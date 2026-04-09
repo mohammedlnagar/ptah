@@ -115,7 +115,7 @@ if "DATABASE_URL" in os.environ:
     # When deployed to Heroku, override with DATABASE_URL from environment variables
     DATABASES = {"default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": "wasel",
+            "NAME": "waslni",
             "USER": "postgres",
             "PASSWORD": "Sezar8760",
             "HOST": "localhost",
@@ -125,7 +125,7 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": "wasel",
+            "NAME": "waslni",
             "USER": "postgres",
             "PASSWORD": "Sezar8760",
             "HOST": "localhost",

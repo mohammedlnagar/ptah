@@ -49,7 +49,7 @@
                 <th>Doctor</th>
                 <th>Appointment Date</th>
                 <th>Appointment Time</th>
-                <th>Custom Message</th>
+                <th>remarks</th>
                 <th>Status</th>
                 <th>WhatsApp</th>
             </tr>
@@ -63,11 +63,8 @@
                 <td>{{ assigned_message.appointment.appointment_date|default:"N/A" }}</td>
                 <td>{{ assigned_message.appointment.appointment_time|default:"N/A" }}</td>
                 <td>
-                    {{ assigned_message.custom_message }}
-                    <button class="btn btn-sm btn-primary edit-message-btn" data-message-id="{{ assigned_message.id }}"
-                        data-message-content="{{ assigned_message.custom_message }}">
-                        ✏️ Edit
-                    </button>
+                    {{ assigned_message.appointment.appointment_remarks }}
+                    
                 </td>
 
                 <td>

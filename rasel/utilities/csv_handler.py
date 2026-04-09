@@ -9,7 +9,7 @@ CSV_COLUMNS = [
     'Patient Mobile', 'Consultant', 'Doctor Department', 'Visit Id',
     'Consultation Type', 'Appointment Status', 'Appointment Source',
     'Complaint', 'Duration (Min)', 'Other Resources', 'Cancel Reason',
-    'Cancelled Date/Time', 'Patient Category'
+    'Cancelled Date/Time', 'Patient Category', 'Remarks'
 ]
 
 # Date columns that need parsing
@@ -19,16 +19,25 @@ def clean_csv_data(file):
     """Reads and cleans the CSV file data, ensuring proper formatting."""
     try:
         # df = pd.read_csv(file, skiprows=2, parse_dates=DATE_COLUMNS)
-        df = pd.read_csv(file, skiprows=2)
-        df['Appointment Date'] = pd.to_datetime(df['Appointment Date'], dayfirst=True)
-        df['Appointment Date/Time'] = pd.to_datetime(df['Appointment Date/Time'], dayfirst=True, format= '%d-%m-%Y %H:%M')
+        df = pd.read_csv(file, header=None, engine="pyarrow", dtype_backend="pyarrow")
+        valid_rows = df.dropna(thresh=3)
+        valid_header = valid_rows.index[0]
+        valid_footer = valid_rows.index[-1]
+        df = df.loc[valid_header:valid_footer].reset_index(drop=True)
+        df.columns = df.iloc[0].reset_index(drop=True)  # Set the first valid row as header
+        df.columns.name = None  # Remove the name of the columns index
+        df = df[1:].reset_index(drop=True)  # Remove the header row from data
+        df['Appointment Date'] = pd.to_datetime(df['Appointment Date'], format='%d-%m-%Y')
+        df['Appointment Date/Time'] = pd.to_datetime(df['Appointment Date/Time'], format= '%d-%m-%Y %H:%M')
         # Ensure the required columns are present
         missing_cols = [col for col in CSV_COLUMNS if col not in df.columns]
         if missing_cols:
             raise ValueError(f"Missing columns in CSV: {', '.join(missing_cols)}")
 
         # Drop rows without an appointment date
-        df.dropna(subset=['Appointment Date'], inplace=True)
+        # df.dropna(subset=['Appointment Date'], inplace=True)
+
+       
 
         # Convert Patient Mobile to string (avoid scientific notation issues)
         df['Patient Mobile'] = df['Patient Mobile'].astype(str).str.replace('.0', '', regex=False)
@@ -82,6 +91,7 @@ def save_appointments_from_csv(user, file, list_title, messages):
                 doctor_name=row['Consultant'],
                 appointment_date=row['Appointment Date'].date() if pd.notna(row['Appointment Date/Time']) else None,
                 appointment_time=row['Appointment Date/Time'].time() if pd.notna(row['Appointment Date/Time']) else None,
+                appointment_remarks=row['Remarks'],
                 appointment_status=row['Appointment Status']
             )
 
