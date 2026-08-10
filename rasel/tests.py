@@ -172,6 +172,16 @@ class TenantSchemaTests(TestCase):
         self.assertTrue(campaign_form.is_valid(), campaign_form.errors)
 
 
+class AuthenticationRoutingTests(TestCase):
+    def test_protected_campaign_list_redirects_to_project_login(self):
+        target = reverse("manage_appointments")
+
+        response = self.client.get(target)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], f"/Account/login/?next={target}")
+
+
 @override_settings(TEMPLATES=TENANT_VIEW_TEST_TEMPLATES)
 class TenantViewIsolationTests(TestCase):
     def setUp(self):
