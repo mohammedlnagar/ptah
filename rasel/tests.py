@@ -1,12 +1,22 @@
 import datetime
+from io import StringIO
 
+from django.contrib.auth.models import Permission
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.db import IntegrityError, connection, transaction
 from django.db.migrations.executor import MigrationExecutor
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase, TransactionTestCase, override_settings
+from django.urls import reverse
 
-from account.models import CustomUser, Organization
+from account.models import (
+    CustomUser,
+    Organization,
+    OrganizationSubscription,
+    SubscriptionPlan,
+)
 from rasel.models import (
     Campaign,
     CampaignItem,
@@ -18,6 +28,29 @@ from rasel.models import (
 )
 from rasel.forms import CampaignUploadForm, MessageTemplateForm
 from rasel.utilities.csv_handler import save_campaign_from_csv
+
+
+TENANT_VIEW_TEST_TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "APP_DIRS": False,
+        "OPTIONS": {
+            "loaders": [
+                (
+                    "django.template.loaders.locmem.Loader",
+                    {
+                        "rasel/contact_lists.html": (
+                            "{% for campaign in appointment_lists %}"
+                            "{{ campaign.title }}"
+                            "{% endfor %}"
+                        ),
+                        "rasel/list_detail.html": "{{ appointment_list.title }}",
+                    },
+                )
+            ]
+        },
+    }
+]
 
 
 class TenantSchemaTests(TestCase):
@@ -137,6 +170,141 @@ class TenantSchemaTests(TestCase):
             user=self.user,
         )
         self.assertTrue(campaign_form.is_valid(), campaign_form.errors)
+
+
+@override_settings(TEMPLATES=TENANT_VIEW_TEST_TEMPLATES)
+class TenantViewIsolationTests(TestCase):
+    def setUp(self):
+        self.first = Organization.objects.create(name="First Clinic", slug="view-first")
+        self.second = Organization.objects.create(name="Second Clinic", slug="view-second")
+        self.first_user = CustomUser.objects.create_user(
+            username="first-operator",
+            email="first-operator@example.com",
+            organization=self.first,
+            password="test-password",
+        )
+        self.second_user = CustomUser.objects.create_user(
+            username="second-operator",
+            email="second-operator@example.com",
+            organization=self.second,
+            password="test-password",
+        )
+        self.first_campaign, self.first_message = self._create_campaign(
+            self.first, self.first_user, "First campaign", "+971500000021"
+        )
+        self.second_campaign, self.second_message = self._create_campaign(
+            self.second, self.second_user, "Second campaign", "+971500000022"
+        )
+        change_message = Permission.objects.get(
+            content_type__app_label="rasel", codename="change_campaignmessage"
+        )
+        self.first_user.user_permissions.add(change_message)
+        self.client.force_login(self.first_user)
+
+    def _create_campaign(self, organization, user, title, phone_number):
+        template = MessageTemplate.objects.create(
+            organization=organization,
+            created_by=user,
+            name=f"{title} template",
+            content="Hello #patient_name",
+            approval_status=MessageTemplate.ApprovalStatus.APPROVED,
+        )
+        contact = Contact.objects.create(
+            organization=organization,
+            name=f"{title} patient",
+            phone_number=phone_number,
+        )
+        campaign = Campaign.objects.create(
+            organization=organization,
+            created_by=user,
+            title=title,
+            purpose=Campaign.Purpose.MARKETING,
+            template=template,
+        )
+        item = CampaignItem.objects.create(
+            organization=organization,
+            campaign=campaign,
+            contact=contact,
+            row_number=1,
+            patient_name_snapshot=contact.name,
+            phone_number_snapshot=contact.phone_number,
+        )
+        message = CampaignMessage.objects.create(
+            organization=organization,
+            campaign_item=item,
+            template=template,
+            rendered_content=f"Hello {contact.name}",
+        )
+        return campaign, message
+
+    def test_campaign_list_contains_only_the_signed_in_organization(self):
+        response = self.client.get(reverse("manage_appointments"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertQuerySetEqual(
+            response.context["appointment_lists"], [self.first_campaign]
+        )
+        self.assertNotContains(response, self.second_campaign.title)
+
+    def test_foreign_campaign_detail_returns_not_found(self):
+        response = self.client.get(
+            reverse("appointment_list_detail", args=[self.second_campaign.pk])
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_foreign_message_cannot_be_updated(self):
+        response = self.client.post(
+            reverse("update_assigned_message_status"),
+            {"message_id": self.second_message.pk, "status": CampaignMessage.Status.SENT},
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.second_message.refresh_from_db()
+        self.assertEqual(self.second_message.status, CampaignMessage.Status.PENDING)
+
+
+class TenantIntegrityCommandTests(TestCase):
+    def setUp(self):
+        self.plan = SubscriptionPlan.objects.create(name="Test", code="test")
+        self.first = self._create_organization("Audit First", "audit-first")
+        self.second = self._create_organization("Audit Second", "audit-second")
+        self.user = CustomUser.objects.create_user(
+            username="audit-user",
+            email="audit@example.com",
+            organization=self.first,
+        )
+
+    def _create_organization(self, name, slug):
+        organization = Organization.objects.create(name=name, slug=slug)
+        OrganizationSubscription.objects.create(
+            organization=organization,
+            plan=self.plan,
+            starts_on=datetime.date(2026, 8, 11),
+        )
+        return organization
+
+    def test_clean_tenant_data_passes_the_audit(self):
+        output = StringIO()
+
+        call_command("audit_tenant_integrity", stdout=output)
+
+        self.assertIn("No tenant integrity violations detected", output.getvalue())
+
+    def test_cross_tenant_relation_fails_the_audit(self):
+        department = Department.objects.create(organization=self.second, name="Dental")
+        doctor = Doctor.objects.create(
+            organization=self.first,
+            department=department,
+            name="Dr Invalid",
+        )
+        error_output = StringIO()
+
+        with self.assertRaisesMessage(CommandError, "1 tenant integrity violation"):
+            call_command("audit_tenant_integrity", stderr=error_output)
+
+        self.assertIn("doctor.department", error_output.getvalue())
+        self.assertIn(str(doctor.pk), error_output.getvalue())
 
 
 class TenantMigrationUpgradeTests(TransactionTestCase):

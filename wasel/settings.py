@@ -59,6 +59,13 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+if TESTING:
+    MIDDLEWARE = [
+        middleware
+        for middleware in MIDDLEWARE
+        if not middleware.startswith(("whitenoise.", "django_htmx."))
+    ]
+
 ROOT_URLCONF = "wasel.test_urls" if TESTING else "wasel.urls"
 TEMPLATES = [
     {
@@ -80,13 +87,15 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL:
     import dj_database_url
 
+    database_config = dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+    if not DEBUG and database_config["ENGINE"].endswith("postgresql"):
+        database_config.setdefault("OPTIONS", {})["sslmode"] = "require"
     DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-            ssl_require=not DEBUG,
-        )
+        "default": database_config
     }
 else:
     DATABASES = {
@@ -131,5 +140,6 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
