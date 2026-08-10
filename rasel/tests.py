@@ -331,6 +331,10 @@ class TenantMigrationUpgradeTests(TransactionTestCase):
 
         user = User.objects.create(username="legacy", email="legacy@example.com")
         Profile.objects.create(user=user, role="Admin")
+        null_role_user = User.objects.create(
+            username="null-role", email="null-role@example.com"
+        )
+        Profile.objects.create(user=null_role_user, role=None)
         template = Template.objects.create(user=user, category="Legacy reminder", content="Hello")
         appointment_list = AppointmentList.objects.create(title="Legacy list", author=user)
         appointment_list.message_selected.add(template)
@@ -358,12 +362,24 @@ class TenantMigrationUpgradeTests(TransactionTestCase):
                 executor.loader.graph.leaf_nodes()
             ).apps
             NewUser = new_apps.get_model("account", "CustomUser")
+            NewProfile = new_apps.get_model("account", "UserProfile")
             Campaign = new_apps.get_model("rasel", "Campaign")
             CampaignItem = new_apps.get_model("rasel", "CampaignItem")
             CampaignMessage = new_apps.get_model("rasel", "CampaignMessage")
 
             migrated_user = NewUser.objects.get(email="legacy@example.com")
             self.assertIsNotNone(migrated_user.organization_id)
+            migrated_null_role_user = NewUser.objects.get(
+                email="null-role@example.com"
+            )
+            self.assertIsNotNone(migrated_null_role_user.organization_id)
+            self.assertTrue(
+                migrated_null_role_user.groups.filter(name="Operator").exists()
+            )
+            self.assertEqual(
+                NewProfile.objects.get(user=migrated_null_role_user).legacy_role,
+                "",
+            )
             self.assertEqual(Campaign.objects.get().organization_id, migrated_user.organization_id)
             item = CampaignItem.objects.get()
             self.assertEqual(item.appointment_status, "booked")

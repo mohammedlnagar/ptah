@@ -121,9 +121,9 @@ class Migration(migrations.Migration):
         migrations.RenameField(model_name="userprofile", old_name="role", new_name="legacy_role"),
         migrations.AlterField(model_name="customuser", name="mobile_number", field=models.CharField(blank=True, max_length=20, null=True)),
         migrations.AlterField(model_name="userprofile", name="emergency_contact_phone", field=models.CharField(blank=True, max_length=20, null=True)),
-        migrations.AlterField(model_name="userprofile", name="legacy_role", field=models.CharField(blank=True, help_text="Historical value only. Authorization is managed with Django groups.", max_length=100)),
         migrations.AlterModelOptions(name="customuser", options={}),
         migrations.RunPython(create_legacy_tenant, reverse_legacy_tenant),
+        migrations.AlterField(model_name="userprofile", name="legacy_role", field=models.CharField(blank=True, help_text="Historical value only. Authorization is managed with Django groups.", max_length=100)),
         migrations.AddConstraint(
             model_name="customuser",
             constraint=models.CheckConstraint(condition=Q(organization__isnull=False) | Q(is_superuser=True), name="employee_requires_organization"),
