@@ -3,9 +3,12 @@ import sys
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env", override=False)
+
 TESTING = "test" in sys.argv or os.getenv("MINIMAL_TEST") == "1"
 DEBUG = os.getenv("DEBUG", "False").lower() in {"1", "true", "yes"}
 
@@ -14,6 +17,12 @@ if not SECRET_KEY and (DEBUG or TESTING):
     SECRET_KEY = "local-development-only-key"
 if not SECRET_KEY:
     raise ImproperlyConfigured("SECRET_KEY must be provided through the environment.")
+
+SECRET_KEY_FALLBACKS = [
+    key.strip()
+    for key in os.getenv("SECRET_KEY_FALLBACKS", "").split(",")
+    if key.strip()
+]
 
 ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
 
@@ -92,6 +101,14 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.ScryptPasswordHasher",
 ]
 
 LANGUAGE_CODE = "en-us"

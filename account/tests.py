@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Group
+from django.contrib.auth.hashers import check_password, identify_hasher, make_password
 from django.test import TestCase
 
 from .forms import CustomUserCreationForm
@@ -38,3 +39,11 @@ class OrganizationSignupTests(TestCase):
         user.organization = second
         user.save(update_fields=("organization",))
         self.assertEqual(CustomUser.objects.get(pk=user.pk).organization, second)
+
+
+class PasswordHashingTests(TestCase):
+    def test_new_passwords_use_argon2id(self):
+        encoded = make_password("A-secure-test-password-123")
+
+        self.assertEqual(identify_hasher(encoded).algorithm, "argon2")
+        self.assertTrue(check_password("A-secure-test-password-123", encoded))
