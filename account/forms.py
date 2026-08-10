@@ -1,61 +1,68 @@
-from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import CustomUser, UserProfile
+import re
 
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
-from django.core.exceptions import ValidationError
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.models import Group
+from django.db import transaction
+from django.utils import timezone
+from django.utils.text import slugify
 
+from .models import (
+    CustomUser,
+    Organization,
+    OrganizationSubscription,
+    SubscriptionPlan,
+    UserProfile,
+)
 
-import re  # For mobile number validation
-
-from django import forms
-from django.contrib.auth.forms import UserCreationForm
-from django.core.exceptions import ValidationError
-from .models import CustomUser
-import re  # For mobile number validation
 
 class CustomUserCreationForm(UserCreationForm):
-    email = forms.EmailField(
-        required=True,
-        help_text="Enter a valid email address.",
-        widget=forms.EmailInput(attrs={"class": "form-control"})
-    )
-    username = forms.CharField(
-        required=True,
-        widget=forms.TextInput(attrs={"class": "form-control"})
-    )
-    mobile_number = forms.CharField(
-        required=True,
-        max_length=15,
-        help_text="Enter a valid phone number.",
-        widget=forms.TextInput(attrs={"class": "form-control"})
-    )
+    organization_name = forms.CharField(max_length=200, label="Organization name")
 
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'mobile_number', 'password1', 'password2']
-
-    def clean_username(self):
-        username = self.cleaned_data.get("username")
-        if CustomUser.objects.filter(username=username).exists():
-            raise ValidationError("This username is already taken. Please choose another.")
-        return username
-
-    def clean_email(self):
-        email = self.cleaned_data.get("email")
-        if CustomUser.objects.filter(email=email).exists():
-            raise ValidationError("This email is already registered. Use a different one.")
-        return email
+        fields = ("organization_name", "username", "email", "mobile_number", "password1", "password2")
 
     def clean_mobile_number(self):
-        mobile_number = self.cleaned_data.get("mobile_number")
-        if not re.match(r'^\+?[1-9]\d{6,14}$', mobile_number):  # International format
-            raise ValidationError("Enter a valid mobile number (e.g., +123456789).")
-        if CustomUser.objects.filter(mobile_number=mobile_number).exists():
-            raise ValidationError("This mobile number is already registered.")
-        return mobile_number
+        value = (self.cleaned_data.get("mobile_number") or "").strip()
+        if value and not re.fullmatch(r"\+?[1-9]\d{6,14}", value):
+            raise forms.ValidationError("Enter a valid international phone number.")
+        return value
 
+    def _unique_slug(self, name):
+        base = slugify(name)[:180] or "organization"
+        candidate = base
+        suffix = 2
+        while Organization.objects.filter(slug=candidate).exists():
+            candidate = f"{base}-{suffix}"
+            suffix += 1
+        return candidate
+
+    @transaction.atomic
+    def save(self, commit=True):
+        if not commit:
+            raise ValueError("Organization signup must be committed atomically.")
+        organization_name = self.cleaned_data["organization_name"].strip()
+        organization = Organization.objects.create(
+            name=organization_name,
+            slug=self._unique_slug(organization_name),
+        )
+        plan, _ = SubscriptionPlan.objects.get_or_create(
+            code="starter",
+            defaults={"name": "Starter", "monthly_price": 0, "max_users": 5, "max_monthly_campaigns": 20},
+        )
+        OrganizationSubscription.objects.create(
+            organization=organization,
+            plan=plan,
+            status=OrganizationSubscription.Status.TRIAL,
+            starts_on=timezone.localdate(),
+        )
+        user = super().save(commit=False)
+        user.organization = organization
+        user.save()
+        owner_group, _ = Group.objects.get_or_create(name="Owner")
+        user.groups.add(owner_group)
+        return user
 
 
 class LoginForm(AuthenticationForm):
@@ -65,18 +72,17 @@ class LoginForm(AuthenticationForm):
 class CustomUserUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ["username", "email", "mobile_number"]
+        fields = ("username", "email", "mobile_number")
 
 
 class UserProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = [
+        fields = (
             "passport",
             "emirates_id",
             "university_certificate",
             "cv",
-            "role",
             "work_email",
             "home_address",
             "marital_status",
@@ -85,7 +91,5 @@ class UserProfileUpdateForm(forms.ModelForm):
             "emergency_contact_name",
             "emergency_contact_phone",
             "nationality",
-        ]
-        widgets = {
-            "birthdate": forms.DateInput(attrs={"type": "date"}),
-        }
+        )
+        widgets = {"birthdate": forms.DateInput(attrs={"type": "date"})}

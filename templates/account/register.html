@@ -1,93 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-    <h2 class="text-primary"><i class="fas fa-user-plus"></i> Register</h2>
-
-    <div class="card shadow-lg rounded-4 p-4">
-        <form method="post" id="registrationForm">
-            {% csrf_token %}
-
-            <div class="mb-3">
-                <label for="id_username" class="form-label">Username</label>
-                {{ form.username }}
-                <div id="username-feedback" class="invalid-feedback"></div>
-                {% if form.username.errors %}
-                    <div class="text-danger">{{ form.username.errors.as_text }}</div>
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
-                <label for="id_email" class="form-label">Email</label>
-                {{ form.email }}
-                <div id="email-feedback" class="invalid-feedback"></div>
-                {% if form.email.errors %}
-                    <div class="text-danger">{{ form.email.errors.as_text }}</div>
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
-                <label for="id_mobile_number" class="form-label">Mobile Number</label>
-                {{ form.mobile_number }}
-                <small class="text-muted">Format: +123456789</small>
-                {% if form.mobile_number.errors %}
-                    <div class="text-danger">{{ form.mobile_number.errors.as_text }}</div>
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
-                <label for="id_password1" class="form-label">Password</label>
-                {{ form.password1 }}
-                <small class="text-muted">At least 8 characters with special characters.</small>
-                {% if form.password1.errors %}
-                    <div class="text-danger">{{ form.password1.errors.as_text }}</div>
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
-                <label for="id_password2" class="form-label">Confirm Password</label>
-                {{ form.password2 }}
-                {% if form.password2.errors %}
-                    <div class="text-danger">{{ form.password2.errors.as_text }}</div>
-                {% endif %}
-            </div>
-
-            <button type="submit" class="btn btn-primary"><i class="fas fa-user-check"></i> Register</button>
-        </form>
-    </div>
+  <h2>Create your organization</h2>
+  <div class="card p-4">
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary">Create organization and owner account</button>
+    </form>
+  </div>
 </div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const usernameInput = document.getElementById("id_username");
-    const emailInput = document.getElementById("id_email");
-
-    usernameInput.addEventListener("input", function() {
-        validateField("username", this.value, "username-feedback", this);
-    });
-
-    emailInput.addEventListener("input", function() {
-        validateField("email", this.value, "email-feedback", this);
-    });
-
-    function validateField(field, value, feedbackId, inputElement) {
-        let url = "{% url 'validate_registration' %}?field=" + field + "&value=" + encodeURIComponent(value);
-
-        fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            let feedbackElement = document.getElementById(feedbackId);
-            if (!data.valid) {
-                feedbackElement.textContent = data.message;
-                feedbackElement.classList.add("text-danger");
-                inputElement.classList.add("is-invalid");
-            } else {
-                feedbackElement.textContent = "";
-                feedbackElement.classList.remove("text-danger");
-                inputElement.classList.remove("is-invalid");
-            }
-        })
-        .catch(error => console.error("Error:", error));
-    }
-});
-</script>
 {% endblock %}

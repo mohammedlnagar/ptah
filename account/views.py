@@ -1,10 +1,12 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate, logout
-from .forms import CustomUserCreationForm, LoginForm, UserProfileUpdateForm, CustomUserUpdateForm
-from .models import UserProfile, CustomUser
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_GET, require_POST
+
+from .forms import CustomUserCreationForm, CustomUserUpdateForm, LoginForm, UserProfileUpdateForm
+from .models import CustomUser
+
 
 def register(request):
     if request.method == "POST":
@@ -12,73 +14,65 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('profile')  # Redirect after successful registration
+            return redirect("profile")
     else:
         form = CustomUserCreationForm()
+    return render(request, "account/register.html", {"form": form})
 
-    return render(request, 'account/register.html', {'form': form})
 
-# AJAX Username & Email Validation
+@require_GET
 def validate_registration(request):
     field = request.GET.get("field")
-    value = request.GET.get("value")
-
-    if not field or not value:
+    value = request.GET.get("value", "").strip()
+    if field not in {"username", "email"} or not value:
         return JsonResponse({"valid": False, "message": "Invalid request."}, status=400)
-
-    response = {"valid": True}
-
-    if field == "username" and CustomUser.objects.filter(username=value).exists():
-        response = {"valid": False, "message": "This username is already taken."}
-    elif field == "email" and CustomUser.objects.filter(email=value).exists():
-        response = {"valid": False, "message": "This email is already registered."}
-
-    return JsonResponse(response)
+    exists = CustomUser.objects.filter(**{field: value}).exists()
+    return JsonResponse(
+        {
+            "valid": not exists,
+            "message": f"This {field} is already registered." if exists else "",
+        }
+    )
 
 
 def user_login(request):
     if request.method == "POST":
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
-            
-            user = form.get_user()
-            login(request, user)
-            print(user.email_user)
-            return redirect('profile')
+            login(request, form.get_user())
+            return redirect("profile")
     else:
         form = LoginForm()
-    return render(request, 'account/login.html', {'form': form})
+    return render(request, "account/login.html", {"form": form})
 
+
+@require_POST
 def user_logout(request):
     logout(request)
-    return redirect('login')
+    return redirect("login")
 
 
 @login_required
 def profile(request):
-    profile = request.user.profile  # Access related profile
-    return render(request, 'account/profile.html', {'profile': profile})
+    return render(request, "account/profile.html", {"profile": request.user.profile})
 
 
 @login_required
 def edit_profile(request):
-    user = request.user
-    profile = user.profile
-
     if request.method == "POST":
-        user_form = CustomUserUpdateForm(request.POST, instance=user)
-        profile_form = UserProfileUpdateForm(request.POST, request.FILES, instance=profile)
-
+        user_form = CustomUserUpdateForm(request.POST, instance=request.user)
+        profile_form = UserProfileUpdateForm(
+            request.POST, request.FILES, instance=request.user.profile
+        )
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
             profile_form.save()
-            return redirect('profile')
-
+            return redirect("profile")
     else:
-        user_form = CustomUserUpdateForm(instance=user)
-        profile_form = UserProfileUpdateForm(instance=profile)
-
-    return render(request, 'account/edit_profile.html', {
-        'user_form': user_form,
-        'profile_form': profile_form
-    })
+        user_form = CustomUserUpdateForm(instance=request.user)
+        profile_form = UserProfileUpdateForm(instance=request.user.profile)
+    return render(
+        request,
+        "account/edit_profile.html",
+        {"user_form": user_form, "profile_form": profile_form},
+    )

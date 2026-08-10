@@ -1,249 +1,280 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from .models import AppointmentsList, MessageTemplate, Appointment, AssignedMessage, Contact
-from .forms import AppointmentsListForm, MessageTemplateForm
-from .utilities.csv_handler import save_appointments_from_csv
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
-from .utilities.message_formatter import format_message
-from urllib.parse import quote  # Use Python's built-in quote function for URL encoding
-from django.db.models import Q
-from django.core.paginator import Paginator
+import csv
+
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required, permission_required
+from django.db.models import Q
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.views.decorators.http import require_GET, require_POST
+
+from .forms import CampaignUploadForm, MessageTemplateForm
+from .models import Campaign, CampaignItem, CampaignMessage, Contact, MessageTemplate
+from .utilities.csv_handler import CsvImportError, save_campaign_from_csv
 
 
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
+def _tenant_or_403(request):
+    if not request.user.organization_id:
+        from django.core.exceptions import PermissionDenied
+
+        raise PermissionDenied("Your account is not assigned to an organization.")
+    return request.user.organization
+
 
 @login_required
 def manage_appointments_and_messages(request):
-    """
-    Handles appointment list creation and message template creation on the same page.
-    Uses AJAX for asynchronous processing.
-    """
+    organization = _tenant_or_403(request)
     if request.method == "POST":
         form_type = request.POST.get("form_type")
-
-        # Handle appointment list creation
         if form_type == "appointments_list":
-            form = AppointmentsListForm(request.POST, request.FILES)
+            form = CampaignUploadForm(request.POST, request.FILES, user=request.user)
             if form.is_valid():
-                csv_file = request.FILES['csv_file']
-                list_title = form.cleaned_data['title']
-                appointment_messages = form.cleaned_data['message_selected']
+                try:
+                    campaign = save_campaign_from_csv(
+                        user=request.user,
+                        file=form.cleaned_data["csv_file"],
+                        title=form.cleaned_data["title"],
+                        template=form.cleaned_data["template"],
+                        purpose=form.cleaned_data["purpose"],
+                    )
+                except CsvImportError as exc:
+                    return JsonResponse({"success": False, "message": str(exc)}, status=400)
+                messages.success(request, "Campaign created successfully.")
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "campaign_id": campaign.pk,
+                        "message": "Campaign created successfully.",
+                    }
+                )
+            return JsonResponse({"success": False, "errors": form.errors.get_json_data()}, status=400)
 
-                new_list = save_appointments_from_csv(request.user, csv_file, list_title, appointment_messages)
+        if form_type == "message_template":
+            form = MessageTemplateForm(request.POST, user=request.user)
+            if form.is_valid():
+                template = form.save()
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "template_id": template.pk,
+                        "message": "Template submitted for approval.",
+                    }
+                )
+            return JsonResponse({"success": False, "errors": form.errors.get_json_data()}, status=400)
 
-                if new_list:
-                    messages.success(request, "Appointment list created successfully!")
-                    return JsonResponse({"success": True, "message": "Appointment list created successfully!"})
-                
-                return JsonResponse({"success": False, "message": "Error processing CSV file."})
-            return JsonResponse({"success": False, "message": "Invalid form data."})
+    campaigns = Campaign.objects.for_organization(organization).select_related("template")
+    templates = MessageTemplate.objects.for_organization(organization)
+    return render(
+        request,
+        "rasel/contact_lists.html",
+        {
+            "appointments_list_form": CampaignUploadForm(user=request.user),
+            "message_template_form": MessageTemplateForm(user=request.user),
+            "appointment_lists": campaigns,
+            "messages": templates,
+        },
+    )
 
-        # Handle message template creation
-        elif form_type == "message_template":
-            messageform = MessageTemplateForm(request.POST)
-            if messageform.is_valid():
-                messageform.save()
-                messages.success(request, "Message template created successfully!")
-
-                return JsonResponse({"success": True, "message": "Message template created successfully!"})
-            return JsonResponse({"success": False, "message": "Invalid form data."})
-
-    # Fetch existing lists and messages
-    appointment_lists = AppointmentsList.objects.all()
-    appointment_messages = MessageTemplate.objects.all()
-
-    return render(request, "rasel/contact_lists.html", {
-        "appointments_list_form": AppointmentsListForm(),
-        "message_template_form": MessageTemplateForm(),
-        "appointment_lists": appointment_lists,
-        "messages": appointment_messages
-    })
-
- 
 
 @login_required
 def appointment_list_detail(request, list_id):
-    """
-    Displays details of a specific appointment list with customized messages.
-    """
-    appointment_list = get_object_or_404(AppointmentsList, id=list_id)
-    assigned_messages = AssignedMessage.objects.filter(appointment__appointments_list=appointment_list)
+    organization = _tenant_or_403(request)
+    campaign = get_object_or_404(
+        Campaign.objects.for_organization(organization).select_related("template"), pk=list_id
+    )
+    campaign_messages = _filtered_messages(request, campaign)
+    doctors = campaign.items.order_by("doctor_name_snapshot").values_list(
+        "doctor_name_snapshot", flat=True
+    ).distinct()
+    return render(
+        request,
+        "rasel/list_detail.html",
+        {
+            "appointment_list": campaign,
+            "assigned_messages": campaign_messages,
+            "doctors": doctors,
+        },
+    )
 
-    
-    # Fetch unique doctor names for the dropdown
-    doctors = Appointment.objects.filter(appointments_list=appointment_list).values_list('doctor_name', flat=True).distinct()
-
-    return render(request, "rasel/list_detail.html", {
-        "appointment_list": appointment_list,
-        "assigned_messages": assigned_messages,
-        "doctors": doctors,
-    })
-
-
-
-@csrf_exempt
-@require_POST
-def edit_assigned_message(request):
-    """
-    AJAX endpoint to update the custom message of an assigned message.
-    """
-    try:
-        message_id = int(request.POST.get("message_id"))
-        new_message = request.POST.get("new_message")
-
-        assigned_message = AssignedMessage.objects.get(id=message_id)
-        assigned_message.custom_message = new_message
-        assigned_message.save()
-        
-        print(f'Message Changed___________________________: {new_message}')
-
-        return JsonResponse({"success": True, "message": "Message updated successfully!"})
-    except AssignedMessage.DoesNotExist:
-        return JsonResponse({"success": False, "message": "Assigned message not found."})
-    except Exception as e:
-        return JsonResponse({"success": False, "message": str(e)})
-
-@csrf_exempt
-@require_POST
-def update_assigned_message_status(request):
-    """
-    AJAX endpoint to update the status of an assigned message.
-    """
-    try:
-        message_id = int(request.POST.get("message_id"))
-        new_status = request.POST.get("status")
-
-        assigned_message = AssignedMessage.objects.get(id=message_id)
-        assigned_message.status = new_status
-        assigned_message.save()
-
-        return JsonResponse({"success": True, "message": "Status updated successfully!"})
-    except AssignedMessage.DoesNotExist:
-        return JsonResponse({"success": False, "message": "Assigned message not found."})
-    except Exception as e:
-        return JsonResponse({"success": False, "message": str(e)})
-
-from django.core.paginator import Paginator
-
-@csrf_exempt
-def filter_assigned_messages(request, list_id):
-    """
-    Filters assigned messages based on doctor name and message status.
-    Automatically paginates lists with more than 15 messages.
-    """
-    try:
-        doctor = request.GET.get("doctor", "").strip()
-        status = request.GET.get("status", "").strip()
-        page = int(request.GET.get("page", 1))  # Get the current page number
-
-        appointment_list = get_object_or_404(AppointmentsList, id=list_id)
-
-        filters = Q(appointment__appointments_list=appointment_list)
-
-        if doctor:
-            filters &= Q(appointment__doctor_name__icontains=doctor)
-        if status:
-            filters &= Q(status=status)
-
-        assigned_messages = AssignedMessage.objects.filter(filters)
-
-        # Check if pagination is necessary
-        paginate = assigned_messages.count() > 15
-        paginator = Paginator(assigned_messages, 15) if paginate else None
-        page_obj = paginator.get_page(page) if paginate else assigned_messages
-
-        # Prepare data for JSON response
-        filtered_data = []
-        for message in page_obj:
-            filtered_data.append({
-                "id": message.id,
-                "patient_name": message.appointment.contact.name,
-                "doctor_name": message.appointment.doctor_name,
-                "appointment_date": message.appointment.appointment_date.strftime("%d-%m-%Y") if message.appointment.appointment_date else "N/A",
-                "appointment_time": message.appointment.appointment_time.strftime("%I:%M %p") if message.appointment.appointment_time else "N/A",
-                "custom_message": message.custom_message,
-                "status": message.status
-            })
-
-        return JsonResponse({
-            "success": True,
-            "data": filtered_data,
-            "paginate": paginate,
-            "num_pages": paginator.num_pages if paginate else 1,
-            "current_page": page_obj.number if paginate else 1
-        })
-    except Exception as e:
-        return JsonResponse({"success": False, "message": str(e)})
-
-
-import csv
-from django.http import HttpResponse
 
 @login_required
+@permission_required("rasel.change_campaignmessage", raise_exception=True)
+@require_POST
+def edit_assigned_message(request):
+    organization = _tenant_or_403(request)
+    campaign_message = get_object_or_404(
+        CampaignMessage.objects.for_organization(organization), pk=request.POST.get("message_id")
+    )
+    rendered_content = request.POST.get("new_message", "").strip()
+    if not rendered_content:
+        return JsonResponse({"success": False, "message": "Message cannot be empty."}, status=400)
+    campaign_message.rendered_content = rendered_content
+    campaign_message.save(update_fields=("rendered_content", "updated_at"))
+    return JsonResponse({"success": True})
+
+
+@login_required
+@permission_required("rasel.change_campaignmessage", raise_exception=True)
+@require_POST
+def update_assigned_message_status(request):
+    organization = _tenant_or_403(request)
+    campaign_message = get_object_or_404(
+        CampaignMessage.objects.for_organization(organization), pk=request.POST.get("message_id")
+    )
+    new_status = request.POST.get("status")
+    if new_status not in CampaignMessage.Status.values:
+        return JsonResponse({"success": False, "message": "Invalid message status."}, status=400)
+    campaign_message.status = new_status
+    update_fields = ["status", "updated_at"]
+    if new_status == CampaignMessage.Status.SENT:
+        campaign_message.sent_at = timezone.now()
+        campaign_message.sent_by = request.user
+        update_fields.extend(("sent_at", "sent_by"))
+    campaign_message.save(update_fields=update_fields)
+    return JsonResponse({"success": True})
+
+
+@login_required
+@permission_required("rasel.change_campaignmessage", raise_exception=True)
+@require_GET
+def open_whatsapp_message(request, message_id):
+    organization = _tenant_or_403(request)
+    campaign_message = get_object_or_404(
+        CampaignMessage.objects.for_organization(organization).select_related(
+            "organization", "campaign_item"
+        ),
+        pk=message_id,
+    )
+    campaign_message.status = CampaignMessage.Status.OPENED
+    campaign_message.opened_at = timezone.now()
+    campaign_message.save(update_fields=("status", "opened_at", "updated_at"))
+    return redirect(campaign_message.whatsapp_url())
+
+
+def _filtered_messages(request, campaign):
+    query = CampaignMessage.objects.for_organization(campaign.organization).filter(
+        campaign_item__campaign=campaign
+    )
+    filters = {
+        "doctor": "campaign_item__doctor_name_snapshot__icontains",
+        "department": "campaign_item__department_name_snapshot__icontains",
+        "name": "campaign_item__patient_name_snapshot__icontains",
+        "mrn": "campaign_item__mrn_snapshot__icontains",
+        "phone": "campaign_item__phone_number_snapshot__icontains",
+        "date": "campaign_item__appointment_date",
+        "time": "campaign_item__appointment_time",
+        "appointment_status": "campaign_item__appointment_status",
+        "message_status": "status",
+    }
+    for parameter, lookup in filters.items():
+        value = request.GET.get(parameter, "").strip()
+        if value:
+            query = query.filter(**{lookup: value})
+    search = request.GET.get("q", "").strip()
+    if search:
+        query = query.filter(
+            Q(campaign_item__patient_name_snapshot__icontains=search)
+            | Q(campaign_item__phone_number_snapshot__icontains=search)
+            | Q(campaign_item__mrn_snapshot__icontains=search)
+            | Q(campaign_item__doctor_name_snapshot__icontains=search)
+            | Q(campaign_item__department_name_snapshot__icontains=search)
+        )
+    return query.select_related("campaign_item")
+
+
+@login_required
+@require_GET
+def filter_assigned_messages(request, list_id):
+    organization = _tenant_or_403(request)
+    campaign = get_object_or_404(Campaign.objects.for_organization(organization), pk=list_id)
+    data = []
+    for campaign_message in _filtered_messages(request, campaign)[:500]:
+        item = campaign_message.campaign_item
+        data.append(
+            {
+                "id": campaign_message.pk,
+                "patient_name": item.patient_name_snapshot,
+                "phone_number": item.phone_number_snapshot,
+                "mrn": item.mrn_snapshot,
+                "doctor_name": item.doctor_name_snapshot,
+                "department": item.department_name_snapshot,
+                "appointment_date": item.appointment_date.isoformat() if item.appointment_date else None,
+                "appointment_time": item.appointment_time.isoformat() if item.appointment_time else None,
+                "appointment_status": item.appointment_status,
+                "rendered_content": campaign_message.rendered_content,
+                "message_status": campaign_message.status,
+            }
+        )
+    return JsonResponse({"success": True, "data": data})
+
+
+@login_required
+@require_GET
 def export_assigned_messages_to_csv(request, list_id):
-    """
-    Exports filtered assigned messages as a CSV file.
-    """
-    try:
-        doctor = request.GET.get("doctor", "").strip()
-        status = request.GET.get("status", "").strip()
+    organization = _tenant_or_403(request)
+    campaign = get_object_or_404(Campaign.objects.for_organization(organization), pk=list_id)
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="campaign_{campaign.pk}.csv"'
+    writer = csv.writer(response)
+    writer.writerow(
+        [
+            "Patient Name",
+            "Phone",
+            "MRN",
+            "Doctor",
+            "Department",
+            "Appointment Date",
+            "Appointment Time",
+            "Appointment Status",
+            "Message",
+            "Message Status",
+        ]
+    )
+    for campaign_message in _filtered_messages(request, campaign):
+        item = campaign_message.campaign_item
+        writer.writerow(
+            [
+                item.patient_name_snapshot,
+                item.phone_number_snapshot,
+                item.mrn_snapshot,
+                item.doctor_name_snapshot,
+                item.department_name_snapshot,
+                item.appointment_date or "",
+                item.appointment_time or "",
+                item.appointment_status or "",
+                campaign_message.rendered_content,
+                campaign_message.status,
+            ]
+        )
+    return response
 
-        appointment_list = get_object_or_404(AppointmentsList, id=list_id)
 
-        filters = Q(appointment__appointments_list=appointment_list)
-
-        if doctor:
-            filters &= Q(appointment__doctor_name__icontains=doctor)
-        if status:
-            filters &= Q(status=status)
-
-        assigned_messages = AssignedMessage.objects.filter(filters)
-
-        # Create the HttpResponse object with CSV header
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = f'attachment; filename="assigned_messages_list_{list_id}.csv"'
-
-        writer = csv.writer(response)
-        # Write the CSV header
-        writer.writerow(["Patient Name", "Doctor Name", "Appointment Date", "Appointment Time", "Message", "Status"])
-
-        # Write message data to CSV
-        for message in assigned_messages:
-            writer.writerow([
-                message.appointment.contact.name,
-                message.appointment.doctor_name,
-                message.appointment.appointment_date.strftime("%d-%m-%Y") if message.appointment.appointment_date else "N/A",
-                message.appointment.appointment_time.strftime("%I:%M %p") if message.appointment.appointment_time else "N/A",
-                message.custom_message,
-                message.status.capitalize()
-            ])
-
-        return response
-    except Exception as e:
-        return JsonResponse({"success": False, "message": str(e)})
-
-@csrf_exempt
+@login_required
+@permission_required("rasel.change_contact", raise_exception=True)
 @require_POST
 def update_contact_details(request):
-    """
-    AJAX endpoint to update contact details (name and phone number).
-    """
-    try:
-        contact_id = int(request.POST.get("contact_id"))
-        new_name = request.POST.get("name").strip()
-        new_phone_number = request.POST.get("phone_number").strip()
+    organization = _tenant_or_403(request)
+    contact = get_object_or_404(
+        Contact.objects.for_organization(organization), pk=request.POST.get("contact_id")
+    )
+    contact.name = request.POST.get("name", "").strip()
+    contact.phone_number = request.POST.get("phone_number", "").strip()
+    contact.full_clean()
+    contact.save(update_fields=("name", "phone_number", "updated_at"))
+    return JsonResponse({"success": True})
 
-        contact = Contact.objects.get(id=contact_id)
-        contact.name = new_name
-        contact.phone_number = new_phone_number
-        contact.save()
 
-        return JsonResponse({"success": True, "message": "Contact updated successfully!"})
-    except Contact.DoesNotExist:
-        return JsonResponse({"success": False, "message": "Contact not found."})
-    except Exception as e:
-        return JsonResponse({"success": False, "message": str(e)})
+@login_required
+@permission_required("rasel.change_campaignitem", raise_exception=True)
+@require_POST
+def update_appointment_status(request, item_id):
+    organization = _tenant_or_403(request)
+    item = get_object_or_404(
+        CampaignItem.objects.for_organization(organization), pk=item_id
+    )
+    new_status = request.POST.get("status")
+    if new_status not in CampaignItem.AppointmentStatus.values:
+        return JsonResponse({"success": False, "message": "Invalid appointment status."}, status=400)
+    item.appointment_status = new_status
+    item.save(update_fields=("appointment_status", "updated_at"))
+    return JsonResponse({"success": True})

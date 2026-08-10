@@ -3,126 +3,64 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>Manage Appointments & Messages</h2>
-
-    <div class="row">
-        <!-- Left Column: Create Appointment List -->
-        <div class="col-md-6">
-            <h4>Create Appointment List</h4>
-            <form id="appointmentListForm" method="POST" enctype="multipart/form-data"
-                action="{% url 'manage_appointments' %}">
-                {% csrf_token %}
-
-                <div class="mb-3">
-                    <label for="{{ appointments_list_form.title.id_for_label }}" class="form-label">List Name</label>
-                    {{ appointments_list_form.title }}
-                </div>
-
-                <div class="mb-3">
-                    <label for="{{ appointments_list_form.message_selected.id_for_label }}" class="form-label">Select
-                        Messages</label>
-                    {{ appointments_list_form.message_selected }}
-                </div>
-
-                <div class="mb-3">
-                    <label for="{{ appointments_list_form.csv_file.id_for_label }}" class="form-label">Upload CSV
-                        File</label>
-                    {{ appointments_list_form.csv_file }}
-                </div>
-
-                <button type="submit" id="listSubmitButton" class="btn btn-primary">Create List</button>
-            </form>
-        </div>
-
-        <!-- Right Column: Button to Open Modal for Message Templates -->
-        <div class="col-md-6">
-            <h4>Messages</h4>
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#messageModal">
-                + New Message
-            </button>
-
-            <!-- List of Created Messages -->
-            <ul class="list-group mt-3" id="messageList">
-                {% for message in messages %}
-                <li class="list-group-item">{{ message.category }} - {{ message.content }}</li>
-                {% empty %}
-                <li class="list-group-item">No messages created yet.</li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-
-    <hr>
-
-    <!-- Section: Display Appointment Lists in Cards -->
-    <h4>Appointment Lists</h4>
-    <div class="row">
-        {% for appointment_list in appointment_lists %}
-        <div class="col-md-4">
-            <a href="{% url 'appointment_list_detail' appointment_list.id %}" class="text-decoration-none">
-                <div class="card shadow-lg rounded-4 mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ appointment_list.title }}</h5>
-                        <p class="card-text text-muted">Created: {{ appointment_list.created_date|date:"F j, Y" }}</p>
-                        <p class="card-text">
-                            <strong>Messages:</strong>
-                            {% for message in appointment_list.message_selected.all %}
-                            <span class="badge bg-secondary">{{ message.category }}</span>
-                            {% empty %}
-                            <span class="text-muted">No messages assigned</span>
-                            {% endfor %}
-                        </p>
-                    </div>
-                </div>
-            </a>
-        </div>
+  <h2>Campaigns and message templates</h2>
+  <div class="row g-4">
+    <section class="col-lg-7">
+      <div class="card p-4">
+        <h4>Create a campaign</h4>
+        <form id="appointmentListForm" method="post" enctype="multipart/form-data" action="{% url 'manage_appointments' %}">
+          {% csrf_token %}
+          {{ appointments_list_form.as_p }}
+          <button type="submit" id="listSubmitButton" class="btn btn-primary">Create campaign</button>
+        </form>
+      </div>
+    </section>
+    <section class="col-lg-5">
+      <div class="card p-4">
+        <h4>Create a message template</h4>
+        <form id="messageTemplateForm" method="post" action="{% url 'manage_appointments' %}">
+          {% csrf_token %}
+          {{ message_template_form.as_p }}
+          <p class="small text-muted">
+            Placeholders: #patient_name, #mrn, #doctor, #department,
+            #appointment_date, #appointment_time, #appointment_status
+          </p>
+          <button type="submit" id="messageSubmitButton" class="btn btn-success">Submit template</button>
+        </form>
+      </div>
+      <ul class="list-group mt-3">
+        {% for message in messages %}
+          <li class="list-group-item d-flex justify-content-between">
+            <span>{{ message.name }}</span>
+            <span class="badge text-bg-secondary">{{ message.get_approval_status_display }}</span>
+          </li>
         {% empty %}
-        <p>No appointment lists created yet.</p>
+          <li class="list-group-item">No templates yet.</li>
         {% endfor %}
-    </div>
+      </ul>
+    </section>
+  </div>
+
+  <h4 class="mt-5">Campaigns</h4>
+  <div class="row g-3">
+    {% for campaign in appointment_lists %}
+      <div class="col-md-6 col-xl-4">
+        <a href="{% url 'appointment_list_detail' campaign.id %}" class="text-decoration-none">
+          <div class="card h-100 p-3">
+            <h5>{{ campaign.title }}</h5>
+            <p class="text-muted mb-1">{{ campaign.created_at|date:"F j, Y" }}</p>
+            <p class="mb-1">{{ campaign.get_purpose_display }}</p>
+            <p class="mb-0">Template: {{ campaign.template.name|default:"Not assigned" }}</p>
+          </div>
+        </a>
+      </div>
+    {% empty %}
+      <p>No campaigns created yet.</p>
+    {% endfor %}
+  </div>
 </div>
-
-<!-- Bootstrap Modal for Creating Messages -->
-<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="messageModalLabel">Create Message Template</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="messageTemplateForm" method="POST" action="{% url 'manage_appointments' %}">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="{{ message_template_form.category.id_for_label }}" class="form-label">Message
-                            Category</label>
-                        {{ message_template_form.category }}
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="{{ message_template_form.content.id_for_label }}" class="form-label">Message
-                            Content</label>
-                        {{ message_template_form.content }}
-                        <small class="form-text text-muted">
-                            Available placeholders: <br>
-                            <code>#appointment_date</code>, <code>#appointment_time</code>, <code>#doctor</code>,
-                            <code>#patient_name</code>, <code>#appointment_status</code>
-                        </small>
-                    </div>
-
-                    <button type="submit" id="messageSubmitButton" class="btn btn-success">Save Message</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 {% endblock %}
 
 {% block scripts %}
 <script src="{% static 'js/ajax_form_submission.js' %}"></script>
-
-
 {% endblock %}
-
