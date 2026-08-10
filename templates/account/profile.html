@@ -1,14 +1,30 @@
 {% extends "base.html" %}
+{% block title %}My profile · Waslni{% endblock %}
 {% block content %}
-<div class="container mt-4">
-  <h2>{{ profile.user.get_full_name|default:profile.user.username }}</h2>
-  <p class="text-muted">{{ profile.user.organization.name }}</p>
-  <p><strong>Email:</strong> {{ profile.user.email }}</p>
-  <p><strong>Roles:</strong> {% for group in profile.user.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</p>
-  <a href="{% url 'edit_profile' %}" class="btn btn-warning">Edit profile</a>
-  <form method="post" action="{% url 'logout' %}" class="d-inline">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Logout</button>
-  </form>
+<header class="page-header">
+  <div><span class="eyebrow">Account</span><h1>My profile</h1><p>Review your workspace membership and keep your contact details current.</p></div>
+  <div class="page-header-actions"><a href="{% url 'edit_profile' %}" class="button button--primary"><svg><use href="#icon-edit"></use></svg>Edit profile</a></div>
+</header>
+
+<div class="profile-grid">
+  <section class="panel panel--padded profile-summary">
+    <div class="profile-summary__avatar">{{ profile.user.get_full_name|default:profile.user.email|slice:":1"|upper }}</div>
+    <h2>{{ profile.user.get_full_name|default:profile.user.username }}</h2>
+    <p>{{ profile.user.email }}</p>
+    <span class="badge badge--active">Active team member</span>
+  </section>
+  <section class="panel">
+    <div class="panel-header"><div><h2>Workspace details</h2><p>Your organization and role access.</p></div></div>
+    <div class="panel-body">
+      <dl class="detail-list">
+        <div class="detail-row"><dt>Organization</dt><dd>{{ profile.user.organization.name }}</dd></div>
+        <div class="detail-row"><dt>Work email</dt><dd>{{ profile.work_email|default:profile.user.email }}</dd></div>
+        <div class="detail-row"><dt>Mobile number</dt><dd>{{ profile.user.mobile_number|default:"Not added" }}</dd></div>
+        <div class="detail-row"><dt>Access role</dt><dd>{% for group in profile.user.groups.all %}<span class="badge badge--neutral">{{ group.name }}</span>{% if not forloop.last %} {% endif %}{% empty %}Team member{% endfor %}</dd></div>
+        <div class="detail-row"><dt>Nationality</dt><dd>{{ profile.nationality|default:"Not added" }}</dd></div>
+        <div class="detail-row"><dt>Emergency contact</dt><dd>{{ profile.emergency_contact_name|default:"Not added" }}{% if profile.emergency_contact_phone %} · {{ profile.emergency_contact_phone }}{% endif %}</dd></div>
+      </dl>
+    </div>
+  </section>
 </div>
 {% endblock %}

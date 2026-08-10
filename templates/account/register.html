@@ -1,13 +1,35 @@
 {% extends "base.html" %}
+{% block title %}Create your workspace · Waslni{% endblock %}
 {% block content %}
-<div class="container mt-4">
-  <h2>Create your organization</h2>
-  <div class="card p-4">
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit" class="btn btn-primary">Create organization and owner account</button>
-    </form>
-  </div>
+<div class="auth-layout">
+  <section class="auth-story">
+    <div><span class="auth-kicker">Start your organization</span><h1>A private outreach workspace for your healthcare team.</h1><p>Your data, templates, campaigns, doctors, and employees stay isolated inside one organization.</p></div>
+    <div class="auth-steps">
+      <div class="auth-step"><span>1</span><div><strong>Create the workspace</strong><small>You become its first Owner.</small></div></div>
+      <div class="auth-step"><span>2</span><div><strong>Prepare your templates</strong><small>Use approved copy for consistent outreach.</small></div></div>
+      <div class="auth-step"><span>3</span><div><strong>Upload your first campaign</strong><small>Start with an appointment or marketing CSV.</small></div></div>
+    </div>
+  </section>
+  <section class="auth-form-wrap">
+    <div class="auth-card">
+      <div class="auth-card__heading"><span class="eyebrow">14-day trial workspace</span><h2>Create your organization</h2><p>Set up the Owner account that will manage your team.</p></div>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="flash flash--error" role="alert"><svg><use href="#icon-info"></use></svg><span>{{ form.non_field_errors|striptags }}</span></div>{% endif %}
+        <div class="form-grid">
+          {% for field in form %}
+            <div class="form-field">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<small>Required</small>{% endif %}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="field-help password-guidance">{{ field.help_text|safe }}</div>{% endif %}
+              {% if field.errors %}<ul class="field-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+          {% endfor %}
+          <button class="button button--primary" type="submit">Create workspace <svg><use href="#icon-arrow"></use></svg></button>
+        </div>
+      </form>
+      <p class="auth-switch">Already have a workspace? <a href="{% url 'login' %}">Sign in</a></p>
+    </div>
+  </section>
 </div>
 {% endblock %}

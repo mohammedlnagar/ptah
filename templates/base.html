@@ -1,209 +1,130 @@
 {% load static %}
-{% load widget_tweaks %}
-{% load crispy_forms_tags %}
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📋 Contact Lists Dashboard</title>
-
-    <!-- Bootstrap CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <!-- Custom Styles -->
-    <style>
-        body {
-            background-color: #f5f7fa;
-        }
-
-        /* Navbar Customization */
-        .navbar {
-            background-color: #1f2937;
-        }
-
-        .navbar-brand,
-        .nav-link {
-            color: #ffffff !important;
-        }
-
-        .nav-link:hover {
-            color: #60a5fa !important;
-        }
-
-        /* Card Effects */
-        .card {
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        }
-
-        .card-header {
-            background-color: #4f46e5;
-            color: white;
-            border-radius: 20px 20px 0 0;
-        }
-
-        /* Button Styling */
-        .btn-primary {
-            background-color: #6366f1;
-            border-color: #6366f1;
-        }
-
-        .btn-primary:hover {
-            background-color: #4f46e5;
-            border-color: #4f46e5;
-        }
-
-        .btn-success {
-            background-color: #22c55e;
-            border-color: #22c55e;
-        }
-
-        .btn-success:hover {
-            background-color: #16a34a;
-            border-color: #16a34a;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            background-color: #1f2937;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .sidebar a {
-            color: #ffffff;
-            text-decoration: none;
-            display: block;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-        }
-
-        .sidebar a:hover {
-            background-color: #374151;
-        }
-
-        /* Footer */
-        .footer {
-            background-color: #1f2937;
-            color: #ffffff;
-            padding: 10px;
-            text-align: center;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Waslni helps healthcare teams prepare and send personal WhatsApp reminders, one patient at a time.">
+  <title>{% block title %}Waslni{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'js/app.js' %}" defer></script>
+  {% block head %}{% endblock %}
 </head>
+<body class="{% if user.is_authenticated %}app-body{% else %}public-body{% endif %}">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
 
-<body>
+  <svg class="icon-sprite" aria-hidden="true">
+    <symbol id="icon-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+    <symbol id="icon-campaign" viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h10"/><circle cx="18" cy="17.5" r="2.5"/></symbol>
+    <symbol id="icon-template" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v5h4M9 12h7M9 16h7"/></symbol>
+    <symbol id="icon-doctor" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.5"/><path d="M5 21a7 7 0 0 1 14 0M18 11v5M15.5 13.5h5"/></symbol>
+    <symbol id="icon-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M16 5.5a3 3 0 0 1 0 5.8M17 14a5 5 0 0 1 4 4.9"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></symbol>
+    <symbol id="icon-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5"/></symbol>
+    <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="icon-whatsapp" viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"/><path d="M9 8.5c.4 2.7 2.2 4.5 5 5"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></symbol>
+    <symbol id="icon-edit" viewBox="0 0 24 24"><path d="m4 20 4.5-1 10-10-3.5-3.5-10 10zM13.5 7l3.5 3.5"/></symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol>
+    <symbol id="icon-logout" viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M8 12h10"/></symbol>
+  </svg>
 
+  {% if user.is_authenticated %}
+    <div class="app-shell">
+      <div class="sidebar-scrim" data-sidebar-close></div>
+      <aside class="sidebar" id="primary-sidebar" aria-label="Primary navigation">
+        <div class="sidebar-header">
+          <a class="brand brand--sidebar" href="{% url 'home' %}" aria-label="Waslni dashboard">
+            <span class="brand-mark">W</span>
+            <span><strong>Waslni</strong><small>Patient outreach</small></span>
+          </a>
+          <button class="icon-button sidebar-close" type="button" data-sidebar-close aria-label="Close navigation">
+            <svg><use href="#icon-close"></use></svg>
+          </button>
+        </div>
 
-    <!-- Navigation Bar -->
+        <div class="tenant-card">
+          <span class="tenant-avatar">{{ user.organization.name|default:"W"|slice:":1"|upper }}</span>
+          <span><small>Workspace</small><strong>{{ user.organization.name|default:"Waslni" }}</strong></span>
+          <span class="status-dot" title="Workspace active"></span>
+        </div>
+
+        <nav class="sidebar-nav">
+          <p class="nav-label">Workspace</p>
+          <a href="{% url 'home' %}" class="nav-item {% if request.resolver_match.url_name == 'home' %}is-active{% endif %}">
+            <svg><use href="#icon-grid"></use></svg><span>Overview</span>
+          </a>
+          <a href="{% url 'manage_appointments' %}" class="nav-item {% if request.resolver_match.url_name == 'manage_appointments' or request.resolver_match.url_name == 'appointment_list_detail' %}is-active{% endif %}">
+            <svg><use href="#icon-campaign"></use></svg><span>Campaigns</span>
+          </a>
+          <a href="{% url 'manage_appointments' %}#templates" class="nav-item">
+            <svg><use href="#icon-template"></use></svg><span>Message templates</span>
+          </a>
+          {% if perms.rasel.view_doctor %}
+            <a href="/admin/rasel/doctor/" class="nav-item">
+              <svg><use href="#icon-doctor"></use></svg><span>Doctors</span>
+            </a>
+          {% endif %}
+
+          <p class="nav-label">Administration</p>
+          {% if user.is_staff %}
+            <a href="/admin/" class="nav-item">
+              <svg><use href="#icon-settings"></use></svg><span>Admin center</span>
+            </a>
+          {% endif %}
+          <a href="{% url 'profile' %}" class="nav-item {% if request.resolver_match.url_name == 'profile' or request.resolver_match.url_name == 'edit_profile' %}is-active{% endif %}">
+            <svg><use href="#icon-user"></use></svg><span>My profile</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="sidebar-help">
+            <span class="help-icon"><svg><use href="#icon-info"></use></svg></span>
+            <div><strong>Need help?</strong><small>Review the CSV format before uploading.</small></div>
+          </div>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="nav-item nav-item--button" type="submit">
+              <svg><use href="#icon-logout"></use></svg><span>Sign out</span>
+            </button>
+          </form>
+        </div>
+      </aside>
+
+      <div class="app-main">
+        {% include 'partials/_navbar.html' %}
+        <main id="main-content" class="page-content">
+          {% include 'partials/_flash_messages.html' %}
+  {% else %}
     {% include 'partials/_navbar.html' %}
+    <main id="main-content" class="public-main">
+      {% include 'partials/_flash_messages.html' %}
+  {% endif %}
 
+  {% block content %}{% endblock %}
 
-    <!-- Toast Notification Container -->
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
-        <div id="toastNotification" class="toast align-items-center text-white bg-primary border-0 shadow-lg"
-            role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div class="toast-body" id="toastMessage">
-                    <!-- Dynamic Toast Message Will Be Inserted Here -->
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
-                    aria-label="Close"></button>
-            </div>
-        </div>
+  {% if user.is_authenticated %}
+        </main>
+      </div>
     </div>
-
-
-
-    <!-- Main Content -->
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar for Larger Screens -->
-            <div class="col-md-2 d-none d-md-block sidebar">
-                <h5 class="text-white">🔗 Quick Links</h5>
-                <a href="{% url 'home' %}">📋 Home</a>
-                <a href="{% url 'manage_appointments' %}">📅 All Appointments</a>
-
-            </div>
-
-            <!-- Main Dashboard -->
-            <div class="col-md-10 mt-4">
-                {% block content %}
-                <!-- Content from Child Templates Goes Here -->
-                {% endblock %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer mt-5">
-        <p>&copy; 2024 Contact Management System. All rights reserved.</p>
+  {% else %}
+    </main>
+    <footer class="public-footer">
+      <span>© {% now "Y" %} Waslni</span>
+      <span>Personal outreach. Clear follow-up. Better attendance.</span>
     </footer>
+  {% endif %}
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
-
-    {% block scripts %}
-    <!-- Scripts from Child Templates -->
-    <script>
-        // Function to trigger toast notifications dynamically
-        function showToast(message, type = 'info') {
-            const toastElement = document.getElementById('toastNotification');
-            const toastBody = document.getElementById('toastMessage');
-
-            // Define colors based on type
-            let bgColor;
-            switch (type) {
-                case 'success':
-                    bgColor = 'bg-success';  // Green
-                    break;
-                case 'error':
-                    bgColor = 'bg-danger';  // Red
-                    break;
-                case 'warning':
-                    bgColor = 'bg-warning';  // Yellow
-                    break;
-                default:
-                    bgColor = 'bg-primary';  // Blue (info)
-            }
-
-            // Update toast appearance dynamically
-            toastElement.className = `toast align-items-center text-white ${bgColor} border-0 shadow-lg`;
-            toastBody.textContent = message;
-
-            // Show the toast using Bootstrap's built-in method
-            const toast = new bootstrap.Toast(toastElement, {
-                delay: 5000  // Auto-dismiss after 5 seconds
-            });
-            toast.show();
-        }
-
-        // Example Usage:
-        // Uncomment one of the lines below to test different toast types
-        // showToast('Appointment list created successfully!', 'success');
-        // showToast('Failed to upload CSV. Please try again.', 'error');
-        // showToast('This is just an informational message.', 'info');
-
-    </script>
-    {% endblock %}
-
-
+  <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+  {% block scripts %}{% endblock %}
 </body>
-
 </html>

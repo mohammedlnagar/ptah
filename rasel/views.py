@@ -2,7 +2,7 @@ import csv
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -57,13 +57,21 @@ def manage_appointments_and_messages(request):
                     {
                         "success": True,
                         "template_id": template.pk,
-                        "message": "Template submitted for approval.",
+                        "message": "Template saved as a draft.",
                     }
                 )
             return JsonResponse({"success": False, "errors": form.errors.get_json_data()}, status=400)
 
-    campaigns = Campaign.objects.for_organization(organization).select_related("template")
+    campaigns = Campaign.objects.for_organization(organization).select_related("template").annotate(
+        item_count=Count("items", distinct=True),
+        sent_count=Count(
+            "items__message",
+            filter=Q(items__message__status=CampaignMessage.Status.SENT),
+            distinct=True,
+        ),
+    )
     templates = MessageTemplate.objects.for_organization(organization)
+    campaign_messages = CampaignMessage.objects.for_organization(organization)
     return render(
         request,
         "rasel/contact_lists.html",
@@ -71,7 +79,16 @@ def manage_appointments_and_messages(request):
             "appointments_list_form": CampaignUploadForm(user=request.user),
             "message_template_form": MessageTemplateForm(user=request.user),
             "appointment_lists": campaigns,
-            "messages": templates,
+            "message_templates": templates,
+            "campaign_stats": {
+                "campaigns": campaigns.count(),
+                "messages": campaign_messages.count(),
+                "sent": campaign_messages.filter(status=CampaignMessage.Status.SENT).count(),
+                "templates": templates.filter(
+                    approval_status=MessageTemplate.ApprovalStatus.APPROVED,
+                    is_active=True,
+                ).count(),
+            },
         },
     )
 
@@ -82,10 +99,24 @@ def appointment_list_detail(request, list_id):
     campaign = get_object_or_404(
         Campaign.objects.for_organization(organization).select_related("template"), pk=list_id
     )
+    all_campaign_messages = CampaignMessage.objects.for_organization(organization).filter(
+        campaign_item__campaign=campaign
+    )
     campaign_messages = _filtered_messages(request, campaign)
     doctors = campaign.items.order_by("doctor_name_snapshot").values_list(
         "doctor_name_snapshot", flat=True
     ).distinct()
+    doctor_summaries = campaign.items.exclude(doctor_name_snapshot="").values(
+        "doctor_name_snapshot", "department_name_snapshot"
+    ).annotate(
+        total=Count("id"),
+        confirmed=Count(
+            "id", filter=Q(appointment_status=CampaignItem.AppointmentStatus.CONFIRMED)
+        ),
+        cancelled=Count(
+            "id", filter=Q(appointment_status=CampaignItem.AppointmentStatus.CANCELLED)
+        ),
+    ).order_by("doctor_name_snapshot")
     return render(
         request,
         "rasel/list_detail.html",
@@ -93,6 +124,20 @@ def appointment_list_detail(request, list_id):
             "appointment_list": campaign,
             "assigned_messages": campaign_messages,
             "doctors": doctors,
+            "result_count": campaign_messages.count(),
+            "message_metrics": {
+                "total": all_campaign_messages.count(),
+                "pending": all_campaign_messages.filter(
+                    status=CampaignMessage.Status.PENDING
+                ).count(),
+                "opened": all_campaign_messages.filter(
+                    status=CampaignMessage.Status.OPENED
+                ).count(),
+                "sent": all_campaign_messages.filter(
+                    status=CampaignMessage.Status.SENT
+                ).count(),
+            },
+            "doctor_summaries": doctor_summaries,
         },
     )
 
