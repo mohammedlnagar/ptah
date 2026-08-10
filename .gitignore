@@ -160,8 +160,7 @@ dmypy.json
 
 # pytype static type analyzer
 .pytype/
-# Project-authored assets are stored in /static; collectstatic writes to /staticfiles.
-/staticfiles/
+static/
 # Cython debug symbols
 cython_debug/
 

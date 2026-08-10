@@ -40,3 +40,4 @@
     window.setTimeout(() => toast.remove(), 4500);
   };
 })();
+

@@ -28,8 +28,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const state = item.querySelector(".save-state");
       const original = button.innerHTML;
       button.disabled = true;
-      button.textContent = "Saving…";
-      state.textContent = "Saving your edit…";
+      button.textContent = "Savingâ€¦";
+      state.textContent = "Saving your editâ€¦";
       try {
         await postForm("/Rasel/EditMessage/", { message_id: button.dataset.messageId, new_message: textarea.value });
         state.textContent = "Saved just now.";
@@ -88,3 +88,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
