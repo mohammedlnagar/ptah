@@ -84,13 +84,13 @@ class Migration(migrations.Migration):
             name='current_revision',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='current_for_templates', to='messaging.messagetemplaterevision'),
         ),
-        migrations.RunPython(
-            create_initial_template_revisions,
-            reverse_code=remove_initial_template_revisions,
-        ),
         migrations.AlterField(
             model_name='campaignmessage',
             name='status',
             field=models.CharField(choices=[('pending', 'Pending'), ('opened', 'WhatsApp opened'), ('operator_marked_sent', 'Operator marked sent'), ('skipped', 'Skipped')], default='pending', max_length=30),
+        ),
+        migrations.RunPython(
+            create_initial_template_revisions,
+            reverse_code=remove_initial_template_revisions,
         ),
     ]
