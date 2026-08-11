@@ -23,6 +23,7 @@ class OrganizationSignupTests(TestCase):
 
         self.assertEqual(user.organization.name, "Example Clinic")
         self.assertTrue(user.groups.filter(name="Owner").exists())
+        self.assertTrue(user.is_staff)
         owner = Group.objects.get(name="Owner")
         self.assertTrue(owner.permissions.filter(codename="add_campaign").exists())
         self.assertFalse(owner.permissions.filter(codename="add_organization").exists())

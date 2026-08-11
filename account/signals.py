@@ -1,7 +1,10 @@
 from django.apps import apps
 from django.contrib.auth.models import Group, Permission
+from django.db.models.signals import m2m_changed
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
+
+from .models import CustomUser
 
 
 ROLE_PERMISSION_PREFIXES = {
@@ -10,34 +13,54 @@ ROLE_PERMISSION_PREFIXES = {
         "account.add_customuser",
         "account.change_customuser",
         "account.delete_customuser",
-        "account.view_userprofile",
-        "account.add_userprofile",
-        "account.change_userprofile",
-        "account.delete_userprofile",
         "account.view_organization",
         "account.change_organization",
         "account.view_organizationsubscription",
         "account.view_subscriptionplan",
         "rasel.",
+        "appointments.",
+        "messaging.",
+        "imports.",
+        "directory.",
+        "campaigns.",
     ),
-    "Admin": ("account.view_", "rasel."),
+    "Admin": (
+        "account.view_",
+        "rasel.",
+        "appointments.",
+        "messaging.",
+        "imports.",
+        "directory.",
+        "campaigns.",
+    ),
     "Approver": (
         "rasel.view_",
-        "rasel.change_messagetemplate",
-        "rasel.approve_messagetemplate",
+        "messaging.change_messagetemplate",
+        "messaging.approve_messagetemplate",
+        "messaging.view_",
+        "imports.view_",
+        "directory.view_",
+        "campaigns.view_",
     ),
     "Operator": (
         "rasel.view_",
-        "rasel.add_campaign",
-        "rasel.change_campaign",
-        "rasel.add_importbatch",
-        "rasel.change_importbatch",
-        "rasel.add_campaignitem",
-        "rasel.change_campaignitem",
-        "rasel.add_campaignmessage",
-        "rasel.change_campaignmessage",
-        "rasel.add_contact",
-        "rasel.change_contact",
+        "campaigns.add_campaign",
+        "campaigns.change_campaign",
+        "imports.add_importbatch",
+        "imports.change_importbatch",
+        "campaigns.add_campaignitem",
+        "campaigns.change_campaignitem",
+        "messaging.add_campaignmessage",
+        "messaging.change_campaignmessage",
+        "messaging.add_messagetemplate",
+        "campaigns.change_doctorsummary",
+        "appointments.view_",
+        "messaging.view_",
+        "imports.view_",
+        "directory.view_",
+        "directory.add_contact",
+        "directory.change_contact",
+        "campaigns.view_",
     ),
 }
 
@@ -49,7 +72,15 @@ def configure_role_permissions(**kwargs):
 
     permissions = list(
         Permission.objects.select_related("content_type").filter(
-            content_type__app_label__in=("account", "rasel")
+            content_type__app_label__in=(
+                "account",
+                "rasel",
+                "appointments",
+                "messaging",
+                "imports",
+                "directory",
+                "campaigns",
+            )
         )
     )
     for role_name, prefixes in ROLE_PERMISSION_PREFIXES.items():
@@ -60,3 +91,19 @@ def configure_role_permissions(**kwargs):
             if any(qualified.startswith(prefix) for prefix in prefixes):
                 selected.append(permission)
         group.permissions.set(selected)
+
+    CustomUser.objects.filter(
+        groups__name__in=("Owner", "Admin", "Approver")
+    ).update(is_staff=True)
+
+
+@receiver(m2m_changed, sender=CustomUser.groups.through)
+def synchronize_staff_access(sender, instance, action, **kwargs):
+    if action not in {"post_add", "post_remove", "post_clear"}:
+        return
+    should_be_staff = instance.is_superuser or instance.groups.filter(
+        name__in=("Owner", "Admin", "Approver")
+    ).exists()
+    if instance.is_staff != should_be_staff:
+        CustomUser.objects.filter(pk=instance.pk).update(is_staff=should_be_staff)
+        instance.is_staff = should_be_staff

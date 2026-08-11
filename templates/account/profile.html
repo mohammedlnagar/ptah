@@ -8,21 +8,19 @@
 
 <div class="profile-grid">
   <section class="panel panel--padded profile-summary">
-    <div class="profile-summary__avatar">{{ profile.user.get_full_name|default:profile.user.email|slice:":1"|upper }}</div>
-    <h2>{{ profile.user.get_full_name|default:profile.user.username }}</h2>
-    <p>{{ profile.user.email }}</p>
+    <div class="profile-summary__avatar">{{ profile_user.get_full_name|default:profile_user.email|slice:":1"|upper }}</div>
+    <h2>{{ profile_user.get_full_name|default:profile_user.username }}</h2>
+    <p>{{ profile_user.email }}</p>
     <span class="badge badge--active">Active team member</span>
   </section>
   <section class="panel">
     <div class="panel-header"><div><h2>Workspace details</h2><p>Your organization and role access.</p></div></div>
     <div class="panel-body">
       <dl class="detail-list">
-        <div class="detail-row"><dt>Organization</dt><dd>{{ profile.user.organization.name }}</dd></div>
-        <div class="detail-row"><dt>Work email</dt><dd>{{ profile.work_email|default:profile.user.email }}</dd></div>
-        <div class="detail-row"><dt>Mobile number</dt><dd>{{ profile.user.mobile_number|default:"Not added" }}</dd></div>
-        <div class="detail-row"><dt>Access role</dt><dd>{% for group in profile.user.groups.all %}<span class="badge badge--neutral">{{ group.name }}</span>{% if not forloop.last %} {% endif %}{% empty %}Team member{% endfor %}</dd></div>
-        <div class="detail-row"><dt>Nationality</dt><dd>{{ profile.nationality|default:"Not added" }}</dd></div>
-        <div class="detail-row"><dt>Emergency contact</dt><dd>{{ profile.emergency_contact_name|default:"Not added" }}{% if profile.emergency_contact_phone %} · {{ profile.emergency_contact_phone }}{% endif %}</dd></div>
+        <div class="detail-row"><dt>Organization</dt><dd>{{ profile_user.organization.name }}</dd></div>
+        <div class="detail-row"><dt>Email</dt><dd>{{ profile_user.email }}</dd></div>
+        <div class="detail-row"><dt>Mobile number</dt><dd>{{ profile_user.mobile_number|default:"Not added" }}</dd></div>
+        <div class="detail-row"><dt>Access role</dt><dd>{% for group in profile_user.groups.all %}<span class="badge badge--neutral">{{ group.name }}</span>{% if not forloop.last %} {% endif %}{% empty %}Team member{% endfor %}</dd></div>
       </dl>
     </div>
   </section>

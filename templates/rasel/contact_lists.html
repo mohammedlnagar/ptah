@@ -5,7 +5,7 @@
 {% block content %}
 <header class="page-header">
   <div><span class="eyebrow">Outreach operations</span><h1>Campaigns</h1><p>Upload appointment or marketing data, assign an approved template, and work through each message personally.</p></div>
-  <div class="page-header-actions"><a class="button button--secondary" href="#templates"><svg><use href="#icon-template"></use></svg>New template</a><a class="button button--primary" href="#new-campaign"><svg><use href="#icon-upload"></use></svg>Upload CSV</a></div>
+  <div class="page-header-actions">{% if perms.messaging.add_messagetemplate %}<a class="button button--secondary" href="#templates"><svg><use href="#icon-template"></use></svg>New template</a>{% endif %}{% if perms.campaigns.add_campaign %}<a class="button button--primary" href="#new-campaign"><svg><use href="#icon-upload"></use></svg>Upload CSV</a>{% endif %}</div>
 </header>
 
 <section class="metric-grid" aria-label="Campaign metrics">
@@ -24,14 +24,14 @@
           <span class="campaign-primary"><strong>{{ campaign.title }}</strong><small>Created {{ campaign.created_at|date:"d M Y · H:i" }}</small></span>
           <span class="campaign-meta"><small>Purpose</small><span class="badge badge--{{ campaign.purpose }}">{{ campaign.get_purpose_display }}</span></span>
           <span class="campaign-meta"><small>Recipients</small><strong>{{ campaign.item_count }}</strong></span>
-          <span class="campaign-meta"><small>Sent</small><strong>{{ campaign.sent_count }} / {{ campaign.item_count }}</strong></span>
+          <span class="campaign-meta"><small>Operator marked sent</small><strong>{{ campaign.sent_count }} / {{ campaign.item_count }}</strong></span>
           <span class="campaign-meta"><small>Status</small><span class="badge badge--{{ campaign.status }}">{{ campaign.get_status_display }}</span></span>
           <svg><use href="#icon-chevron"></use></svg>
         </a>
       {% endfor %}
     </div>
   {% else %}
-    <div class="empty-state"><span class="empty-state__icon"><svg><use href="#icon-campaign"></use></svg></span><h3>No campaigns yet</h3><p>Create an approved message template, then upload your first CSV to prepare a patient outreach queue.</p><a class="button button--primary button--compact" href="#new-campaign">Create campaign</a></div>
+    <div class="empty-state"><span class="empty-state__icon"><svg><use href="#icon-campaign"></use></svg></span><h3>No campaigns yet</h3><p>Create an approved message template, then upload your first CSV to prepare a patient outreach queue.</p>{% if perms.campaigns.add_campaign %}<a class="button button--primary button--compact" href="#new-campaign">Create campaign</a>{% endif %}</div>
   {% endif %}
 </section>
 
@@ -39,7 +39,7 @@
   <section class="panel panel--padded" id="new-campaign" aria-labelledby="new-campaign-heading">
     <div class="section-header"><div><span class="eyebrow">Step 1</span><h2 id="new-campaign-heading">Create a campaign</h2><p>Every upload creates a separate campaign and import record.</p></div><span class="metric-icon"><svg><use href="#icon-upload"></use></svg></span></div>
     <div class="form-intro"><svg><use href="#icon-info"></use></svg><p><strong>Choose the matching CSV format.</strong>Appointment campaigns require patient, mobile, date/time, doctor, department, and status. Marketing campaigns require patient and mobile details.</p></div>
-    <form id="appointmentListForm" method="post" enctype="multipart/form-data" action="{% url 'manage_appointments' %}" novalidate>
+    {% if perms.campaigns.add_campaign %}<form id="appointmentListForm" method="post" enctype="multipart/form-data" action="{% url 'manage_appointments' %}" novalidate>
       {% csrf_token %}
       <div class="form-grid">
         <div class="form-field form-field--full"><label class="form-label" for="{{ appointments_list_form.title.id_for_label }}">Campaign name <small>Required</small></label>{{ appointments_list_form.title }}<small class="field-help">Use a name your team will recognize, such as “Cardiology · 14 August”.</small><div class="field-errors" data-error-for="title"></div></div>
@@ -48,12 +48,12 @@
         <div class="form-field form-field--full"><label class="form-label" for="{{ appointments_list_form.csv_file.id_for_label }}">CSV file <small>Maximum 10 MB</small></label>{{ appointments_list_form.csv_file }}<small class="field-help">CSV only. A corrected re-upload should be made only when the original import failed.</small><div class="field-errors" data-error-for="csv_file"></div></div>
       </div>
       <div class="form-actions"><span class="muted">Messages are generated after validation.</span><button type="submit" id="listSubmitButton" class="button button--primary"><svg><use href="#icon-upload"></use></svg>Create campaign</button></div>
-    </form>
+    </form>{% else %}<p class="muted">You have read-only access to campaigns.</p>{% endif %}
   </section>
 
   <section class="panel panel--padded" id="templates" aria-labelledby="templates-heading">
     <div class="section-header"><div><span class="eyebrow">Reusable copy</span><h2 id="templates-heading">Message templates</h2><p>Create a draft for an Admin or Approver to review.</p></div><span class="metric-icon"><svg><use href="#icon-template"></use></svg></span></div>
-    <form id="messageTemplateForm" method="post" action="{% url 'manage_appointments' %}" novalidate>
+    {% if perms.messaging.add_messagetemplate %}<form id="messageTemplateForm" method="post" action="{% url 'manage_appointments' %}" novalidate>
       {% csrf_token %}
       <div class="form-grid">
         <div class="form-field form-field--full"><label class="form-label" for="{{ message_template_form.name.id_for_label }}">Template name</label>{{ message_template_form.name }}<div class="field-errors" data-error-for="name"></div></div>
@@ -61,7 +61,7 @@
         <div class="form-field form-field--full"><label class="form-label" for="{{ message_template_form.content.id_for_label }}">Message content</label>{{ message_template_form.content }}<div class="placeholder-guide" aria-label="Available placeholders"><span class="placeholder-token">#patient_name</span><span class="placeholder-token">#mrn</span><span class="placeholder-token">#doctor</span><span class="placeholder-token">#department</span><span class="placeholder-token">#appointment_date</span><span class="placeholder-token">#appointment_time</span><span class="placeholder-token">#appointment_status</span></div><div class="field-errors" data-error-for="content"></div></div>
       </div>
       <div class="form-actions"><button type="submit" id="messageSubmitButton" class="button button--primary"><svg><use href="#icon-plus"></use></svg>Save draft</button></div>
-    </form>
+    </form>{% endif %}
 
     <div class="content-section">
       <div class="section-header"><div><h3>Saved templates</h3></div><span class="badge badge--neutral">{{ message_templates|length }}</span></div>

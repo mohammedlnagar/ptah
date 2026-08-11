@@ -5,7 +5,7 @@ from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
 
-from .forms import CustomUserCreationForm, CustomUserUpdateForm, LoginForm, UserProfileUpdateForm
+from .forms import CustomUserCreationForm, CustomUserUpdateForm, LoginForm
 from .models import CustomUser
 
 
@@ -62,25 +62,20 @@ def user_logout(request):
 
 @login_required
 def profile(request):
-    return render(request, "account/profile.html", {"profile": request.user.profile})
+    return render(request, "account/profile.html", {"profile_user": request.user})
 
 
 @login_required
 def edit_profile(request):
     if request.method == "POST":
         user_form = CustomUserUpdateForm(request.POST, instance=request.user)
-        profile_form = UserProfileUpdateForm(
-            request.POST, request.FILES, instance=request.user.profile
-        )
-        if user_form.is_valid() and profile_form.is_valid():
+        if user_form.is_valid():
             user_form.save()
-            profile_form.save()
             return redirect("profile")
     else:
         user_form = CustomUserUpdateForm(instance=request.user)
-        profile_form = UserProfileUpdateForm(instance=request.user.profile)
     return render(
         request,
         "account/edit_profile.html",
-        {"user_form": user_form, "profile_form": profile_form},
+        {"user_form": user_form},
     )

@@ -2,16 +2,8 @@ from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
-
-class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
+from common.models import TimeStampedModel
 
 
 class SubscriptionPlan(TimeStampedModel):
@@ -51,6 +43,16 @@ class Organization(TimeStampedModel):
             raise ValidationError(
                 {"whatsapp_url_template": f"Missing placeholders: {', '.join(sorted(missing))}"}
             )
+        try:
+            self.whatsapp_url_template.format(phone="", message="")
+        except (AttributeError, IndexError, KeyError, ValueError) as exc:
+            raise ValidationError(
+                {
+                    "whatsapp_url_template": (
+                        "Use only valid {phone} and {message} placeholders."
+                    )
+                }
+            ) from exc
 
     def __str__(self):
         return self.name
@@ -118,48 +120,3 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.email
-
-
-class UserProfile(models.Model):
-    user = models.OneToOneField(
-        CustomUser, on_delete=models.CASCADE, related_name="profile"
-    )
-    passport = models.ImageField(upload_to="documents/", blank=True, null=True)
-    emirates_id = models.ImageField(upload_to="documents/", blank=True, null=True)
-    university_certificate = models.FileField(upload_to="documents/", blank=True, null=True)
-    cv = models.FileField(upload_to="documents/", blank=True, null=True)
-    legacy_role = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="Historical value only. Authorization is managed with Django groups.",
-    )
-    work_email = models.EmailField(blank=True, null=True)
-    home_address = models.TextField(blank=True, null=True)
-    marital_status = models.CharField(
-        max_length=20,
-        choices=[("Single", "Single"), ("Married", "Married")],
-        blank=True,
-        null=True,
-    )
-    visa_copy = models.FileField(upload_to="documents/", blank=True, null=True)
-    birthdate = models.DateField(blank=True, null=True)
-    emergency_contact_name = models.CharField(max_length=100, blank=True, null=True)
-    emergency_contact_phone = models.CharField(max_length=20, blank=True, null=True)
-    nationality = models.CharField(max_length=100, blank=True, null=True)
-
-    def get_documents(self):
-        return {
-            self.passport: "Passport",
-            self.emirates_id: "Emirates ID",
-            self.university_certificate: "University Certificate",
-            self.cv: "CV",
-            self.visa_copy: "Visa Copy",
-        }
-
-    def __str__(self):
-        return f"Profile of {self.user.email}"
-
-
-@receiver(post_save, sender=CustomUser)
-def ensure_user_profile(sender, instance, **kwargs):
-    UserProfile.objects.get_or_create(user=instance)

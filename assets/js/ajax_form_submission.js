@@ -59,12 +59,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   campaignForm?.addEventListener("submit", (event) => {
     event.preventDefault();
-    submitForm({ form: campaignForm, type: "appointments_list", button: document.getElementById("listSubmitButton"), loadingLabel: "Validating CSVâ€¦" });
+    submitForm({ form: campaignForm, type: "appointments_list", button: document.getElementById("listSubmitButton"), loadingLabel: "Validating CSV..." });
   });
 
   templateForm?.addEventListener("submit", (event) => {
     event.preventDefault();
-    submitForm({ form: templateForm, type: "message_template", button: document.getElementById("messageSubmitButton"), loadingLabel: "Saving draftâ€¦" });
+    submitForm({ form: templateForm, type: "message_template", button: document.getElementById("messageSubmitButton"), loadingLabel: "Saving draft..." });
   });
 });
 

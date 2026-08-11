@@ -6,7 +6,6 @@ from .models import (
     Organization,
     OrganizationSubscription,
     SubscriptionPlan,
-    UserProfile,
 )
 
 
@@ -48,15 +47,6 @@ class OrganizationAdmin(OrganizationScopedAdmin):
 @admin.register(OrganizationSubscription)
 class OrganizationSubscriptionAdmin(OrganizationScopedAdmin):
     list_display = ("organization", "plan", "status", "starts_on", "ends_on")
-
-
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
-    def get_queryset(self, request):
-        queryset = super().get_queryset(request)
-        if request.user.is_superuser and request.user.organization_id is None:
-            return queryset
-        return queryset.filter(user__organization=request.user.organization)
 
 
 admin.site.register(SubscriptionPlan)

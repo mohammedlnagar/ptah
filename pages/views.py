@@ -3,7 +3,9 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from account.models import OrganizationSubscription
-from rasel.models import Campaign, CampaignItem, CampaignMessage, Contact, Doctor, MessageTemplate
+from campaigns.models import Campaign, CampaignItem
+from directory.models import Contact, Doctor
+from messaging.models import CampaignMessage, MessageTemplate
 
 
 def home(request):

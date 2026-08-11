@@ -2,31 +2,43 @@ import csv
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
+from appointments.services import change_appointment_status
+from campaigns.models import Campaign, CampaignItem, DoctorSummary
+from directory.models import Contact
+from messaging.models import CampaignMessage, MessageHandoffEvent, MessageTemplate
+from messaging.services import (
+    record_message_content_edit,
+    transition_message_status,
+)
+
 from .forms import CampaignUploadForm, MessageTemplateForm
-from .models import Campaign, CampaignItem, CampaignMessage, Contact, MessageTemplate
 from .utilities.csv_handler import CsvImportError, save_campaign_from_csv
 
 
 def _tenant_or_403(request):
     if not request.user.organization_id:
-        from django.core.exceptions import PermissionDenied
-
         raise PermissionDenied("Your account is not assigned to an organization.")
+    if not request.user.organization.is_active:
+        raise PermissionDenied("Your organization is inactive.")
     return request.user.organization
 
 
 @login_required
+@permission_required("campaigns.view_campaign", raise_exception=True)
 def manage_appointments_and_messages(request):
     organization = _tenant_or_403(request)
     if request.method == "POST":
         form_type = request.POST.get("form_type")
         if form_type == "appointments_list":
+            if not request.user.has_perm("campaigns.add_campaign"):
+                raise PermissionDenied("You cannot create campaigns.")
             form = CampaignUploadForm(request.POST, request.FILES, user=request.user)
             if form.is_valid():
                 try:
@@ -50,6 +62,8 @@ def manage_appointments_and_messages(request):
             return JsonResponse({"success": False, "errors": form.errors.get_json_data()}, status=400)
 
         if form_type == "message_template":
+            if not request.user.has_perm("messaging.add_messagetemplate"):
+                raise PermissionDenied("You cannot create message templates.")
             form = MessageTemplateForm(request.POST, user=request.user)
             if form.is_valid():
                 template = form.save()
@@ -94,6 +108,7 @@ def manage_appointments_and_messages(request):
 
 
 @login_required
+@permission_required("campaigns.view_campaign", raise_exception=True)
 def appointment_list_detail(request, list_id):
     organization = _tenant_or_403(request)
     campaign = get_object_or_404(
@@ -138,12 +153,15 @@ def appointment_list_detail(request, list_id):
                 ).count(),
             },
             "doctor_summaries": doctor_summaries,
+            "doctor_summary_records": campaign.doctor_summaries.select_related(
+                "doctor"
+            ).order_by("doctor__name"),
         },
     )
 
 
 @login_required
-@permission_required("rasel.change_campaignmessage", raise_exception=True)
+@permission_required("messaging.change_campaignmessage", raise_exception=True)
 @require_POST
 def edit_assigned_message(request):
     organization = _tenant_or_403(request)
@@ -153,13 +171,16 @@ def edit_assigned_message(request):
     rendered_content = request.POST.get("new_message", "").strip()
     if not rendered_content:
         return JsonResponse({"success": False, "message": "Message cannot be empty."}, status=400)
-    campaign_message.rendered_content = rendered_content
-    campaign_message.save(update_fields=("rendered_content", "updated_at"))
+    record_message_content_edit(
+        message=campaign_message,
+        user=request.user,
+        rendered_content=rendered_content,
+    )
     return JsonResponse({"success": True})
 
 
 @login_required
-@permission_required("rasel.change_campaignmessage", raise_exception=True)
+@permission_required("messaging.change_campaignmessage", raise_exception=True)
 @require_POST
 def update_assigned_message_status(request):
     organization = _tenant_or_403(request)
@@ -169,18 +190,16 @@ def update_assigned_message_status(request):
     new_status = request.POST.get("status")
     if new_status not in CampaignMessage.Status.values:
         return JsonResponse({"success": False, "message": "Invalid message status."}, status=400)
-    campaign_message.status = new_status
-    update_fields = ["status", "updated_at"]
-    if new_status == CampaignMessage.Status.SENT:
-        campaign_message.sent_at = timezone.now()
-        campaign_message.sent_by = request.user
-        update_fields.extend(("sent_at", "sent_by"))
-    campaign_message.save(update_fields=update_fields)
+    transition_message_status(
+        message=campaign_message,
+        user=request.user,
+        new_status=new_status,
+    )
     return JsonResponse({"success": True})
 
 
 @login_required
-@permission_required("rasel.change_campaignmessage", raise_exception=True)
+@permission_required("messaging.change_campaignmessage", raise_exception=True)
 @require_GET
 def open_whatsapp_message(request, message_id):
     organization = _tenant_or_403(request)
@@ -190,10 +209,37 @@ def open_whatsapp_message(request, message_id):
         ),
         pk=message_id,
     )
-    campaign_message.status = CampaignMessage.Status.OPENED
-    campaign_message.opened_at = timezone.now()
-    campaign_message.save(update_fields=("status", "opened_at", "updated_at"))
+    transition_message_status(
+        message=campaign_message,
+        user=request.user,
+        new_status=CampaignMessage.Status.OPENED,
+        event_type=MessageHandoffEvent.EventType.WHATSAPP_OPENED,
+    )
     return redirect(campaign_message.whatsapp_url())
+
+
+@login_required
+@permission_required("campaigns.change_doctorsummary", raise_exception=True)
+@require_GET
+def open_doctor_summary(request, summary_id):
+    organization = _tenant_or_403(request)
+    doctor_summary = get_object_or_404(
+        DoctorSummary.objects.for_organization(organization).select_related(
+            "organization", "doctor"
+        ),
+        pk=summary_id,
+    )
+    destination = doctor_summary.whatsapp_url()
+    if not destination:
+        return JsonResponse(
+            {"success": False, "message": "Add the doctor's phone number first."},
+            status=400,
+        )
+    if doctor_summary.status != DoctorSummary.Status.SENT:
+        doctor_summary.status = DoctorSummary.Status.OPENED
+    doctor_summary.opened_at = timezone.now()
+    doctor_summary.save(update_fields=("status", "opened_at", "updated_at"))
+    return redirect(destination)
 
 
 def _filtered_messages(request, campaign):
@@ -228,6 +274,7 @@ def _filtered_messages(request, campaign):
 
 
 @login_required
+@permission_required("campaigns.view_campaign", raise_exception=True)
 @require_GET
 def filter_assigned_messages(request, list_id):
     organization = _tenant_or_403(request)
@@ -254,6 +301,7 @@ def filter_assigned_messages(request, list_id):
 
 
 @login_required
+@permission_required("campaigns.view_campaign", raise_exception=True)
 @require_GET
 def export_assigned_messages_to_csv(request, list_id):
     organization = _tenant_or_403(request)
@@ -295,7 +343,7 @@ def export_assigned_messages_to_csv(request, list_id):
 
 
 @login_required
-@permission_required("rasel.change_contact", raise_exception=True)
+@permission_required("directory.change_contact", raise_exception=True)
 @require_POST
 def update_contact_details(request):
     organization = _tenant_or_403(request)
@@ -310,7 +358,7 @@ def update_contact_details(request):
 
 
 @login_required
-@permission_required("rasel.change_campaignitem", raise_exception=True)
+@permission_required("campaigns.change_campaignitem", raise_exception=True)
 @require_POST
 def update_appointment_status(request, item_id):
     organization = _tenant_or_403(request)
@@ -320,6 +368,16 @@ def update_appointment_status(request, item_id):
     new_status = request.POST.get("status")
     if new_status not in CampaignItem.AppointmentStatus.values:
         return JsonResponse({"success": False, "message": "Invalid appointment status."}, status=400)
-    item.appointment_status = new_status
-    item.save(update_fields=("appointment_status", "updated_at"))
+    if not item.appointment_id:
+        return JsonResponse(
+            {"success": False, "message": "This item has no linked appointment."},
+            status=409,
+        )
+    change_appointment_status(
+        appointment=item.appointment,
+        user=request.user,
+        new_status=new_status,
+        reason=request.POST.get("reason", ""),
+    )
+    item.refresh_from_db(fields=("appointment_status",))
     return JsonResponse({"success": True})

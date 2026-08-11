@@ -187,7 +187,7 @@ p { margin-bottom: 1rem; }
 
 .badge { display: inline-flex; align-items: center; width: fit-content; min-height: 1.55rem; padding: 0.27rem 0.52rem; border-radius: 999px; font-size: 0.67rem; font-weight: 750; line-height: 1; white-space: nowrap; }
 .badge--neutral, .badge--draft, .badge--pending { color: var(--ink-700); background: var(--ink-100); }
-.badge--ready, .badge--approved, .badge--sent, .badge--confirmed, .badge--active { color: var(--green-700); background: var(--green-100); }
+.badge--ready, .badge--approved, .badge--sent, .badge--operator_marked_sent, .badge--confirmed, .badge--active { color: var(--green-700); background: var(--green-100); }
 .badge--opened, .badge--appointment { color: var(--blue-700); background: var(--blue-100); }
 .badge--marketing, .badge--trial, .badge--booked { color: var(--amber-700); background: var(--amber-100); }
 .badge--cancelled, .badge--rejected, .badge--skipped, .badge--suspended { color: var(--red-700); background: var(--red-100); }

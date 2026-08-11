@@ -63,14 +63,14 @@
           <a href="{% url 'home' %}" class="nav-item {% if request.resolver_match.url_name == 'home' %}is-active{% endif %}">
             <svg><use href="#icon-grid"></use></svg><span>Overview</span>
           </a>
-          <a href="{% url 'manage_appointments' %}" class="nav-item {% if request.resolver_match.url_name == 'manage_appointments' or request.resolver_match.url_name == 'appointment_list_detail' %}is-active{% endif %}">
+          {% if perms.campaigns.view_campaign %}<a href="{% url 'manage_appointments' %}" class="nav-item {% if request.resolver_match.url_name == 'manage_appointments' or request.resolver_match.url_name == 'appointment_list_detail' %}is-active{% endif %}">
             <svg><use href="#icon-campaign"></use></svg><span>Campaigns</span>
-          </a>
-          <a href="{% url 'manage_appointments' %}#templates" class="nav-item">
+          </a>{% endif %}
+          {% if perms.messaging.view_messagetemplate %}<a href="{% url 'manage_appointments' %}#templates" class="nav-item">
             <svg><use href="#icon-template"></use></svg><span>Message templates</span>
-          </a>
-          {% if perms.rasel.view_doctor %}
-            <a href="/admin/rasel/doctor/" class="nav-item">
+          </a>{% endif %}
+          {% if user.is_staff and perms.directory.view_doctor %}
+            <a href="/admin/directory/doctor/" class="nav-item">
               <svg><use href="#icon-doctor"></use></svg><span>Doctors</span>
             </a>
           {% endif %}

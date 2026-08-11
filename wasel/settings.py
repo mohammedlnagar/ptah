@@ -35,12 +35,17 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "account.apps.AccountConfig",
     "rasel.apps.RaselConfig",
+    "appointments.apps.AppointmentsConfig",
+    "messaging.apps.MessagingConfig",
+    "directory.apps.DirectoryConfig",
+    "imports.apps.ImportsConfig",
+    "reporting.apps.ReportingConfig",
+    "campaigns.apps.CampaignsConfig",
 ]
 
 if not TESTING:
     INSTALLED_APPS += [
         "pages",
-        "referrals",
         "widget_tweaks",
         "crispy_forms",
         "crispy_bootstrap5",

@@ -12,7 +12,6 @@ from .models import (
     Organization,
     OrganizationSubscription,
     SubscriptionPlan,
-    UserProfile,
 )
 
 
@@ -74,22 +73,8 @@ class CustomUserUpdateForm(forms.ModelForm):
         model = CustomUser
         fields = ("username", "email", "mobile_number")
 
-
-class UserProfileUpdateForm(forms.ModelForm):
-    class Meta:
-        model = UserProfile
-        fields = (
-            "passport",
-            "emirates_id",
-            "university_certificate",
-            "cv",
-            "work_email",
-            "home_address",
-            "marital_status",
-            "visa_copy",
-            "birthdate",
-            "emergency_contact_name",
-            "emergency_contact_phone",
-            "nationality",
-        )
-        widgets = {"birthdate": forms.DateInput(attrs={"type": "date"})}
+    def clean_mobile_number(self):
+        value = (self.cleaned_data.get("mobile_number") or "").strip()
+        if value and not re.fullmatch(r"\+?[1-9]\d{6,14}", value):
+            raise forms.ValidationError("Enter a valid international phone number.")
+        return value

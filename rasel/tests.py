@@ -17,14 +17,15 @@ from account.models import (
     OrganizationSubscription,
     SubscriptionPlan,
 )
-from rasel.models import (
-    Campaign,
-    CampaignItem,
+from appointments.models import Appointment, AppointmentStatusEvent
+from campaigns.models import Campaign, CampaignItem
+from directory.models import Contact, Department, Doctor
+from imports.models import ImportBatch, ImportIssue
+from messaging.models import (
     CampaignMessage,
-    Contact,
-    Department,
-    Doctor,
+    MessageHandoffEvent,
     MessageTemplate,
+    MessageTemplateRevision,
 )
 from rasel.forms import CampaignUploadForm, MessageTemplateForm
 from rasel.utilities.csv_handler import save_campaign_from_csv
@@ -149,6 +150,39 @@ class TenantSchemaTests(TestCase):
         self.assertEqual(item.doctor_name_snapshot, "Dr Ali")
         self.assertEqual(campaign.summary["total_items"], 1)
         self.assertIn("Confirmed", item.message.rendered_content)
+        self.assertIsNotNone(item.appointment_id)
+        self.assertEqual(item.appointment.status, Appointment.Status.CONFIRMED)
+        self.assertEqual(item.appointment.status_events.count(), 1)
+        doctor_summary = campaign.doctor_summaries.get()
+        self.assertEqual(doctor_summary.metrics["confirmed"], 1)
+        self.assertEqual(campaign.summary["appointments"]["confirmed"], 1)
+
+    def test_directory_identity_is_normalized_per_organization(self):
+        department = Department.objects.create(
+            organization=self.first,
+            name="  Dental   Care ",
+        )
+        self.assertEqual(department.name, "Dental Care")
+        self.assertEqual(department.normalized_name, "dental care")
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Department.objects.create(
+                organization=self.first,
+                name="dEnTaL cArE",
+            )
+
+        Contact.objects.create(
+            organization=self.first,
+            name="First MRN",
+            phone_number="+971500000031",
+            mrn=" mr-100 ",
+        )
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Contact.objects.create(
+                organization=self.first,
+                name="Duplicate MRN",
+                phone_number="+971500000032",
+                mrn="MR-100",
+            )
 
     def test_tenant_forms_validate_without_preassigned_hidden_fields(self):
         template_form = MessageTemplateForm(
@@ -156,6 +190,22 @@ class TenantSchemaTests(TestCase):
             user=self.user,
         )
         self.assertTrue(template_form.is_valid(), template_form.errors)
+        draft_template = template_form.save()
+        self.assertEqual(draft_template.revisions.count(), 1)
+        self.assertEqual(
+            draft_template.current_revision.approval_status,
+            MessageTemplateRevision.ApprovalStatus.DRAFT,
+        )
+
+        revision = draft_template.current_revision
+        revision.approval_status = MessageTemplateRevision.ApprovalStatus.APPROVED
+        revision.approved_by = self.user
+        revision.approved_at = datetime.datetime.now(datetime.timezone.utc)
+        revision.full_clean()
+        revision.save()
+        revision.content = "Changed after approval"
+        with self.assertRaises(ValidationError):
+            revision.full_clean()
 
         template = MessageTemplate.objects.create(
             organization=self.first,
@@ -170,6 +220,73 @@ class TenantSchemaTests(TestCase):
             user=self.user,
         )
         self.assertTrue(campaign_form.is_valid(), campaign_form.errors)
+
+    def test_invalid_csv_persists_failed_import_without_campaign(self):
+        template = MessageTemplate.objects.create(
+            organization=self.first,
+            created_by=self.user,
+            name="Invalid CSV reminder",
+            content="Hello",
+            approval_status=MessageTemplate.ApprovalStatus.APPROVED,
+        )
+        csv_file = SimpleUploadedFile(
+            "invalid.csv",
+            (
+                "Patient Name,Patient Mobile,Appointment Date/Time,Consultant,Appointment Status\n"
+                "Mona,123,11-08-2026 09:30,Dr Ali,waiting\n"
+            ).encode(),
+            content_type="text/csv",
+        )
+
+        with self.assertRaises(ValueError):
+            save_campaign_from_csv(
+                user=self.user,
+                file=csv_file,
+                title="Invalid reminders",
+                template=template,
+                purpose=Campaign.Purpose.APPOINTMENT,
+            )
+
+        batch = ImportBatch.objects.get(original_filename="invalid.csv")
+        self.assertEqual(batch.status, ImportBatch.Status.FAILED)
+        self.assertGreater(batch.error_count, 0)
+        self.assertEqual(ImportIssue.objects.filter(batch=batch).count(), 1)
+        self.assertFalse(Campaign.objects.filter(import_batch=batch).exists())
+
+    def test_campaign_form_rejects_template_for_another_purpose(self):
+        template = MessageTemplate.objects.create(
+            organization=self.first,
+            created_by=self.user,
+            name="Marketing only",
+            purpose=MessageTemplate.Purpose.MARKETING,
+            content="Hello",
+            approval_status=MessageTemplate.ApprovalStatus.APPROVED,
+        )
+        campaign_form = CampaignUploadForm(
+            data={"title": "Test", "purpose": "appointment", "template": template.pk},
+            files={
+                "csv_file": SimpleUploadedFile(
+                    "test.csv", b"Patient Name,Patient Mobile\n"
+                )
+            },
+            user=self.user,
+        )
+
+        self.assertFalse(campaign_form.is_valid())
+        self.assertIn("template", campaign_form.errors)
+
+    def test_unknown_template_placeholder_is_rejected(self):
+        template_form = MessageTemplateForm(
+            data={
+                "name": "Invalid placeholder",
+                "purpose": "appointment",
+                "content": "Hello #unknown_field",
+            },
+            user=self.user,
+        )
+
+        self.assertFalse(template_form.is_valid())
+        self.assertIn("content", template_form.errors)
 
 
 class AuthenticationRoutingTests(TestCase):
@@ -206,9 +323,12 @@ class TenantViewIsolationTests(TestCase):
             self.second, self.second_user, "Second campaign", "+971500000022"
         )
         change_message = Permission.objects.get(
-            content_type__app_label="rasel", codename="change_campaignmessage"
+            content_type__app_label="messaging", codename="change_campaignmessage"
         )
-        self.first_user.user_permissions.add(change_message)
+        view_campaign = Permission.objects.get(
+            content_type__app_label="campaigns", codename="view_campaign"
+        )
+        self.first_user.user_permissions.add(change_message, view_campaign)
         self.client.force_login(self.first_user)
 
     def _create_campaign(self, organization, user, title, phone_number):
@@ -273,6 +393,44 @@ class TenantViewIsolationTests(TestCase):
         self.second_message.refresh_from_db()
         self.assertEqual(self.second_message.status, CampaignMessage.Status.PENDING)
 
+    def test_message_actions_are_audited(self):
+        edit_response = self.client.post(
+            reverse("EditMessage"),
+            {"message_id": self.first_message.pk, "new_message": "Updated copy"},
+        )
+        status_response = self.client.post(
+            reverse("update_assigned_message_status"),
+            {
+                "message_id": self.first_message.pk,
+                "status": CampaignMessage.Status.SENT,
+            },
+        )
+
+        self.assertEqual(edit_response.status_code, 200)
+        self.assertEqual(status_response.status_code, 200)
+        self.first_message.refresh_from_db()
+        recorded_sent_at = self.first_message.sent_at
+        open_response = self.client.get(
+            reverse("open_whatsapp_message", args=[self.first_message.pk])
+        )
+        self.assertEqual(open_response.status_code, 302)
+        self.first_message.refresh_from_db()
+        self.assertEqual(self.first_message.status, CampaignMessage.Status.SENT)
+        self.assertEqual(self.first_message.sent_at, recorded_sent_at)
+        self.assertEqual(self.first_message.sent_by, self.first_user)
+        self.assertEqual(
+            list(
+                self.first_message.handoff_events.values_list(
+                    "event_type", flat=True
+                )
+            ),
+            [
+                MessageHandoffEvent.EventType.CONTENT_EDITED,
+                MessageHandoffEvent.EventType.STATUS_CHANGED,
+                MessageHandoffEvent.EventType.WHATSAPP_OPENED,
+            ],
+        )
+
 
 class TenantIntegrityCommandTests(TestCase):
     def setUp(self):
@@ -326,7 +484,16 @@ class TenantMigrationUpgradeTests(TransactionTestCase):
         old_targets = [
             target
             for target in latest_targets
-            if target[0] not in {"account", "rasel"}
+            if target[0]
+            not in {
+                "account",
+                "rasel",
+                "appointments",
+                "messaging",
+                "imports",
+                "directory",
+                "campaigns",
+            }
         ] + [("account", "0001_initial"), ("rasel", "0001_initial")]
         executor.migrate(old_targets)
 
@@ -372,10 +539,16 @@ class TenantMigrationUpgradeTests(TransactionTestCase):
                 executor.loader.graph.leaf_nodes()
             ).apps
             NewUser = new_apps.get_model("account", "CustomUser")
-            NewProfile = new_apps.get_model("account", "UserProfile")
-            Campaign = new_apps.get_model("rasel", "Campaign")
-            CampaignItem = new_apps.get_model("rasel", "CampaignItem")
-            CampaignMessage = new_apps.get_model("rasel", "CampaignMessage")
+            Campaign = new_apps.get_model("campaigns", "Campaign")
+            CampaignItem = new_apps.get_model("campaigns", "CampaignItem")
+            CampaignMessage = new_apps.get_model("messaging", "CampaignMessage")
+            NewAppointment = new_apps.get_model("appointments", "Appointment")
+            AppointmentStatusEvent = new_apps.get_model(
+                "appointments", "AppointmentStatusEvent"
+            )
+            MessageTemplateRevision = new_apps.get_model(
+                "messaging", "MessageTemplateRevision"
+            )
 
             migrated_user = NewUser.objects.get(email="legacy@example.com")
             self.assertIsNotNone(migrated_user.organization_id)
@@ -386,16 +559,16 @@ class TenantMigrationUpgradeTests(TransactionTestCase):
             self.assertTrue(
                 migrated_null_role_user.groups.filter(name="Operator").exists()
             )
-            self.assertEqual(
-                NewProfile.objects.get(user=migrated_null_role_user).legacy_role,
-                "",
-            )
             self.assertEqual(Campaign.objects.get().organization_id, migrated_user.organization_id)
             item = CampaignItem.objects.get()
             self.assertEqual(item.appointment_status, "booked")
             self.assertEqual(item.patient_name_snapshot, "Legacy Patient")
             self.assertEqual(item.mrn_snapshot, "MR-10")
             self.assertEqual(CampaignMessage.objects.get().rendered_content, "Legacy rendered message")
+            self.assertEqual(NewAppointment.objects.count(), 1)
+            self.assertEqual(AppointmentStatusEvent.objects.count(), 1)
+            self.assertEqual(MessageTemplateRevision.objects.count(), 1)
+            self.assertIsNotNone(item.appointment_id)
         finally:
             executor = MigrationExecutor(connection)
             executor.migrate(executor.loader.graph.leaf_nodes())

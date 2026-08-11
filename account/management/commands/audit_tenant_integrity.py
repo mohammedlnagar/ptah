@@ -2,14 +2,15 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db.models import F
 
 from account.models import CustomUser, Organization
-from rasel.models import (
-    Campaign,
-    CampaignItem,
+from appointments.models import Appointment, AppointmentStatusEvent
+from campaigns.models import Campaign, CampaignItem, DoctorSummary
+from directory.models import Doctor
+from imports.models import ImportBatch, ImportIssue
+from messaging.models import (
     CampaignMessage,
-    Doctor,
-    DoctorSummary,
-    ImportBatch,
+    MessageHandoffEvent,
     MessageTemplate,
+    MessageTemplateRevision,
 )
 
 
@@ -102,6 +103,78 @@ class Command(BaseCommand):
                 ),
             ),
             (
+                "message_template.current_revision",
+                MessageTemplate.objects.filter(
+                    current_revision__isnull=False
+                ).exclude(organization_id=F("current_revision__organization_id")),
+            ),
+            (
+                "message_template.current_revision.template",
+                MessageTemplate.objects.filter(
+                    current_revision__isnull=False
+                ).exclude(pk=F("current_revision__template_id")),
+            ),
+            (
+                "import_issue.batch",
+                ImportIssue.objects.exclude(
+                    organization_id=F("batch__organization_id")
+                ),
+            ),
+            (
+                "campaign.template_revision",
+                Campaign.objects.filter(template_revision__isnull=False).exclude(
+                    organization_id=F("template_revision__organization_id")
+                ),
+            ),
+            (
+                "campaign.template_revision.template",
+                Campaign.objects.filter(template_revision__isnull=False).exclude(
+                    template_id=F("template_revision__template_id")
+                ),
+            ),
+            (
+                "campaign_item.appointment",
+                CampaignItem.objects.filter(appointment__isnull=False).exclude(
+                    organization_id=F("appointment__organization_id")
+                ),
+            ),
+            (
+                "campaign_item.appointment.contact",
+                CampaignItem.objects.filter(appointment__isnull=False).exclude(
+                    contact_id=F("appointment__contact_id")
+                ),
+            ),
+            (
+                "appointment.contact",
+                Appointment.objects.exclude(
+                    organization_id=F("contact__organization_id")
+                ),
+            ),
+            (
+                "appointment.doctor",
+                Appointment.objects.filter(doctor__isnull=False).exclude(
+                    organization_id=F("doctor__organization_id")
+                ),
+            ),
+            (
+                "appointment.source_import",
+                Appointment.objects.filter(source_import__isnull=False).exclude(
+                    organization_id=F("source_import__organization_id")
+                ),
+            ),
+            (
+                "appointment_status_event.appointment",
+                AppointmentStatusEvent.objects.exclude(
+                    organization_id=F("appointment__organization_id")
+                ),
+            ),
+            (
+                "appointment_status_event.changed_by",
+                AppointmentStatusEvent.objects.exclude(
+                    organization_id=F("changed_by__organization_id")
+                ),
+            ),
+            (
                 "campaign_message.campaign_item",
                 CampaignMessage.objects.exclude(
                     organization_id=F("campaign_item__organization_id")
@@ -114,9 +187,53 @@ class Command(BaseCommand):
                 ),
             ),
             (
+                "campaign_message.template_revision",
+                CampaignMessage.objects.filter(
+                    template_revision__isnull=False
+                ).exclude(
+                    organization_id=F("template_revision__organization_id")
+                ),
+            ),
+            (
+                "campaign_message.template_revision.template",
+                CampaignMessage.objects.filter(
+                    template_revision__isnull=False
+                ).exclude(template_id=F("template_revision__template_id")),
+            ),
+            (
                 "campaign_message.sent_by",
                 CampaignMessage.objects.filter(sent_by__isnull=False).exclude(
                     organization_id=F("sent_by__organization_id")
+                ),
+            ),
+            (
+                "template_revision.template",
+                MessageTemplateRevision.objects.exclude(
+                    organization_id=F("template__organization_id")
+                ),
+            ),
+            (
+                "template_revision.created_by",
+                MessageTemplateRevision.objects.exclude(
+                    organization_id=F("created_by__organization_id")
+                ),
+            ),
+            (
+                "template_revision.approved_by",
+                MessageTemplateRevision.objects.filter(
+                    approved_by__isnull=False
+                ).exclude(organization_id=F("approved_by__organization_id")),
+            ),
+            (
+                "handoff_event.message",
+                MessageHandoffEvent.objects.exclude(
+                    organization_id=F("message__organization_id")
+                ),
+            ),
+            (
+                "handoff_event.actor",
+                MessageHandoffEvent.objects.exclude(
+                    organization_id=F("actor__organization_id")
                 ),
             ),
             (

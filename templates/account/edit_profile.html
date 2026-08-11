@@ -8,17 +8,11 @@
 
 <form method="post" enctype="multipart/form-data" class="panel panel--padded" novalidate>
   {% csrf_token %}
-  {% if user_form.non_field_errors or profile_form.non_field_errors %}<div class="flash flash--error" role="alert"><svg><use href="#icon-info"></use></svg><span>Please correct the errors below.</span></div>{% endif %}
+  {% if user_form.non_field_errors %}<div class="flash flash--error" role="alert"><svg><use href="#icon-info"></use></svg><span>Please correct the errors below.</span></div>{% endif %}
   <div class="section-header"><div><h2>Contact information</h2><p>The details attached to your team account.</p></div></div>
   <div class="form-grid">
     {% for field in user_form %}
       <div class="form-field"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.errors %}<ul class="field-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}</div>
-    {% endfor %}
-  </div>
-  <div class="section-header content-section"><div><h2>Profile and documents</h2><p>Optional details used by your organization.</p></div></div>
-  <div class="form-grid">
-    {% for field in profile_form %}
-      <div class="form-field {% if field.name == 'home_address' %}form-field--full{% endif %}"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}{% if field.errors %}<ul class="field-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}</div>
     {% endfor %}
   </div>
   <div class="form-actions"><a class="button button--secondary" href="{% url 'profile' %}">Cancel</a><button class="button button--primary" type="submit">Save changes</button></div>

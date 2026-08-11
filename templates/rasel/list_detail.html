@@ -26,7 +26,7 @@
     <div class="filter-field"><label for="campaign-search">Search recipients</label><div class="search-control"><svg><use href="#icon-search"></use></svg><input class="filter-control" id="campaign-search" name="q" value="{{ request.GET.q }}" placeholder="Patient, MRN, phone, doctor or department"></div></div>
     <div class="filter-field"><label for="doctor-filter">Doctor</label><select class="filter-control" id="doctor-filter" name="doctor"><option value="">All doctors</option>{% for doctor in doctors %}{% if doctor %}<option value="{{ doctor }}" {% if request.GET.doctor == doctor %}selected{% endif %}>{{ doctor }}</option>{% endif %}{% endfor %}</select></div>
     {% if appointment_list.purpose == "appointment" %}<div class="filter-field"><label for="appointment-filter">Appointment status</label><select class="filter-control" id="appointment-filter" name="appointment_status"><option value="">All statuses</option><option value="booked" {% if request.GET.appointment_status == "booked" %}selected{% endif %}>Booked</option><option value="confirmed" {% if request.GET.appointment_status == "confirmed" %}selected{% endif %}>Confirmed</option><option value="cancelled" {% if request.GET.appointment_status == "cancelled" %}selected{% endif %}>Cancelled</option></select></div>{% endif %}
-    <div class="filter-field"><label for="message-filter">Message status</label><select class="filter-control" id="message-filter" name="message_status"><option value="">All statuses</option><option value="pending" {% if request.GET.message_status == "pending" %}selected{% endif %}>Pending</option><option value="opened" {% if request.GET.message_status == "opened" %}selected{% endif %}>WhatsApp opened</option><option value="sent" {% if request.GET.message_status == "sent" %}selected{% endif %}>Marked sent</option><option value="skipped" {% if request.GET.message_status == "skipped" %}selected{% endif %}>Skipped</option></select></div>
+    <div class="filter-field"><label for="message-filter">Message status</label><select class="filter-control" id="message-filter" name="message_status"><option value="">All statuses</option><option value="pending" {% if request.GET.message_status == "pending" %}selected{% endif %}>Pending</option><option value="opened" {% if request.GET.message_status == "opened" %}selected{% endif %}>WhatsApp opened</option><option value="operator_marked_sent" {% if request.GET.message_status == "operator_marked_sent" %}selected{% endif %}>Operator marked sent</option><option value="skipped" {% if request.GET.message_status == "skipped" %}selected{% endif %}>Skipped</option></select></div>
     {% if appointment_list.purpose == "appointment" %}<div class="filter-field"><label for="date-filter">Appointment date</label><input class="filter-control" type="date" id="date-filter" name="date" value="{{ request.GET.date }}"></div>{% endif %}
     <div class="filter-actions"><a class="button button--secondary button--compact" href="{% url 'appointment_list_detail' appointment_list.id %}">Clear</a><button class="button button--primary button--compact" type="submit">Apply filters</button></div>
   </div>
@@ -57,7 +57,7 @@
           </div>
           {% if item.appointment_status %}
             <div style="margin-top:.55rem">
-              {% if perms.rasel.change_campaignitem %}
+              {% if perms.campaigns.change_campaignitem %}
                 <label class="visually-hidden" for="appointment-status-{{ item.id }}">Appointment status for {{ item.patient_name_snapshot }}</label>
                 <select id="appointment-status-{{ item.id }}" class="status-select appointment-status" data-url="{% url 'update_appointment_status' item.id %}">
                   <option value="booked" {% if item.appointment_status == "booked" %}selected{% endif %}>Booked</option>
@@ -71,20 +71,20 @@
 
         <section class="work-section work-section--message">
           <label class="work-label" for="message-content-{{ campaign_message.id }}">Prepared message</label>
-          <textarea id="message-content-{{ campaign_message.id }}" class="message-editor message-content" {% if not perms.rasel.change_campaignmessage %}readonly{% endif %}>{{ campaign_message.rendered_content }}</textarea>
+          <textarea id="message-content-{{ campaign_message.id }}" class="message-editor message-content" {% if not perms.messaging.change_campaignmessage %}readonly{% endif %}>{{ campaign_message.rendered_content }}</textarea>
           <div class="message-actions">
             <span class="save-state" aria-live="polite">Edit before opening WhatsApp if needed.</span>
-            {% if perms.rasel.change_campaignmessage %}<button class="button button--secondary button--small save-message" type="button" data-message-id="{{ campaign_message.id }}"><svg><use href="#icon-edit"></use></svg>Save edit</button>{% endif %}
+            {% if perms.messaging.change_campaignmessage %}<button class="button button--secondary button--small save-message" type="button" data-message-id="{{ campaign_message.id }}"><svg><use href="#icon-edit"></use></svg>Save edit</button>{% endif %}
           </div>
         </section>
 
         <section class="work-section dispatch-box">
           <label class="work-label" for="message-status-{{ campaign_message.id }}">Message status</label>
-          {% if perms.rasel.change_campaignmessage %}
+          {% if perms.messaging.change_campaignmessage %}
             <select id="message-status-{{ campaign_message.id }}" class="status-select message-status" data-message-id="{{ campaign_message.id }}">
               <option value="pending" {% if campaign_message.status == "pending" %}selected{% endif %}>Pending</option>
               <option value="opened" {% if campaign_message.status == "opened" %}selected{% endif %}>WhatsApp opened</option>
-              <option value="sent" {% if campaign_message.status == "sent" %}selected{% endif %}>Marked sent</option>
+              <option value="operator_marked_sent" {% if campaign_message.status == "operator_marked_sent" %}selected{% endif %}>Operator marked sent</option>
               <option value="skipped" {% if campaign_message.status == "skipped" %}selected{% endif %}>Skipped</option>
             </select>
           {% else %}<span class="badge badge--{{ campaign_message.status }}">{{ campaign_message.get_status_display }}</span>{% endif %}
@@ -104,6 +104,21 @@
     <div class="doctor-summary-grid">
       {% for doctor in doctor_summaries %}
         <article class="doctor-summary"><div class="doctor-summary__head"><div><strong>{{ doctor.doctor_name_snapshot }}</strong><small>{{ doctor.department_name_snapshot|default:"Department not provided" }}</small></div><span class="badge badge--neutral">{{ doctor.total }} appointments</span></div><div class="mini-metrics"><div class="mini-metric"><strong>{{ doctor.total }}</strong><small>Total</small></div><div class="mini-metric"><strong>{{ doctor.confirmed }}</strong><small>Confirmed</small></div><div class="mini-metric"><strong>{{ doctor.cancelled }}</strong><small>Cancelled</small></div></div></article>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{% if doctor_summary_records %}
+  <section class="content-section" aria-labelledby="doctor-share-heading">
+    <div class="section-header"><div><h2 id="doctor-share-heading">Share doctor summaries</h2><p>Open each generated summary in WhatsApp. Waslni records only that the link was opened.</p></div></div>
+    <div class="doctor-summary-grid">
+      {% for summary in doctor_summary_records %}
+        <article class="doctor-summary">
+          <div class="doctor-summary__head"><div><strong>{{ summary.doctor.name }}</strong><small>{{ summary.doctor.department.name|default:"Department not provided" }}</small></div><span class="badge badge--{{ summary.status }}">{{ summary.get_status_display }}</span></div>
+          <p>{{ summary.rendered_content }}</p>
+          {% if summary.doctor.phone_number and perms.campaigns.change_doctorsummary %}<a class="button button--success button--compact" target="_blank" rel="noopener" href="{% url 'open_doctor_summary' summary.id %}"><svg><use href="#icon-whatsapp"></use></svg>Open WhatsApp</a>{% else %}<small>Add the doctor's phone number in Admin to enable sharing.</small>{% endif %}
+        </article>
       {% endfor %}
     </div>
   </section>
