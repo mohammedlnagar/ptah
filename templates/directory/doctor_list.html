@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Doctors · Waslni{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <span class="eyebrow">Directory</span>
+    <h1>Doctors</h1>
+    <p>Doctors are matched by name when you import a CSV, so keeping this list tidy keeps campaigns tidy.</p>
+  </div>
+  <div class="page-header-actions">
+    <a class="button button--secondary" href="{% url 'department_list' %}">Departments</a>
+    {% if perms.directory.add_doctor %}
+      <a class="button button--primary" href="{% url 'doctor_create' %}">Add doctor</a>
+    {% endif %}
+  </div>
+</header>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="flash flash--{{ message.tags }}" role="status"><span>{{ message }}</span></div>
+  {% endfor %}
+{% endif %}
+
+<form method="get" class="filter-panel" aria-label="Search doctors">
+  <div class="filter-grid">
+    <div class="filter-field">
+      <label for="doctor-search">Search</label>
+      <input class="filter-control" id="doctor-search" name="q" value="{{ query }}" placeholder="Name, code or department">
+    </div>
+  </div>
+  <div class="filter-actions">
+    <button class="button button--secondary button--small" type="submit">Search</button>
+    {% if query %}<a class="button button--secondary button--small" href="{% url 'doctor_list' %}">Clear</a>{% endif %}
+  </div>
+</form>
+
+<section class="panel panel--padded">
+  {% if doctors %}
+    <div class="roster-list">
+      {% for doctor in doctors %}
+        <article class="roster-row">
+          <span class="roster-main">
+            <strong>{{ doctor.name }}</strong>
+            <small>{{ doctor.department.name|default:"No department" }}{% if doctor.code %} · {{ doctor.code }}{% endif %}</small>
+          </span>
+          <span class="roster-field">
+            <small>Phone</small>
+            <strong>{{ doctor.phone_number|default:"Not set" }}</strong>
+          </span>
+          <span class="roster-field">
+            <small>Status</small>
+            <span class="badge badge--{% if doctor.is_active %}active{% else %}suspended{% endif %}">
+              {% if doctor.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+          </span>
+          {% if perms.directory.change_doctor %}
+            <span class="roster-actions">
+              <a class="button button--secondary button--small" href="{% url 'doctor_edit' doctor.id %}">Edit</a>
+            </span>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>{% if query %}No doctors match that search{% else %}No doctors yet{% endif %}</h3>
+      <p>{% if query %}Try a different name or code.{% else %}Doctors are also created automatically the first time they appear in an appointment CSV.{% endif %}</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

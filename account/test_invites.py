@@ -264,8 +264,10 @@ class TeamApprovalTests(TestCase):
 
         response = self.client.get(reverse("manage_team"))
 
-        self.assertIn(self.pending, response.context["pending_members"])
-        self.assertIn(self.owner, response.context["active_members"])
+        pending = [row["member"] for row in response.context["pending_rows"]]
+        active = [row["member"] for row in response.context["active_rows"]]
+        self.assertIn(self.pending, pending)
+        self.assertIn(self.owner, active)
 
     def test_approving_lets_the_member_sign_in(self):
         self.client.force_login(self.owner)
@@ -311,7 +313,8 @@ class TeamApprovalTests(TestCase):
 
         response = self.client.get(reverse("manage_team"))
 
-        self.assertNotIn(outsider, response.context["active_members"])
+        active = [row["member"] for row in response.context["active_rows"]]
+        self.assertNotIn(outsider, active)
 
     def test_suspending_blocks_sign_in(self):
         member = make_member(self.organization, "member@example.com", "Operator")

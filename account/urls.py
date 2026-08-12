@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     approve_member,
+    change_member_role,
     edit_profile,
     manage_invites,
     manage_team,
@@ -29,4 +30,5 @@ urlpatterns = [
     path('team/', manage_team, name='manage_team'),
     path('team/<int:user_id>/approve/', approve_member, name='approve_member'),
     path('team/<int:user_id>/suspend/', suspend_member, name='suspend_member'),
+    path('team/<int:user_id>/role/', change_member_role, name='change_member_role'),
 ]

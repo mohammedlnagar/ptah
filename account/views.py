@@ -1,6 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.models import Group
+from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -167,6 +169,27 @@ def revoke_invite(request, invite_id):
     return redirect("manage_invites")
 
 
+ASSIGNABLE_ROLES = OrganizationInvite.Role
+
+
+def _is_owner(user):
+    return user.groups.filter(name="Owner").exists()
+
+
+def _editable_member(request, organization, user_id, **filters):
+    """Fetch a colleague the requester is allowed to act on.
+
+    Owner accounts are only modifiable by another Owner, so an Admin cannot
+    suspend or demote the person who owns the workspace.
+    """
+    member = get_object_or_404(
+        CustomUser, pk=user_id, organization=organization, **filters
+    )
+    if _is_owner(member) and not _is_owner(request.user):
+        raise PermissionDenied("Only an Owner can manage another Owner.")
+    return member
+
+
 @login_required
 @permission_required("account.change_customuser", raise_exception=True)
 def manage_team(request):
@@ -176,12 +199,31 @@ def manage_team(request):
         .prefetch_related("groups")
         .order_by("-is_active", "email")
     )
+    requester_is_owner = _is_owner(request.user)
+    rows = []
+    for member in members:
+        member_is_owner = any(
+            group.name == "Owner" for group in member.groups.all()
+        )
+        rows.append(
+            {
+                "member": member,
+                "roles": [group.name for group in member.groups.all()],
+                # An Admin may not touch an Owner, and nobody edits themselves.
+                "manageable": (
+                    member.pk != request.user.pk
+                    and (requester_is_owner or not member_is_owner)
+                ),
+                "is_self": member.pk == request.user.pk,
+            }
+        )
     return render(
         request,
         "account/team.html",
         {
-            "pending_members": [user for user in members if not user.is_active],
-            "active_members": [user for user in members if user.is_active],
+            "pending_rows": [row for row in rows if not row["member"].is_active],
+            "active_rows": [row for row in rows if row["member"].is_active],
+            "assignable_roles": ASSIGNABLE_ROLES.choices,
         },
     )
 
@@ -189,11 +231,28 @@ def manage_team(request):
 @login_required
 @permission_required("account.change_customuser", raise_exception=True)
 @require_POST
+def change_member_role(request, user_id):
+    organization = tenant_or_403(request)
+    member = _editable_member(request, organization, user_id)
+    if member.pk == request.user.pk:
+        messages.error(request, "You cannot change your own role.")
+        return redirect("manage_team")
+    role = request.POST.get("role")
+    if role not in ASSIGNABLE_ROLES.values:
+        messages.error(request, "Select a valid role.")
+        return redirect("manage_team")
+    # Replace rather than add: a member holds exactly one role.
+    member.groups.set([Group.objects.get(name=role)])
+    messages.success(request, f"{member.email} is now {role}.")
+    return redirect("manage_team")
+
+
+@login_required
+@permission_required("account.change_customuser", raise_exception=True)
+@require_POST
 def approve_member(request, user_id):
     organization = tenant_or_403(request)
-    member = get_object_or_404(
-        CustomUser, pk=user_id, organization=organization, is_active=False
-    )
+    member = _editable_member(request, organization, user_id, is_active=False)
     member.is_active = True
     member.save(update_fields=("is_active",))
     messages.success(request, f"{member.email} can now sign in.")
@@ -205,12 +264,10 @@ def approve_member(request, user_id):
 @require_POST
 def suspend_member(request, user_id):
     organization = tenant_or_403(request)
-    member = get_object_or_404(
-        CustomUser, pk=user_id, organization=organization, is_active=True
-    )
-    if member.pk == request.user.pk:
+    if str(user_id) == str(request.user.pk):
         messages.error(request, "You cannot suspend your own account.")
         return redirect("manage_team")
+    member = _editable_member(request, organization, user_id, is_active=True)
     member.is_active = False
     member.save(update_fields=("is_active",))
     messages.success(request, f"{member.email} can no longer sign in.")

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Departments · Waslni{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <span class="eyebrow">Directory</span>
+    <h1>Departments</h1>
+    <p>Departments group doctors and appear in campaign filters and reports.</p>
+  </div>
+  <div class="page-header-actions">
+    <a class="button button--secondary" href="{% url 'doctor_list' %}">Doctors</a>
+    {% if perms.directory.add_department %}
+      <a class="button button--primary" href="{% url 'department_create' %}">Add department</a>
+    {% endif %}
+  </div>
+</header>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="flash flash--{{ message.tags }}" role="status"><span>{{ message }}</span></div>
+  {% endfor %}
+{% endif %}
+
+<section class="panel panel--padded">
+  {% if departments %}
+    <div class="roster-list">
+      {% for department in departments %}
+        <article class="roster-row">
+          <span class="roster-main">
+            <strong>{{ department.name }}</strong>
+            <small>{% if department.code %}{{ department.code }}{% else %}No code{% endif %}</small>
+          </span>
+          <span class="roster-field">
+            <small>Doctors</small>
+            <strong>{{ department.doctor_count }}</strong>
+          </span>
+          <span class="roster-field">
+            <small>Status</small>
+            <span class="badge badge--{% if department.is_active %}active{% else %}suspended{% endif %}">
+              {% if department.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+          </span>
+          {% if perms.directory.change_department %}
+            <span class="roster-actions">
+              <a class="button button--secondary button--small" href="{% url 'department_edit' department.id %}">Edit</a>
+            </span>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>No departments yet</h3>
+      <p>Departments are also created automatically from the Doctor Department column of an appointment CSV.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

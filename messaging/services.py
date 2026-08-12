@@ -58,6 +58,80 @@ def create_template_revision(*, template, user, content, make_current=True):
     return revision
 
 
+def _locked_revision(revision, user):
+    revision = MessageTemplateRevision.objects.select_for_update().select_related(
+        "template"
+    ).get(pk=revision.pk)
+    if not user.organization_id or user.organization_id != revision.organization_id:
+        raise PermissionDenied("The template revision belongs to another organization.")
+    return revision
+
+
+@transaction.atomic
+def submit_template_revision(*, revision, user):
+    """Move an author's draft into the approval queue.
+
+    Gated on add_messagetemplate rather than change_messagetemplate so the
+    person who wrote the draft can hand it over for review.
+    """
+    revision = _locked_revision(revision, user)
+    if not user.has_perm("messaging.add_messagetemplate"):
+        raise PermissionDenied("You cannot submit message templates for review.")
+    if revision.approval_status not in {
+        MessageTemplateRevision.ApprovalStatus.DRAFT,
+        MessageTemplateRevision.ApprovalStatus.REJECTED,
+    }:
+        raise ValidationError("Only a draft or rejected revision can be submitted.")
+    revision.approval_status = MessageTemplateRevision.ApprovalStatus.PENDING
+    revision.rejection_reason = ""
+    revision.full_clean()
+    revision.save(
+        update_fields=("approval_status", "rejection_reason", "updated_at")
+    )
+    template = revision.template
+    if revision.is_current:
+        template.approval_status = MessageTemplate.ApprovalStatus.PENDING
+        template.save(update_fields=("approval_status", "updated_at"))
+    return revision
+
+
+@transaction.atomic
+def reject_template_revision(*, revision, user, reason=""):
+    revision = _locked_revision(revision, user)
+    if not user.has_perm("messaging.approve_messagetemplate"):
+        raise PermissionDenied("You cannot approve message templates.")
+    if revision.approval_status == MessageTemplateRevision.ApprovalStatus.APPROVED:
+        raise ValidationError("An approved revision cannot be rejected.")
+    revision.approval_status = MessageTemplateRevision.ApprovalStatus.REJECTED
+    revision.rejection_reason = reason
+    revision.approved_by = None
+    revision.approved_at = None
+    revision.full_clean()
+    revision.save(
+        update_fields=(
+            "approval_status",
+            "rejection_reason",
+            "approved_by",
+            "approved_at",
+            "updated_at",
+        )
+    )
+    template = revision.template
+    if revision.is_current:
+        template.approval_status = MessageTemplate.ApprovalStatus.REJECTED
+        template.approved_by = None
+        template.approved_at = None
+        template.save(
+            update_fields=(
+                "approval_status",
+                "approved_by",
+                "approved_at",
+                "updated_at",
+            )
+        )
+    return revision
+
+
 @transaction.atomic
 def approve_template_revision(*, revision, user):
     revision = MessageTemplateRevision.objects.select_for_update().select_related(

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}{{ heading }} · Waslni{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <a class="section-link" href="{% url 'department_list' %}">← All departments</a>
+    <h1>{{ heading }}</h1>
+  </div>
+</header>
+
+<section class="panel panel--padded" style="max-width:38rem">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="flash flash--error" role="alert"><span>{{ form.non_field_errors|striptags }}</span></div>{% endif %}
+    <div class="form-grid">
+      {% for field in form %}
+        <div class="form-field">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<small>Required</small>{% endif %}</label>
+          {{ field }}
+          {% if field.errors %}<ul class="field-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      {% endfor %}
+      <div class="confirm-actions">
+        <a class="button button--secondary" href="{% url 'department_list' %}">Cancel</a>
+        <button class="button button--primary" type="submit">Save department</button>
+      </div>
+    </div>
+  </form>
+</section>
+{% endblock %}

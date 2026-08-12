@@ -66,12 +66,17 @@
           {% if perms.campaigns.view_campaign %}<a href="{% url 'manage_appointments' %}" class="nav-item {% if request.resolver_match.url_name == 'manage_appointments' or request.resolver_match.url_name == 'appointment_list_detail' %}is-active{% endif %}">
             <svg><use href="#icon-campaign"></use></svg><span>Campaigns</span>
           </a>{% endif %}
-          {% if perms.messaging.view_messagetemplate %}<a href="{% url 'manage_appointments' %}#templates" class="nav-item">
+          {% if perms.messaging.view_messagetemplate %}<a href="{% url 'template_approvals' %}" class="nav-item {% if request.resolver_match.url_name == 'template_approvals' %}is-active{% endif %}">
             <svg><use href="#icon-template"></use></svg><span>Message templates</span>
           </a>{% endif %}
-          {% if user.is_staff and perms.directory.view_doctor %}
-            <a href="/admin/directory/doctor/" class="nav-item">
+          {% if perms.directory.view_doctor %}
+            <a href="{% url 'doctor_list' %}" class="nav-item {% if request.resolver_match.url_name == 'doctor_list' or request.resolver_match.url_name == 'doctor_create' or request.resolver_match.url_name == 'doctor_edit' %}is-active{% endif %}">
               <svg><use href="#icon-doctor"></use></svg><span>Doctors</span>
+            </a>
+          {% endif %}
+          {% if perms.directory.view_department %}
+            <a href="{% url 'department_list' %}" class="nav-item {% if request.resolver_match.url_name == 'department_list' or request.resolver_match.url_name == 'department_create' or request.resolver_match.url_name == 'department_edit' %}is-active{% endif %}">
+              <svg><use href="#icon-grid"></use></svg><span>Departments</span>
             </a>
           {% endif %}
 

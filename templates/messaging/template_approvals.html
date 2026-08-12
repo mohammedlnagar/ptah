@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Template approvals · Waslni{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <span class="eyebrow">Messaging</span>
+    <h1>Message templates</h1>
+    <p>Authors submit a draft for review; an approver releases it for campaigns.</p>
+  </div>
+  <div class="page-header-actions">
+    <a class="button button--secondary" href="{% url 'manage_appointments' %}#templates">New template</a>
+  </div>
+</header>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="flash flash--{{ message.tags }}" role="status"><span>{{ message }}</span></div>
+  {% endfor %}
+{% endif %}
+
+<section class="panel panel--padded">
+  <div class="section-header"><div><h2>Waiting for review</h2><p>Only approved templates can be used to build a campaign.</p></div></div>
+  {% if awaiting_review %}
+    <div class="roster-list">
+      {% for revision in awaiting_review %}
+        <article class="roster-row">
+          <span class="roster-main">
+            <strong>{{ revision.template.name }}</strong>
+            <small>v{{ revision.version }} · {{ revision.template.get_purpose_display }} · by {{ revision.created_by.email }}</small>
+          </span>
+          <span class="roster-field">
+            <small>Status</small>
+            <span class="badge badge--pending">Pending</span>
+          </span>
+          {% if can_approve %}
+            <span class="roster-actions">
+              <form method="post" action="{% url 'approve_template' revision.id %}">
+                {% csrf_token %}
+                <button class="button button--success button--small" type="submit">Approve</button>
+              </form>
+            </span>
+            <span class="roster-link">
+              <small>Send back with a reason</small>
+              <form method="post" action="{% url 'reject_template' revision.id %}" class="roster-link-controls">
+                {% csrf_token %}
+                <input class="filter-control" name="reason" maxlength="500" placeholder="What needs changing?">
+                <button class="button button--secondary button--small" type="submit">Reject</button>
+              </form>
+            </span>
+          {% endif %}
+          <span class="roster-link">
+            <small>Content</small>
+            <textarea class="message-editor" readonly rows="2">{{ revision.content }}</textarea>
+          </span>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state"><h3>Nothing waiting</h3><p>Submitted drafts appear here for an approver.</p></div>
+  {% endif %}
+</section>
+
+<section class="panel panel--padded">
+  <div class="section-header"><div><h2>Drafts and rejected</h2></div></div>
+  {% if drafts %}
+    <div class="roster-list">
+      {% for revision in drafts %}
+        <article class="roster-row">
+          <span class="roster-main">
+            <strong>{{ revision.template.name }}</strong>
+            <small>v{{ revision.version }} · {{ revision.template.get_purpose_display }}
+              {% if revision.rejection_reason %} · Sent back: {{ revision.rejection_reason }}{% endif %}</small>
+          </span>
+          <span class="roster-field">
+            <small>Status</small>
+            <span class="badge badge--{{ revision.approval_status }}">{{ revision.get_approval_status_display }}</span>
+          </span>
+          {% if can_submit %}
+            <span class="roster-actions">
+              <form method="post" action="{% url 'submit_template' revision.id %}">
+                {% csrf_token %}
+                <button class="button button--primary button--small" type="submit">Submit for review</button>
+              </form>
+            </span>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state"><h3>No drafts</h3><p>New templates start here before review.</p></div>
+  {% endif %}
+</section>
+
+<section class="panel panel--padded">
+  <div class="section-header"><div><h2>Approved</h2><p>Available when creating a campaign.</p></div></div>
+  {% if approved %}
+    <div class="roster-list">
+      {% for revision in approved %}
+        <article class="roster-row">
+          <span class="roster-main">
+            <strong>{{ revision.template.name }}</strong>
+            <small>v{{ revision.version }} · approved by {{ revision.approved_by.email }} on {{ revision.approved_at|date:"d M Y" }}</small>
+          </span>
+          <span class="roster-field">
+            <small>Status</small>
+            <span class="badge badge--approved">Approved</span>
+          </span>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state"><h3>Nothing approved yet</h3><p>Approve a template before building a campaign.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

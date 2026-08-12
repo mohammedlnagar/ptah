@@ -7,7 +7,7 @@
   <div>
     <span class="eyebrow">Team</span>
     <h1>Team members</h1>
-    <p>Approve colleagues who registered through an invitation, and manage who can sign in.</p>
+    <p>Approve colleagues who registered through an invitation, and manage their roles.</p>
   </div>
   <div class="page-header-actions">
     <a class="button button--primary" href="{% url 'manage_invites' %}">Invitations</a>
@@ -24,24 +24,26 @@
   <div class="section-header">
     <div><h2>Waiting for approval</h2><p>These accounts cannot sign in yet.</p></div>
   </div>
-  {% if pending_members %}
+  {% if pending_rows %}
     <div class="roster-list">
-      {% for member in pending_members %}
+      {% for row in pending_rows %}
         <article class="roster-row">
           <span class="roster-main">
-            <strong>{{ member.email }}</strong>
-            <small>{{ member.username }} · registered {{ member.date_joined|date:"d M Y · H:i" }}</small>
+            <strong>{{ row.member.email }}</strong>
+            <small>{{ row.member.username }} · registered {{ row.member.date_joined|date:"d M Y · H:i" }}</small>
           </span>
           <span class="roster-field">
             <small>Role</small>
-            <strong>{% for group in member.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</strong>
+            <strong>{{ row.roles|join:", "|default:"None" }}</strong>
           </span>
-          <span class="roster-actions">
-            <form method="post" action="{% url 'approve_member' member.id %}">
-              {% csrf_token %}
-              <button class="button button--success button--small" type="submit">Approve</button>
-            </form>
-          </span>
+          {% if row.manageable %}
+            <span class="roster-actions">
+              <form method="post" action="{% url 'approve_member' row.member.id %}">
+                {% csrf_token %}
+                <button class="button button--success button--small" type="submit">Approve</button>
+              </form>
+            </span>
+          {% endif %}
         </article>
       {% endfor %}
     </div>
@@ -54,26 +56,38 @@
 </section>
 
 <section class="panel panel--padded">
-  <div class="section-header"><div><h2>Active members</h2></div></div>
+  <div class="section-header"><div><h2>Active members</h2><p>Owners can only be managed by another Owner.</p></div></div>
   <div class="roster-list">
-    {% for member in active_members %}
+    {% for row in active_rows %}
       <article class="roster-row">
         <span class="roster-main">
-          <strong>{{ member.email }}</strong>
-          <small>{{ member.username }}</small>
+          <strong>{{ row.member.email }}</strong>
+          <small>{{ row.member.username }}</small>
         </span>
         <span class="roster-field">
           <small>Role</small>
-          <strong>{% for group in member.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</strong>
+          <strong>{{ row.roles|join:", "|default:"None" }}</strong>
         </span>
         <span class="roster-actions">
-          {% if member.id != user.id %}
-            <form method="post" action="{% url 'suspend_member' member.id %}">
+          {% if row.is_self %}
+            <span class="badge badge--neutral">You</span>
+          {% elif row.manageable %}
+            <form method="post" action="{% url 'change_member_role' row.member.id %}" class="roster-inline-form">
+              {% csrf_token %}
+              <label class="visually-hidden" for="role-{{ row.member.id }}">Role for {{ row.member.email }}</label>
+              <select class="status-select" id="role-{{ row.member.id }}" name="role">
+                {% for value, label in assignable_roles %}
+                  <option value="{{ value }}" {% if value in row.roles %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              <button class="button button--secondary button--small" type="submit">Save role</button>
+            </form>
+            <form method="post" action="{% url 'suspend_member' row.member.id %}">
               {% csrf_token %}
               <button class="button button--secondary button--small" type="submit">Suspend</button>
             </form>
           {% else %}
-            <span class="badge badge--neutral">You</span>
+            <span class="badge badge--neutral">Owner</span>
           {% endif %}
         </span>
       </article>
