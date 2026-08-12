@@ -209,11 +209,25 @@ def open_whatsapp_message(request, message_id):
         ),
         pk=message_id,
     )
+    item = campaign_message.campaign_item
+    is_cancelled = (
+        item.appointment_status == CampaignItem.AppointmentStatus.CANCELLED
+    )
+    override_confirmed = request.GET.get("confirm_cancelled") == "1"
+    if is_cancelled and not override_confirmed:
+        # Sending a reminder for a cancelled appointment is usually a mistake,
+        # so the operator has to opt in before the handoff is recorded.
+        return render(
+            request,
+            "rasel/confirm_cancelled_message.html",
+            {"campaign_message": campaign_message, "item": item},
+        )
     transition_message_status(
         message=campaign_message,
         user=request.user,
         new_status=CampaignMessage.Status.OPENED,
         event_type=MessageHandoffEvent.EventType.WHATSAPP_OPENED,
+        metadata={"cancelled_override_confirmed": True} if is_cancelled else None,
     )
     return redirect(campaign_message.whatsapp_url())
 

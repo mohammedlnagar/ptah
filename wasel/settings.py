@@ -140,6 +140,13 @@ STORAGES = {
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
 
+if TESTING:
+    # The manifest backend requires collectstatic to have run first, which
+    # would make rendering any template in a test depend on a build step.
+    STORAGES["staticfiles"] = {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+    }
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "account.CustomUser"
 LOGIN_URL = "/Account/login/"
@@ -150,3 +157,9 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = not DEBUG and not TESTING
 SESSION_COOKIE_SECURE = not DEBUG and not TESTING
 CSRF_COOKIE_SECURE = not DEBUG and not TESTING
+
+# Django requires an origin (scheme + host) here, not a bare hostname. Wildcard
+# entries in ALLOWED_HOSTS cannot be turned into origins, so they are skipped.
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{host}" for host in ALLOWED_HOSTS if "*" not in host
+]

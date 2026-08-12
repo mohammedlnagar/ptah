@@ -128,7 +128,9 @@ def record_message_content_edit(*, message, user, rendered_content):
 
 
 @transaction.atomic
-def transition_message_status(*, message, user, new_status, event_type=None):
+def transition_message_status(
+    *, message, user, new_status, event_type=None, metadata=None
+):
     message = CampaignMessage.objects.select_for_update().select_related(
         "campaign_item__campaign"
     ).get(pk=message.pk)
@@ -171,6 +173,7 @@ def transition_message_status(*, message, user, new_status, event_type=None):
         previous_status=previous_status,
         new_status=effective_status,
         actor=user,
+        metadata=metadata or {},
     )
     event.full_clean()
     event.save()

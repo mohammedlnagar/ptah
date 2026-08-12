@@ -144,28 +144,47 @@ class MessageTemplateRevision(TenantModel):
             )
         ]
 
+    def _assert_approved_content_unchanged(self, update_fields=None):
+        if not self.pk:
+            return
+        if update_fields is not None and not set(update_fields) & {
+            "content",
+            "template",
+            "template_id",
+            "version",
+        }:
+            # None of the immutable columns are being written, so an approved
+            # revision cannot be altered by this save.
+            return
+        previous = type(self).objects.filter(pk=self.pk).first()
+        if (
+            previous
+            and previous.approval_status == self.ApprovalStatus.APPROVED
+            and (
+                previous.content != self.content
+                or previous.template_id != self.template_id
+                or previous.version != self.version
+            )
+        ):
+            raise ValidationError("Approved template revisions are immutable.")
+
     def clean(self):
         super().clean()
         validate_related_organizations(
             self, "template", "created_by", "approved_by"
         )
-        if self.pk:
-            previous = type(self).objects.filter(pk=self.pk).first()
-            if (
-                previous
-                and previous.approval_status == self.ApprovalStatus.APPROVED
-                and (
-                    previous.content != self.content
-                    or previous.template_id != self.template_id
-                    or previous.version != self.version
-                )
-            ):
-                raise ValidationError("Approved template revisions are immutable.")
+        self._assert_approved_content_unchanged()
         if self.approval_status == self.ApprovalStatus.APPROVED:
             if not self.approved_by_id or not self.approved_at:
                 raise ValidationError(
                     "Approved revisions require an approver and approval time."
                 )
+
+    def save(self, *args, **kwargs):
+        # Enforced here as well as in clean() so a direct save() cannot bypass
+        # immutability; the database has no constraint that can express this.
+        self._assert_approved_content_unchanged(kwargs.get("update_fields"))
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.template} v{self.version}"

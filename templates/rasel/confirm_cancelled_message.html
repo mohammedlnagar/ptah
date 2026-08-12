@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm cancelled appointment · Waslni{% endblock %}
+
+{% block content %}
+<section class="panel panel--padded confirm-panel">
+  <span class="eyebrow">Cancelled appointment</span>
+  <h1>Send this reminder anyway?</h1>
+  <p>
+    The appointment for <strong>{{ item.patient_name_snapshot }}</strong> is marked
+    <span class="badge badge--cancelled">Cancelled</span>. Reminders for cancelled
+    appointments are usually sent by mistake.
+  </p>
+
+  <dl class="confirm-details">
+    <div><dt>Patient</dt><dd>{{ item.patient_name_snapshot }}</dd></div>
+    <div><dt>Phone</dt><dd>{{ item.phone_number_snapshot }}</dd></div>
+    {% if item.doctor_name_snapshot %}<div><dt>Doctor</dt><dd>{{ item.doctor_name_snapshot }}</dd></div>{% endif %}
+    {% if item.appointment_date %}<div><dt>Appointment</dt><dd>{{ item.appointment_date|date:"d M Y" }}{% if item.appointment_time %} · {{ item.appointment_time|time:"H:i" }}{% endif %}</dd></div>{% endif %}
+  </dl>
+
+  <label class="work-label" for="cancelled-message-preview">Prepared message</label>
+  <textarea id="cancelled-message-preview" class="message-editor" readonly>{{ campaign_message.rendered_content }}</textarea>
+
+  <div class="confirm-actions">
+    <a class="button button--secondary" href="{% url 'appointment_list_detail' item.campaign_id %}">Cancel</a>
+    <a class="button button--success" target="_blank" rel="noopener"
+       href="{% url 'open_whatsapp_message' campaign_message.id %}?confirm_cancelled=1">
+      <svg><use href="#icon-whatsapp"></use></svg>Open WhatsApp anyway
+    </a>
+  </div>
+</section>
+{% endblock %}

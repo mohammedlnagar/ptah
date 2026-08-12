@@ -88,7 +88,11 @@
               <option value="skipped" {% if campaign_message.status == "skipped" %}selected{% endif %}>Skipped</option>
             </select>
           {% else %}<span class="badge badge--{{ campaign_message.status }}">{{ campaign_message.get_status_display }}</span>{% endif %}
-          <p class="dispatch-note">This opens WhatsApp in a new tab. Waslni does not send automatically.</p>
+          {% if item.appointment_status == "cancelled" %}
+            <p class="dispatch-note dispatch-note--warning"><strong>This appointment is cancelled.</strong> You will be asked to confirm before WhatsApp opens.</p>
+          {% else %}
+            <p class="dispatch-note">This opens WhatsApp in a new tab. Waslni does not send automatically.</p>
+          {% endif %}
           <a class="button button--success open-whatsapp" target="_blank" rel="noopener" href="{% url 'open_whatsapp_message' campaign_message.id %}" data-message-id="{{ campaign_message.id }}"><svg><use href="#icon-whatsapp"></use></svg>Open WhatsApp</a>
         </section>
       </article>

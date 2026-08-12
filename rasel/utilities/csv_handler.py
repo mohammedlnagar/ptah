@@ -104,19 +104,74 @@ def _parse_appointment_datetime(value, row_number, organization_timezone):
     return scheduled_at
 
 
-def clean_csv_data(file, purpose):
-    try:
-        file.seek(0)
-        frame = pd.read_csv(file, dtype=str, encoding="utf-8-sig")
-    except Exception as exc:
-        raise CsvImportError(f"Unable to read CSV file: {exc}") from exc
-
-    frame.columns = [str(column).strip() for column in frame.columns]
+def required_columns_for(purpose):
     required = set(COMMON_REQUIRED_COLUMNS)
     if purpose == Campaign.Purpose.APPOINTMENT:
         required.update(APPOINTMENT_REQUIRED_COLUMNS)
-    missing = sorted(required.difference(frame.columns))
-    if missing:
+    return required
+
+
+def _header_row_index(frame, required):
+    """Return the index of the row that holds the column headers.
+
+    Exported reports often carry a title block above the header and a totals
+    row below the data, so the header is not always the first row. A row is
+    treated as the header when it contains every required column name.
+    """
+    for index in range(len(frame)):
+        values = {
+            str(value).strip()
+            for value in frame.iloc[index].tolist()
+            if value is not None and not pd.isna(value)
+        }
+        if required.issubset(values):
+            return index
+    return None
+
+
+def _drop_trailing_summary_rows(frame, required):
+    """Drop trailing summary rows such as ``Total: 312 appointments``.
+
+    Those rows fill a single cell and would otherwise fail per-row validation
+    and reject the entire upload. A trailing row that fills two or more of the
+    required columns is kept so that genuinely incomplete data is still
+    reported to the operator rather than silently discarded.
+    """
+    while len(frame):
+        last = frame.iloc[-1]
+        populated = sum(
+            1 for column in required if _clean_optional(last.get(column))
+        )
+        if populated > 1:
+            break
+        frame = frame.iloc[:-1]
+    return frame
+
+
+def clean_csv_data(file, purpose):
+    """Return a frame of data rows indexed by their zero-based line in the file.
+
+    The index is preserved rather than reset so validation errors can name the
+    row the operator sees in their spreadsheet.
+    """
+    required = required_columns_for(purpose)
+    try:
+        file.seek(0)
+        frame = pd.read_csv(file, dtype=str, header=None, encoding="utf-8-sig")
+    except Exception as exc:
+        raise CsvImportError(f"Unable to read CSV file: {exc}") from exc
+
+    frame = frame.dropna(how="all")
+    header_position = _header_row_index(frame, required)
+    if header_position is None:
+        # Report against the first row so the error names the columns that are
+        # actually absent instead of failing generically.
+        first_row = (
+            [str(value).strip() for value in frame.iloc[0].tolist()]
+            if len(frame)
+            else []
+        )
+        missing = sorted(required.difference(first_row))
         raise CsvImportError(
             f"Missing columns: {', '.join(missing)}",
             errors=[
@@ -125,10 +180,18 @@ def clean_csv_data(file, purpose):
             ],
         )
 
-    frame = frame.dropna(how="all")
-    if frame.empty:
+    header = frame.iloc[header_position]
+    data = frame.iloc[header_position + 1 :].copy()
+    data.columns = [str(value).strip() for value in header.tolist()]
+    # Trailing separators produce unnamed columns; duplicates would make
+    # row.get() return a Series instead of a scalar.
+    data = data.loc[:, [column not in ("", "nan") for column in data.columns]]
+    data = data.loc[:, ~data.columns.duplicated()]
+    data = data.dropna(how="all")
+    data = _drop_trailing_summary_rows(data, required)
+    if data.empty:
         raise CsvImportError("The CSV contains no data rows.")
-    return frame
+    return data
 
 
 def prepare_csv_rows(frame, purpose, organization):
@@ -137,7 +200,9 @@ def prepare_csv_rows(frame, purpose, organization):
     organization_timezone = _organization_timezone(organization)
 
     for row_number, (source_index, row) in enumerate(frame.iterrows(), start=1):
-        csv_row_number = int(source_index) + 2
+        # clean_csv_data keeps the zero-based physical line as the index, so the
+        # spreadsheet line number the operator sees is one greater.
+        csv_row_number = int(source_index) + 1
         try:
             patient_name = _clean_optional(row.get("Patient Name"))
             if not patient_name:
