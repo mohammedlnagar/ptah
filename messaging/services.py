@@ -3,8 +3,7 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
-from rasel.utilities.message_formatter import validate_template_content
-
+from .formatting import validate_template_content
 from .models import (
     CampaignMessage,
     MessageHandoffEvent,

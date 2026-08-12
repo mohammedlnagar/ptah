@@ -74,6 +74,11 @@
               <svg><use href="#icon-doctor"></use></svg><span>Doctors</span>
             </a>
           {% endif %}
+          {% if perms.imports.view_importbatch %}
+            <a href="{% url 'import_list' %}" class="nav-item {% if request.resolver_match.url_name == 'import_list' or request.resolver_match.url_name == 'import_detail' %}is-active{% endif %}">
+              <svg><use href="#icon-upload"></use></svg><span>CSV imports</span>
+            </a>
+          {% endif %}
           {% if perms.directory.view_department %}
             <a href="{% url 'department_list' %}" class="nav-item {% if request.resolver_match.url_name == 'department_list' or request.resolver_match.url_name == 'department_create' or request.resolver_match.url_name == 'department_edit' %}is-active{% endif %}">
               <svg><use href="#icon-grid"></use></svg><span>Departments</span>

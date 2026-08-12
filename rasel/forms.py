@@ -1,11 +1,8 @@
 from django import forms
-from django.db import transaction
 from django.db.models import Q
 
 from campaigns.models import Campaign
 from messaging.models import MessageTemplate
-from messaging.services import create_template_revision
-from .utilities.message_formatter import validate_template_content
 
 
 class CampaignUploadForm(forms.ModelForm):
@@ -56,35 +53,3 @@ class CampaignUploadForm(forms.ModelForm):
         if uploaded.size > 10 * 1024 * 1024:
             raise forms.ValidationError("CSV files may not exceed 10 MB.")
         return uploaded
-
-
-class MessageTemplateForm(forms.ModelForm):
-    class Meta:
-        model = MessageTemplate
-        fields = ("name", "purpose", "content")
-
-    def __init__(self, *args, user, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.user = user
-        self.instance.organization = user.organization
-        self.instance.created_by = user
-
-    @transaction.atomic
-    def save(self, commit=True):
-        template = super().save(commit=False)
-        template.organization = self.user.organization
-        template.created_by = self.user
-        if commit:
-            template.full_clean()
-            template.save()
-            create_template_revision(
-                template=template,
-                user=self.user,
-                content=template.content,
-            )
-        return template
-
-    def clean_content(self):
-        content = self.cleaned_data["content"]
-        validate_template_content(content)
-        return content

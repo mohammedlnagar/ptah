@@ -5,6 +5,12 @@ from . import views
 
 urlpatterns = [
     path("templates/", views.template_approvals, name="template_approvals"),
+    path("templates/new/", views.template_create, name="template_create"),
+    path(
+        "templates/<int:template_id>/edit/",
+        views.template_edit,
+        name="template_edit",
+    ),
     path(
         "templates/<int:revision_id>/submit/",
         views.submit_template,

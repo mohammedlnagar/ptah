@@ -2,13 +2,14 @@ import csv
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
+from account.services import check_campaign_available
 from appointments.services import change_appointment_status
 from campaigns.models import Campaign, CampaignItem, DoctorSummary
 from common.access import tenant_or_403
@@ -19,7 +20,7 @@ from messaging.services import (
     transition_message_status,
 )
 
-from .forms import CampaignUploadForm, MessageTemplateForm
+from .forms import CampaignUploadForm
 from .utilities.csv_handler import CsvImportError, save_campaign_from_csv
 
 
@@ -37,6 +38,13 @@ def manage_appointments_and_messages(request):
                 raise PermissionDenied("You cannot create campaigns.")
             form = CampaignUploadForm(request.POST, request.FILES, user=request.user)
             if form.is_valid():
+                try:
+                    check_campaign_available(organization)
+                except ValidationError as exc:
+                    return JsonResponse(
+                        {"success": False, "message": "; ".join(exc.messages)},
+                        status=400,
+                    )
                 try:
                     campaign = save_campaign_from_csv(
                         user=request.user,
@@ -57,21 +65,6 @@ def manage_appointments_and_messages(request):
                 )
             return JsonResponse({"success": False, "errors": form.errors.get_json_data()}, status=400)
 
-        if form_type == "message_template":
-            if not request.user.has_perm("messaging.add_messagetemplate"):
-                raise PermissionDenied("You cannot create message templates.")
-            form = MessageTemplateForm(request.POST, user=request.user)
-            if form.is_valid():
-                template = form.save()
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "template_id": template.pk,
-                        "message": "Template saved as a draft.",
-                    }
-                )
-            return JsonResponse({"success": False, "errors": form.errors.get_json_data()}, status=400)
-
     campaigns = Campaign.objects.for_organization(organization).select_related("template").annotate(
         item_count=Count("items", distinct=True),
         sent_count=Count(
@@ -87,7 +80,6 @@ def manage_appointments_and_messages(request):
         "rasel/contact_lists.html",
         {
             "appointments_list_form": CampaignUploadForm(user=request.user),
-            "message_template_form": MessageTemplateForm(user=request.user),
             "appointment_lists": campaigns,
             "message_templates": templates,
             "campaign_stats": {

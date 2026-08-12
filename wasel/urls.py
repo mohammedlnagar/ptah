@@ -9,4 +9,5 @@ urlpatterns = [
     path("Account/", include("account.urls")),
     path("Directory/", include("directory.urls")),
     path("Messaging/", include("messaging.urls")),
+    path("Imports/", include("imports.urls")),
 ]

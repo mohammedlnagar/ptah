@@ -11,7 +11,7 @@
       <p>Track patient outreach, appointment responses, and the campaigns your team is working through.</p>
     </div>
     <div class="page-header-actions">
-      <a class="button button--secondary" href="{% url 'manage_appointments' %}#templates">
+      <a class="button button--secondary" href="{% url 'template_create' %}">
         <svg><use href="#icon-template"></use></svg>New template
       </a>
       <a class="button button--primary" href="{% url 'manage_appointments' %}#new-campaign">
@@ -72,8 +72,8 @@
         <div class="section-header"><div><h3>Quick actions</h3><p>Common workspace tasks</p></div></div>
         <div class="quick-actions">
           <a class="quick-action" href="{% url 'manage_appointments' %}#new-campaign"><span class="quick-action__icon"><svg><use href="#icon-upload"></use></svg></span><span><strong>Upload appointment CSV</strong><small>Create a one-by-one reminder queue</small></span><svg><use href="#icon-chevron"></use></svg></a>
-          <a class="quick-action" href="{% url 'manage_appointments' %}#templates"><span class="quick-action__icon"><svg><use href="#icon-template"></use></svg></span><span><strong>Create message template</strong><small>{{ dashboard.templates }} approved · {{ dashboard.pending_templates }} awaiting review</small></span><svg><use href="#icon-chevron"></use></svg></a>
-          {% if user.is_staff %}<a class="quick-action" href="/admin/rasel/doctor/"><span class="quick-action__icon"><svg><use href="#icon-doctor"></use></svg></span><span><strong>Manage doctors</strong><small>Departments and contact details</small></span><svg><use href="#icon-chevron"></use></svg></a>{% endif %}
+          <a class="quick-action" href="{% url 'template_approvals' %}"><span class="quick-action__icon"><svg><use href="#icon-template"></use></svg></span><span><strong>Manage message templates</strong><small>{{ dashboard.templates }} approved · {{ dashboard.pending_templates }} awaiting review</small></span><svg><use href="#icon-chevron"></use></svg></a>
+          {% if perms.directory.view_doctor %}<a class="quick-action" href="{% url 'doctor_list' %}"><span class="quick-action__icon"><svg><use href="#icon-doctor"></use></svg></span><span><strong>Manage doctors</strong><small>Departments and contact details</small></span><svg><use href="#icon-chevron"></use></svg></a>{% endif %}
         </div>
       </section>
       {% if subscription %}

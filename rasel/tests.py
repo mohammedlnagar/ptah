@@ -27,7 +27,8 @@ from messaging.models import (
     MessageTemplate,
     MessageTemplateRevision,
 )
-from rasel.forms import CampaignUploadForm, MessageTemplateForm
+from messaging.forms import MessageTemplateForm
+from rasel.forms import CampaignUploadForm
 from rasel.utilities.csv_handler import save_campaign_from_csv
 
 

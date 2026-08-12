@@ -5,7 +5,7 @@
 {% block content %}
 <header class="page-header">
   <div><span class="eyebrow">Outreach operations</span><h1>Campaigns</h1><p>Upload appointment or marketing data, assign an approved template, and work through each message personally.</p></div>
-  <div class="page-header-actions">{% if perms.messaging.add_messagetemplate %}<a class="button button--secondary" href="#templates"><svg><use href="#icon-template"></use></svg>New template</a>{% endif %}{% if perms.campaigns.add_campaign %}<a class="button button--primary" href="#new-campaign"><svg><use href="#icon-upload"></use></svg>Upload CSV</a>{% endif %}</div>
+  <div class="page-header-actions">{% if perms.messaging.add_messagetemplate %}<a class="button button--secondary" href="{% url 'template_create' %}"><svg><use href="#icon-template"></use></svg>New template</a>{% endif %}{% if perms.campaigns.add_campaign %}<a class="button button--primary" href="#new-campaign"><svg><use href="#icon-upload"></use></svg>Upload CSV</a>{% endif %}</div>
 </header>
 
 <section class="metric-grid" aria-label="Campaign metrics">
@@ -52,16 +52,7 @@
   </section>
 
   <section class="panel panel--padded" id="templates" aria-labelledby="templates-heading">
-    <div class="section-header"><div><span class="eyebrow">Reusable copy</span><h2 id="templates-heading">Message templates</h2><p>Create a draft for an Admin or Approver to review.</p></div><span class="metric-icon"><svg><use href="#icon-template"></use></svg></span></div>
-    {% if perms.messaging.add_messagetemplate %}<form id="messageTemplateForm" method="post" action="{% url 'manage_appointments' %}" novalidate>
-      {% csrf_token %}
-      <div class="form-grid">
-        <div class="form-field form-field--full"><label class="form-label" for="{{ message_template_form.name.id_for_label }}">Template name</label>{{ message_template_form.name }}<div class="field-errors" data-error-for="name"></div></div>
-        <div class="form-field form-field--full"><label class="form-label" for="{{ message_template_form.purpose.id_for_label }}">Purpose</label>{{ message_template_form.purpose }}<div class="field-errors" data-error-for="purpose"></div></div>
-        <div class="form-field form-field--full"><label class="form-label" for="{{ message_template_form.content.id_for_label }}">Message content</label>{{ message_template_form.content }}<div class="placeholder-guide" aria-label="Available placeholders"><span class="placeholder-token">#patient_name</span><span class="placeholder-token">#mrn</span><span class="placeholder-token">#doctor</span><span class="placeholder-token">#department</span><span class="placeholder-token">#appointment_date</span><span class="placeholder-token">#appointment_time</span><span class="placeholder-token">#appointment_status</span></div><div class="field-errors" data-error-for="content"></div></div>
-      </div>
-      <div class="form-actions"><button type="submit" id="messageSubmitButton" class="button button--primary"><svg><use href="#icon-plus"></use></svg>Save draft</button></div>
-    </form>{% endif %}
+    <div class="section-header"><div><span class="eyebrow">Reusable copy</span><h2 id="templates-heading">Message templates</h2><p>Authoring and approval live on the templates screen.</p></div><span class="metric-icon"><svg><use href="#icon-template"></use></svg></span></div>
 
     <div class="content-section">
       <div class="section-header"><div><h3>Saved templates</h3></div><span class="badge badge--neutral">{{ message_templates|length }}</span></div>
@@ -72,6 +63,7 @@
           {% endfor %}
         </div>
       {% else %}<p class="muted">No templates have been created yet.</p>{% endif %}
+      <div class="form-actions"><a class="button button--secondary" href="{% url 'template_approvals' %}"><svg><use href="#icon-template"></use></svg>Manage templates</a></div>
     </div>
   </section>
 </div>

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}{{ batch.original_filename }} · Waslni{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <a class="section-link" href="{% url 'import_list' %}">← All imports</a>
+    <h1>{{ batch.original_filename }}</h1>
+    <p>
+      {{ batch.get_purpose_display }} · uploaded {{ batch.created_at|date:"d M Y · H:i" }} by {{ batch.uploaded_by.email }}
+      · <span class="badge badge--{{ batch.status }}">{{ batch.get_status_display }}</span>
+    </p>
+  </div>
+</header>
+
+
+<section class="campaign-summary" aria-label="Import counts">
+  <article class="summary-chip"><small>Rows read</small><strong>{{ batch.row_count }}</strong></article>
+  <article class="summary-chip"><small>Rows imported</small><strong>{{ batch.imported_count }}</strong></article>
+  <article class="summary-chip"><small>Problems</small><strong>{{ batch.error_count }}</strong></article>
+</section>
+
+{% if batch.replaces %}
+  <div class="flash flash--info" role="status">
+    <span>This upload replaced <a href="{% url 'import_detail' batch.replaces.id %}">{{ batch.replaces.original_filename }}</a>.</span>
+  </div>
+{% endif %}
+
+{% if issues %}
+  <section class="panel panel--padded">
+    <div class="section-header"><div><h2>What went wrong</h2><p>Fix these rows in your spreadsheet, then upload the corrected file below.</p></div></div>
+    <div class="roster-list">
+      {% for issue in issues %}
+        <article class="roster-row">
+          <span class="roster-main">
+            <strong>{% if issue.row_number %}Row {{ issue.row_number }}{% else %}Whole file{% endif %}</strong>
+            <small>{{ issue.message }}</small>
+          </span>
+          {% if issue.column %}
+            <span class="roster-field"><small>Column</small><strong>{{ issue.column }}</strong></span>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+{% if replacement_form %}
+  <section class="panel panel--padded" style="max-width:38rem">
+    <div class="section-header"><div><h2>Upload a corrected file</h2><p>This creates a new import linked to this one, so the failure stays on record.</p></div></div>
+    <form method="post" action="{% url 'import_replace' batch.id %}" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <div class="form-grid">
+        {% for field in replacement_form %}
+          <div class="form-field form-field--full">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<ul class="field-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+          </div>
+        {% endfor %}
+        <button class="button button--primary" type="submit">Upload replacement</button>
+      </div>
+    </form>
+  </section>
+{% elif batch.status == "failed" %}
+  <section class="panel panel--padded">
+    <p class="muted">
+      {% if batch.replacement %}
+        This import was already replaced by
+        <a href="{% url 'import_detail' batch.replacement.id %}">{{ batch.replacement.original_filename }}</a>.
+      {% else %}
+        You do not have permission to upload a replacement.
+      {% endif %}
+    </p>
+  </section>
+{% endif %}
+{% endblock %}

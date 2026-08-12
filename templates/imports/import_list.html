@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}CSV imports · Waslni{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <span class="eyebrow">Imports</span>
+    <h1>CSV imports</h1>
+    <p>Every upload is recorded here, including the ones that failed validation and why.</p>
+  </div>
+  <div class="page-header-actions">
+    <a class="button button--primary" href="{% url 'manage_appointments' %}#new-campaign">Upload CSV</a>
+  </div>
+</header>
+
+
+<section class="panel panel--padded">
+  {% if batches %}
+    <div class="roster-list">
+      {% for batch in batches %}
+        <article class="roster-row">
+          <span class="roster-main">
+            <strong>{{ batch.original_filename }}</strong>
+            <small>{{ batch.get_purpose_display }} · {{ batch.created_at|date:"d M Y · H:i" }} · {{ batch.uploaded_by.email }}</small>
+          </span>
+          <span class="roster-field">
+            <small>Status</small>
+            <span class="badge badge--{{ batch.status }}">{{ batch.get_status_display }}</span>
+          </span>
+          <span class="roster-field">
+            <small>Rows</small>
+            <strong>{{ batch.imported_count }} of {{ batch.row_count }}</strong>
+          </span>
+          {% if batch.error_count %}
+            <span class="roster-field">
+              <small>Problems</small>
+              <strong>{{ batch.error_count }}</strong>
+            </span>
+          {% endif %}
+          <span class="roster-actions">
+            <a class="button button--secondary button--small" href="{% url 'import_detail' batch.id %}">Details</a>
+          </span>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>No imports yet</h3>
+      <p>Uploading an appointment or marketing CSV records a batch here.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

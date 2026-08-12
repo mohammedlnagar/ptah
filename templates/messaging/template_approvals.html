@@ -10,15 +10,10 @@
     <p>Authors submit a draft for review; an approver releases it for campaigns.</p>
   </div>
   <div class="page-header-actions">
-    <a class="button button--secondary" href="{% url 'manage_appointments' %}#templates">New template</a>
+    {% if can_submit %}<a class="button button--primary" href="{% url 'template_create' %}">New template</a>{% endif %}
   </div>
 </header>
 
-{% if messages %}
-  {% for message in messages %}
-    <div class="flash flash--{{ message.tags }}" role="status"><span>{{ message }}</span></div>
-  {% endfor %}
-{% endif %}
 
 <section class="panel panel--padded">
   <div class="section-header"><div><h2>Waiting for review</h2><p>Only approved templates can be used to build a campaign.</p></div></div>
@@ -77,14 +72,17 @@
             <small>Status</small>
             <span class="badge badge--{{ revision.approval_status }}">{{ revision.get_approval_status_display }}</span>
           </span>
-          {% if can_submit %}
-            <span class="roster-actions">
+          <span class="roster-actions">
+            {% if perms.messaging.change_messagetemplate %}
+              <a class="button button--secondary button--small" href="{% url 'template_edit' revision.template_id %}">Edit</a>
+            {% endif %}
+            {% if can_submit %}
               <form method="post" action="{% url 'submit_template' revision.id %}">
                 {% csrf_token %}
                 <button class="button button--primary button--small" type="submit">Submit for review</button>
               </form>
-            </span>
-          {% endif %}
+            {% endif %}
+          </span>
         </article>
       {% endfor %}
     </div>

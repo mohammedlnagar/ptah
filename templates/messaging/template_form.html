@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}{{ heading }} · Waslni{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <a class="section-link" href="{% url 'template_approvals' %}">← All templates</a>
+    <h1>{{ heading }}</h1>
+    {% if template %}<p>Saving an edit creates a new draft revision; the approved copy already used by campaigns is left untouched.</p>{% endif %}
+  </div>
+</header>
+
+<section class="panel panel--padded" style="max-width:44rem">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="flash flash--error" role="alert"><span>{{ form.non_field_errors|striptags }}</span></div>{% endif %}
+    <div class="form-grid">
+      {% for field in form %}
+        <div class="form-field form-field--full">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<small>Required</small>{% endif %}</label>
+          {{ field }}
+          {% if field.name == "content" %}
+            <div class="placeholder-guide" aria-label="Available placeholders">
+              {% for placeholder in placeholders %}<span class="placeholder-token">{{ placeholder }}</span>{% endfor %}
+            </div>
+          {% endif %}
+          {% if field.errors %}<ul class="field-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      {% endfor %}
+      <div class="confirm-actions">
+        <a class="button button--secondary" href="{% url 'template_approvals' %}">Cancel</a>
+        <button class="button button--primary" type="submit">Save template</button>
+      </div>
+    </div>
+  </form>
+</section>
+{% endblock %}

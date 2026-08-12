@@ -17,11 +17,6 @@
   </div>
 </header>
 
-{% if messages %}
-  {% for message in messages %}
-    <div class="flash flash--{{ message.tags }}" role="status"><span>{{ message }}</span></div>
-  {% endfor %}
-{% endif %}
 
 <section class="panel panel--padded">
   {% if departments %}

@@ -11,10 +11,9 @@ from campaigns.models import Campaign, CampaignItem
 from directory.normalization import normalize_phone_number
 from directory.services import resolve_contact, resolve_department, resolve_doctor
 from imports.models import ImportBatch, ImportIssue
+from messaging.formatting import format_message
 from messaging.models import CampaignMessage, MessageTemplate
 from reporting.services import refresh_campaign_summary
-
-from .message_formatter import format_message
 
 
 COMMON_REQUIRED_COLUMNS = {"Patient Name", "Patient Mobile"}

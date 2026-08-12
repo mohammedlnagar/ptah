@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import Group
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -19,6 +19,7 @@ from .forms import (
     OrganizationInviteForm,
 )
 from .models import CustomUser, OrganizationInvite
+from .services import check_seat_available, usage_summary
 
 
 def register(request):
@@ -130,6 +131,11 @@ def manage_invites(request):
     if request.method == "POST":
         form = OrganizationInviteForm(request.POST)
         if form.is_valid():
+            try:
+                check_seat_available(organization)
+            except ValidationError as error:
+                messages.error(request, "; ".join(error.messages))
+                return redirect("manage_invites")
             invite = form.save(commit=False)
             invite.organization = organization
             invite.created_by = request.user
@@ -148,7 +154,11 @@ def manage_invites(request):
     return render(
         request,
         "account/invites.html",
-        {"form": form, "invites": invites},
+        {
+            "form": form,
+            "invites": invites,
+            "usage": usage_summary(organization),
+        },
     )
 
 
@@ -253,6 +263,12 @@ def change_member_role(request, user_id):
 def approve_member(request, user_id):
     organization = tenant_or_403(request)
     member = _editable_member(request, organization, user_id, is_active=False)
+    try:
+        # The pending account does not hold a seat yet; approving claims one.
+        check_seat_available(organization)
+    except ValidationError as error:
+        messages.error(request, "; ".join(error.messages))
+        return redirect("manage_team")
     member.is_active = True
     member.save(update_fields=("is_active",))
     messages.success(request, f"{member.email} can now sign in.")

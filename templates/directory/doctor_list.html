@@ -17,11 +17,6 @@
   </div>
 </header>
 
-{% if messages %}
-  {% for message in messages %}
-    <div class="flash flash--{{ message.tags }}" role="status"><span>{{ message }}</span></div>
-  {% endfor %}
-{% endif %}
 
 <form method="get" class="filter-panel" aria-label="Search doctors">
   <div class="filter-grid">

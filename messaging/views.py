@@ -6,6 +6,8 @@ from django.views.decorators.http import require_POST
 
 from common.access import tenant_or_403
 
+from .forms import MessageTemplateForm
+from .formatting import PLACEHOLDER_NAMES
 from .models import MessageTemplate, MessageTemplateRevision
 from .services import (
     approve_template_revision,
@@ -61,6 +63,63 @@ def template_approvals(request):
             "approved": settled,
             "can_approve": request.user.has_perm("messaging.approve_messagetemplate"),
             "can_submit": request.user.has_perm("messaging.add_messagetemplate"),
+        },
+    )
+
+
+@login_required
+@permission_required("messaging.add_messagetemplate", raise_exception=True)
+def template_create(request):
+    organization = tenant_or_403(request)
+    if request.method == "POST":
+        form = MessageTemplateForm(request.POST, user=request.user)
+        if form.is_valid():
+            template = form.save()
+            messages.success(
+                request, f"“{template.name}” saved as a draft."
+            )
+            return redirect("template_approvals")
+    else:
+        form = MessageTemplateForm(user=request.user)
+    return render(
+        request,
+        "messaging/template_form.html",
+        {
+            "form": form,
+            "heading": "New message template",
+            "placeholders": PLACEHOLDER_NAMES,
+        },
+    )
+
+
+@login_required
+@permission_required("messaging.change_messagetemplate", raise_exception=True)
+def template_edit(request, template_id):
+    organization = tenant_or_403(request)
+    template = get_object_or_404(
+        MessageTemplate.objects.for_organization(organization), pk=template_id
+    )
+    if request.method == "POST":
+        form = MessageTemplateForm(
+            request.POST, instance=template, user=request.user
+        )
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                f"“{template.name}” updated. Edits start a new draft revision.",
+            )
+            return redirect("template_approvals")
+    else:
+        form = MessageTemplateForm(instance=template, user=request.user)
+    return render(
+        request,
+        "messaging/template_form.html",
+        {
+            "form": form,
+            "heading": f"Edit {template.name}",
+            "template": template,
+            "placeholders": PLACEHOLDER_NAMES,
         },
     )
 

@@ -14,14 +14,21 @@
   </div>
 </header>
 
-{% if messages %}
-  {% for message in messages %}
-    <div class="flash flash--{{ message.tags }}" role="status"><span>{{ message }}</span></div>
-  {% endfor %}
-{% endif %}
 
 <section class="panel panel--padded">
-  <div class="section-header"><div><h2>Create an invitation</h2><p>The link works once and expires after seven days.</p></div></div>
+  <div class="section-header">
+    <div><h2>Create an invitation</h2><p>The link works once and expires after seven days.</p></div>
+    {% if usage.seat_limit %}
+      <span class="badge badge--{% if usage.seats_used >= usage.seat_limit %}cancelled{% else %}neutral{% endif %}">
+        {{ usage.seats_used }} of {{ usage.seat_limit }} seats used
+      </span>
+    {% endif %}
+  </div>
+  {% if usage.seat_limit and usage.seats_used >= usage.seat_limit %}
+    <div class="flash flash--error" role="status">
+      <span>Your plan is full. Suspend a member or upgrade before inviting anyone else. Outstanding invitations count towards the limit.</span>
+    </div>
+  {% endif %}
   <form method="post" class="form-grid">
     {% csrf_token %}
     {% for field in form %}
