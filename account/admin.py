@@ -4,6 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 from .models import (
     CustomUser,
     Organization,
+    OrganizationInvite,
     OrganizationSubscription,
     SubscriptionPlan,
 )
@@ -47,6 +48,13 @@ class OrganizationAdmin(OrganizationScopedAdmin):
 @admin.register(OrganizationSubscription)
 class OrganizationSubscriptionAdmin(OrganizationScopedAdmin):
     list_display = ("organization", "plan", "status", "starts_on", "ends_on")
+
+
+@admin.register(OrganizationInvite)
+class OrganizationInviteAdmin(OrganizationScopedAdmin):
+    list_display = ("organization", "role", "state", "created_by", "expires_at")
+    list_filter = ("role",)
+    readonly_fields = ("token", "used_by", "used_at")
 
 
 admin.site.register(SubscriptionPlan)

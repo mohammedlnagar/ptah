@@ -186,11 +186,11 @@ p { margin-bottom: 1rem; }
 .campaign-row--full { grid-template-columns: minmax(12rem, 1.3fr) minmax(8rem, .7fr) minmax(5rem, .4fr) minmax(6rem, .5fr) minmax(6rem, .5fr) auto; }
 
 .badge { display: inline-flex; align-items: center; width: fit-content; min-height: 1.55rem; padding: 0.27rem 0.52rem; border-radius: 999px; font-size: 0.67rem; font-weight: 750; line-height: 1; white-space: nowrap; }
-.badge--neutral, .badge--draft, .badge--pending { color: var(--ink-700); background: var(--ink-100); }
+.badge--neutral, .badge--draft, .badge--pending, .badge--used { color: var(--ink-700); background: var(--ink-100); }
 .badge--ready, .badge--approved, .badge--sent, .badge--operator_marked_sent, .badge--confirmed, .badge--active { color: var(--green-700); background: var(--green-100); }
 .badge--opened, .badge--appointment { color: var(--blue-700); background: var(--blue-100); }
-.badge--marketing, .badge--trial, .badge--booked { color: var(--amber-700); background: var(--amber-100); }
-.badge--cancelled, .badge--rejected, .badge--skipped, .badge--suspended { color: var(--red-700); background: var(--red-100); }
+.badge--marketing, .badge--trial, .badge--booked, .badge--expired { color: var(--amber-700); background: var(--amber-100); }
+.badge--cancelled, .badge--rejected, .badge--skipped, .badge--suspended, .badge--revoked { color: var(--red-700); background: var(--red-100); }
 .badge--completed { color: var(--teal-900); background: var(--teal-100); }
 
 .quick-actions { display: grid; gap: 0.7rem; }
@@ -284,6 +284,30 @@ p { margin-bottom: 1rem; }
 .dispatch-box { display: flex; flex-direction: column; height: 100%; }
 .dispatch-box .button { width: 100%; margin-top: auto; }
 .dispatch-note { margin: 0.65rem 0; color: var(--ink-500); font-size: 0.66rem; line-height: 1.4; }
+.dispatch-note--warning { padding: 0.5rem 0.6rem; border-radius: 0.5rem; color: var(--red-700); background: var(--red-100); }
+
+/* Confirmation and onboarding panels */
+.confirm-panel { max-width: 40rem; margin: 0 auto; display: grid; gap: 0.85rem; }
+.confirm-details { display: grid; gap: 0.55rem; margin: 0; }
+.confirm-details > div { display: flex; justify-content: space-between; gap: 1rem; padding-bottom: 0.45rem; border-bottom: 1px solid var(--ink-100); }
+.confirm-details dt { color: var(--ink-500); font-size: 0.7rem; }
+.confirm-details dd { margin: 0; font-weight: 650; font-size: 0.75rem; }
+.confirm-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.35rem; }
+/* Team roster and invitations.
+   Deliberately not .campaign-row: that component drops secondary columns on
+   narrow screens, but a member's role and an invitation link are the point of
+   these screens, so they wrap instead of disappearing. */
+.roster-list { display: grid; gap: 0.6rem; }
+.roster-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; padding: 0.8rem 0.9rem; border: 1px solid var(--ink-100); border-radius: 0.7rem; background: #fff; }
+.roster-main { flex: 1 1 13rem; min-width: 0; display: grid; gap: 0.15rem; }
+.roster-main strong { font-size: 0.82rem; overflow-wrap: anywhere; }
+.roster-main small, .roster-field small { color: var(--ink-500); font-size: 0.68rem; }
+.roster-field { display: grid; gap: 0.2rem; }
+.roster-field strong { font-size: 0.76rem; }
+.roster-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-left: auto; }
+.roster-link { flex: 1 1 100%; display: grid; gap: 0.3rem; min-width: 0; }
+.roster-link-controls { display: flex; gap: 0.5rem; }
+.roster-link-controls .invite-link { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.65rem; }
 .doctor-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.75rem; }
 .doctor-summary { padding: 0.9rem; background: var(--white); border: 1px solid var(--ink-200); border-radius: var(--radius-md); }
 .doctor-summary__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.75rem; }

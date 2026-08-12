@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Team invitations · Waslni{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <span class="eyebrow">Team</span>
+    <h1>Invitations</h1>
+    <p>Create a link, share it with your colleague, then approve their account once they register.</p>
+  </div>
+  <div class="page-header-actions">
+    <a class="button button--secondary" href="{% url 'manage_team' %}">Team members</a>
+  </div>
+</header>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="flash flash--{{ message.tags }}" role="status"><span>{{ message }}</span></div>
+  {% endfor %}
+{% endif %}
+
+<section class="panel panel--padded">
+  <div class="section-header"><div><h2>Create an invitation</h2><p>The link works once and expires after seven days.</p></div></div>
+  <form method="post" class="form-grid">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="form-field">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<ul class="field-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+    {% endfor %}
+    <button class="button button--primary" type="submit">Create invitation link</button>
+  </form>
+</section>
+
+<section class="panel panel--padded">
+  <div class="section-header"><div><h2>Existing invitations</h2></div></div>
+  {% if invites %}
+    <div class="roster-list">
+      {% for invite in invites %}
+        <article class="roster-row">
+          <span class="roster-main">
+            <strong>{{ invite.get_role_display }}</strong>
+            <small>Created {{ invite.created_at|date:"d M Y · H:i" }} by {{ invite.created_by.email }}</small>
+          </span>
+          <span class="roster-field">
+            <small>Status</small>
+            <span class="badge badge--{{ invite.state }}">{{ invite.state|capfirst }}</span>
+          </span>
+          {% if invite.used_by %}
+            <span class="roster-field"><small>Accepted by</small><strong>{{ invite.used_by.email }}</strong></span>
+          {% endif %}
+          {% if invite.is_usable %}
+            <span class="roster-actions">
+              <form method="post" action="{% url 'revoke_invite' invite.id %}">
+                {% csrf_token %}
+                <button class="button button--secondary button--small" type="submit">Revoke</button>
+              </form>
+            </span>
+            <span class="roster-link">
+              <small>Invitation link</small>
+              <span class="roster-link-controls">
+                <input class="filter-control invite-link" readonly
+                       value="{{ request.scheme }}://{{ request.get_host }}{% url 'register_with_invite' invite.token %}">
+                <button type="button" class="button button--secondary button--small copy-invite">Copy</button>
+              </span>
+            </span>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>No invitations yet</h3>
+      <p>Create one above to add your first colleague.</p>
+    </div>
+  {% endif %}
+</section>
+
+<script>
+  document.querySelectorAll('.copy-invite').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var field = button.closest('.roster-link-controls').querySelector('.invite-link');
+      field.select();
+      navigator.clipboard.writeText(field.value).then(function () {
+        var original = button.textContent;
+        button.textContent = 'Copied';
+        setTimeout(function () { button.textContent = original; }, 1500);
+      });
+    });
+  });
+</script>
+{% endblock %}

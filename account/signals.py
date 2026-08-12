@@ -17,6 +17,9 @@ ROLE_PERMISSION_PREFIXES = {
         "account.change_organization",
         "account.view_organizationsubscription",
         "account.view_subscriptionplan",
+        "account.add_organizationinvite",
+        "account.change_organizationinvite",
+        "account.view_organizationinvite",
         "rasel.",
         "appointments.",
         "messaging.",
@@ -26,6 +29,11 @@ ROLE_PERMISSION_PREFIXES = {
     ),
     "Admin": (
         "account.view_",
+        # A tenant Admin runs day-to-day onboarding: inviting colleagues and
+        # approving them. Creating Owners stays out of reach by design.
+        "account.change_customuser",
+        "account.add_organizationinvite",
+        "account.change_organizationinvite",
         "rasel.",
         "appointments.",
         "messaging.",

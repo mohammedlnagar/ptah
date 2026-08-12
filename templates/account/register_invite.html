@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Join {{ invite.organization.name }} · Waslni{% endblock %}
+
+{% block content %}
+<div class="auth-layout">
+  <section class="auth-story">
+    <div>
+      <span class="auth-kicker">You have been invited</span>
+      <h1>Join {{ invite.organization.name }} on Waslni.</h1>
+      <p>Your colleague invited you as {{ invite.get_role_display }}. Create your account, then an administrator will approve it before you can sign in.</p>
+    </div>
+    <div class="auth-steps">
+      <div class="auth-step"><span>1</span><div><strong>Create your account</strong><small>Choose your own password.</small></div></div>
+      <div class="auth-step"><span>2</span><div><strong>Wait for approval</strong><small>An administrator activates your access.</small></div></div>
+      <div class="auth-step"><span>3</span><div><strong>Start working</strong><small>Sign in and pick up your queue.</small></div></div>
+    </div>
+  </section>
+  <section class="auth-form-wrap">
+    <div class="auth-card">
+      <div class="auth-card__heading">
+        <span class="eyebrow">{{ invite.get_role_display }} invitation</span>
+        <h2>Create your account</h2>
+        <p>You are joining <strong>{{ invite.organization.name }}</strong>.</p>
+      </div>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="flash flash--error" role="alert"><svg><use href="#icon-info"></use></svg><span>{{ form.non_field_errors|striptags }}</span></div>{% endif %}
+        <div class="form-grid">
+          {% for field in form %}
+            <div class="form-field">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<small>Required</small>{% endif %}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="field-help password-guidance">{{ field.help_text|safe }}</div>{% endif %}
+              {% if field.errors %}<ul class="field-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+          {% endfor %}
+          <button class="button button--primary" type="submit">Create account <svg><use href="#icon-arrow"></use></svg></button>
+        </div>
+      </form>
+      <p class="auth-switch">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+    </div>
+  </section>
+</div>
+{% endblock %}

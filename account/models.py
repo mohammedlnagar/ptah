@@ -1,9 +1,24 @@
+import datetime
+import secrets
+
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 from common.models import TimeStampedModel
+
+
+INVITE_VALID_FOR = datetime.timedelta(days=7)
+
+
+def generate_invite_token():
+    return secrets.token_urlsafe(32)
+
+
+def default_invite_expiry():
+    return timezone.now() + INVITE_VALID_FOR
 
 
 class SubscriptionPlan(TimeStampedModel):
@@ -120,3 +135,90 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.email
+
+
+class OrganizationInvite(TimeStampedModel):
+    """A single-use link that lets an employee join an existing organization.
+
+    Owner is deliberately not invitable: it is established when the workspace
+    is created, so an Admin cannot use an invite to escalate past their own
+    role. Promoting someone to Owner stays a Django admin action.
+    """
+
+    class Role(models.TextChoices):
+        ADMIN = "Admin", "Admin"
+        APPROVER = "Approver", "Approver"
+        OPERATOR = "Operator", "Operator"
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name="invites"
+    )
+    role = models.CharField(
+        max_length=20, choices=Role.choices, default=Role.OPERATOR
+    )
+    token = models.CharField(
+        max_length=64,
+        unique=True,
+        default=generate_invite_token,
+        editable=False,
+    )
+    created_by = models.ForeignKey(
+        CustomUser, on_delete=models.PROTECT, related_name="created_invites"
+    )
+    expires_at = models.DateTimeField(default=default_invite_expiry)
+    used_by = models.OneToOneField(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        related_name="accepted_invite",
+        blank=True,
+        null=True,
+    )
+    used_at = models.DateTimeField(blank=True, null=True)
+    revoked_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(
+                fields=("organization", "used_at"), name="invite_org_used_idx"
+            )
+        ]
+
+    @property
+    def is_used(self):
+        return self.used_at is not None
+
+    @property
+    def is_revoked(self):
+        return self.revoked_at is not None
+
+    @property
+    def is_expired(self):
+        return timezone.now() >= self.expires_at
+
+    @property
+    def is_usable(self):
+        return not (self.is_used or self.is_revoked or self.is_expired)
+
+    @property
+    def state(self):
+        if self.is_used:
+            return "used"
+        if self.is_revoked:
+            return "revoked"
+        if self.is_expired:
+            return "expired"
+        return "active"
+
+    def clean(self):
+        super().clean()
+        if (
+            self.created_by_id
+            and self.created_by.organization_id != self.organization_id
+        ):
+            raise ValidationError(
+                {"created_by": "Invites must be created inside your organization."}
+            )
+
+    def __str__(self):
+        return f"{self.get_role_display()} invite for {self.organization}"

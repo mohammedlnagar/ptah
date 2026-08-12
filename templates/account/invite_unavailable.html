@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Invitation unavailable · Waslni{% endblock %}
+
+{% block content %}
+<section class="panel panel--padded confirm-panel">
+  <span class="eyebrow">Invitation</span>
+  <h1>This invitation can no longer be used</h1>
+  <p>
+    {% if invite.is_used %}
+      It has already been used to create an account.
+    {% elif invite.is_revoked %}
+      It was revoked by an administrator.
+    {% else %}
+      It expired on {{ invite.expires_at|date:"d M Y" }}.
+    {% endif %}
+    Ask an administrator at {{ invite.organization.name }} for a new link.
+  </p>
+  <div class="confirm-actions">
+    <a class="button button--secondary" href="{% url 'login' %}">Go to sign in</a>
+  </div>
+</section>
+{% endblock %}

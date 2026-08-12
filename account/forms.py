@@ -10,23 +10,28 @@ from django.utils.text import slugify
 from .models import (
     CustomUser,
     Organization,
+    OrganizationInvite,
     OrganizationSubscription,
     SubscriptionPlan,
 )
 
 
-class CustomUserCreationForm(UserCreationForm):
-    organization_name = forms.CharField(max_length=200, label="Organization name")
-
-    class Meta:
-        model = CustomUser
-        fields = ("organization_name", "username", "email", "mobile_number", "password1", "password2")
-
+class MobileNumberFieldMixin:
     def clean_mobile_number(self):
         value = (self.cleaned_data.get("mobile_number") or "").strip()
         if value and not re.fullmatch(r"\+?[1-9]\d{6,14}", value):
             raise forms.ValidationError("Enter a valid international phone number.")
         return value
+
+
+class CustomUserCreationForm(MobileNumberFieldMixin, UserCreationForm):
+    """Creates a brand-new organization with the signing-up user as its Owner."""
+
+    organization_name = forms.CharField(max_length=200, label="Organization name")
+
+    class Meta:
+        model = CustomUser
+        fields = ("organization_name", "username", "email", "mobile_number", "password1", "password2")
 
     def _unique_slug(self, name):
         base = slugify(name)[:180] or "organization"
@@ -64,17 +69,54 @@ class CustomUserCreationForm(UserCreationForm):
         return user
 
 
+class InvitedUserCreationForm(MobileNumberFieldMixin, UserCreationForm):
+    """Joins an employee to the organization named on their invite.
+
+    The organization and role come from the invite rather than from user
+    input, and the account stays inactive until an admin approves it.
+    """
+
+    class Meta:
+        model = CustomUser
+        fields = ("username", "email", "mobile_number", "password1", "password2")
+
+    def __init__(self, *args, invite=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.invite = invite
+
+    @transaction.atomic
+    def save(self, commit=True):
+        if not commit:
+            raise ValueError("Invited signup must be committed atomically.")
+        # Re-read under a row lock so two people cannot consume the same link.
+        invite = OrganizationInvite.objects.select_for_update().get(
+            pk=self.invite.pk
+        )
+        if not invite.is_usable:
+            raise forms.ValidationError("This invitation is no longer valid.")
+        user = super().save(commit=False)
+        user.organization = invite.organization
+        user.is_active = False
+        user.save()
+        group, _ = Group.objects.get_or_create(name=invite.role)
+        user.groups.add(group)
+        invite.used_by = user
+        invite.used_at = timezone.now()
+        invite.save(update_fields=("used_by", "used_at", "updated_at"))
+        return user
+
+
+class OrganizationInviteForm(forms.ModelForm):
+    class Meta:
+        model = OrganizationInvite
+        fields = ("role",)
+
+
 class LoginForm(AuthenticationForm):
     username = forms.EmailField(label="Email")
 
 
-class CustomUserUpdateForm(forms.ModelForm):
+class CustomUserUpdateForm(MobileNumberFieldMixin, forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ("username", "email", "mobile_number")
-
-    def clean_mobile_number(self):
-        value = (self.cleaned_data.get("mobile_number") or "").strip()
-        if value and not re.fullmatch(r"\+?[1-9]\d{6,14}", value):
-            raise forms.ValidationError("Enter a valid international phone number.")
-        return value

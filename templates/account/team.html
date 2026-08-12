@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Team members · Waslni{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <span class="eyebrow">Team</span>
+    <h1>Team members</h1>
+    <p>Approve colleagues who registered through an invitation, and manage who can sign in.</p>
+  </div>
+  <div class="page-header-actions">
+    <a class="button button--primary" href="{% url 'manage_invites' %}">Invitations</a>
+  </div>
+</header>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="flash flash--{{ message.tags }}" role="status"><span>{{ message }}</span></div>
+  {% endfor %}
+{% endif %}
+
+<section class="panel panel--padded">
+  <div class="section-header">
+    <div><h2>Waiting for approval</h2><p>These accounts cannot sign in yet.</p></div>
+  </div>
+  {% if pending_members %}
+    <div class="roster-list">
+      {% for member in pending_members %}
+        <article class="roster-row">
+          <span class="roster-main">
+            <strong>{{ member.email }}</strong>
+            <small>{{ member.username }} · registered {{ member.date_joined|date:"d M Y · H:i" }}</small>
+          </span>
+          <span class="roster-field">
+            <small>Role</small>
+            <strong>{% for group in member.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</strong>
+          </span>
+          <span class="roster-actions">
+            <form method="post" action="{% url 'approve_member' member.id %}">
+              {% csrf_token %}
+              <button class="button button--success button--small" type="submit">Approve</button>
+            </form>
+          </span>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>Nobody is waiting</h3>
+      <p>New registrations from your invitation links will appear here.</p>
+    </div>
+  {% endif %}
+</section>
+
+<section class="panel panel--padded">
+  <div class="section-header"><div><h2>Active members</h2></div></div>
+  <div class="roster-list">
+    {% for member in active_members %}
+      <article class="roster-row">
+        <span class="roster-main">
+          <strong>{{ member.email }}</strong>
+          <small>{{ member.username }}</small>
+        </span>
+        <span class="roster-field">
+          <small>Role</small>
+          <strong>{% for group in member.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</strong>
+        </span>
+        <span class="roster-actions">
+          {% if member.id != user.id %}
+            <form method="post" action="{% url 'suspend_member' member.id %}">
+              {% csrf_token %}
+              <button class="button button--secondary button--small" type="submit">Suspend</button>
+            </form>
+          {% else %}
+            <span class="badge badge--neutral">You</span>
+          {% endif %}
+        </span>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

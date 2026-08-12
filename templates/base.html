@@ -76,6 +76,16 @@
           {% endif %}
 
           <p class="nav-label">Administration</p>
+          {% if perms.account.change_customuser %}
+            <a href="{% url 'manage_team' %}" class="nav-item {% if request.resolver_match.url_name == 'manage_team' %}is-active{% endif %}">
+              <svg><use href="#icon-user"></use></svg><span>Team members</span>
+            </a>
+          {% endif %}
+          {% if perms.account.add_organizationinvite %}
+            <a href="{% url 'manage_invites' %}" class="nav-item {% if request.resolver_match.url_name == 'manage_invites' %}is-active{% endif %}">
+              <svg><use href="#icon-arrow"></use></svg><span>Invitations</span>
+            </a>
+          {% endif %}
           {% if user.is_staff %}
             <a href="/admin/" class="nav-item">
               <svg><use href="#icon-settings"></use></svg><span>Admin center</span>

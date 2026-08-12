@@ -11,6 +11,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from appointments.services import change_appointment_status
 from campaigns.models import Campaign, CampaignItem, DoctorSummary
+from common.access import tenant_or_403
 from directory.models import Contact
 from messaging.models import CampaignMessage, MessageHandoffEvent, MessageTemplate
 from messaging.services import (
@@ -22,12 +23,7 @@ from .forms import CampaignUploadForm, MessageTemplateForm
 from .utilities.csv_handler import CsvImportError, save_campaign_from_csv
 
 
-def _tenant_or_403(request):
-    if not request.user.organization_id:
-        raise PermissionDenied("Your account is not assigned to an organization.")
-    if not request.user.organization.is_active:
-        raise PermissionDenied("Your organization is inactive.")
-    return request.user.organization
+_tenant_or_403 = tenant_or_403
 
 
 @login_required

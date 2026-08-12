@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Account created · Waslni{% endblock %}
+
+{% block content %}
+<section class="panel panel--padded confirm-panel">
+  <span class="eyebrow">Almost there</span>
+  <h1>Your account is waiting for approval</h1>
+  <p>
+    You have joined <strong>{{ invite.organization.name }}</strong> as
+    {{ invite.get_role_display }}. An administrator needs to approve your
+    account before you can sign in. You will not be able to log in until then.
+  </p>
+  <div class="confirm-actions">
+    <a class="button button--secondary" href="{% url 'login' %}">Go to sign in</a>
+  </div>
+</section>
+{% endblock %}
