@@ -98,7 +98,11 @@ if DATABASE_URL:
         conn_health_checks=True,
     )
     if not DEBUG and database_config["ENGINE"].endswith("postgresql"):
-        database_config.setdefault("OPTIONS", {})["sslmode"] = "require"
+        # Require TLS unless the URL asks for something else. setdefault is on
+        # sslmode itself, not just OPTIONS, so an explicit ?sslmode= is honoured
+        # — CI runs against a service container that has no TLS. Heroku's
+        # DATABASE_URL carries no sslmode, so production still gets "require".
+        database_config.setdefault("OPTIONS", {}).setdefault("sslmode", "require")
     DATABASES = {
         "default": database_config
     }
