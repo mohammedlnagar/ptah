@@ -288,32 +288,68 @@ registering at `/Account/register/`.
 ## 10. Deploy from GitHub Actions
 
 Deployment uses OIDC, so no long-lived Azure credential is stored in GitHub.
+This was provisioned on 19 Aug 2026; the commands are recorded so the identity
+can be rebuilt or audited.
 
 ```bash
-SUBSCRIPTION=$(az account show --query id -o tsv)
 APP_REG=$(az ad app create --display-name ptah-github-deploy --query appId -o tsv)
 az ad sp create --id $APP_REG
-az role assignment create --assignee $APP_REG --role Contributor \
-  --scope /subscriptions/$SUBSCRIPTION/resourceGroups/$RG
 ```
+
+The deploy identity is scoped per resource rather than given Contributor over
+the whole resource group. It can build images and roll the app and the two
+jobs; it cannot reach the database, the Key Vault or the network, so a stolen
+GitHub token cannot read secrets or drop the server. Contributor on the
+registry (not just `AcrPush`) is needed because `az acr build` schedules a task
+run, which `AcrPush` does not permit.
+
+```bash
+for scope in \
+  $(az acr show -g $RG -n $REGISTRY --query id -o tsv) \
+  $(az containerapp show -g $RG -n ptah-web --query id -o tsv) \
+  $(az containerapp job show -g $RG -n ptah-migrate --query id -o tsv) \
+  $(az containerapp job show -g $RG -n ptah-scrub --query id -o tsv); do
+  az role assignment create --assignee $APP_REG --role Contributor --scope $scope
+done
+```
+
+One federated credential per branch that may run the workflow. The `subject`
+must match the running ref exactly — a mismatch fails at `azure/login` with
+`AADSTS70021: No matching federated identity record found`.
 
 ```bash
 az ad app federated-credential create --id $APP_REG --parameters '{
-  "name": "github-deploy",
+  "name": "github-main",
   "issuer": "https://token.actions.githubusercontent.com",
   "subject": "repo:mohammedlnagar/ptah:ref:refs/heads/agent/ptah-domain-refactor",
   "audiences": ["api://AzureADTokenExchange"]
 }'
 ```
 
-Add three repository secrets under **Settings → Secrets and variables →
-Actions**: `AZURE_CLIENT_ID` (the `appId` above), `AZURE_TENANT_ID`
-(`az account show --query tenantId -o tsv`) and `AZURE_SUBSCRIPTION_ID`.
+`github-azure` exists alongside it for `refs/heads/agent/azure-uae-deployment`,
+so the pipeline can be exercised from the deployment branch before it merges.
 
-Deploy from **Actions → Deploy to Azure → Run workflow**, typing `deploy` to
-confirm. The workflow builds in ACR, runs `ptah-migrate` to completion, and
-only then promotes the new revision — so a failed migration leaves the running
-version serving.
+The three repository secrets are set (**Settings → Secrets and variables →
+Actions**): `AZURE_CLIENT_ID` (the `appId` above), `AZURE_TENANT_ID` and
+`AZURE_SUBSCRIPTION_ID`. None is confidential on its own — they are directory
+identifiers, and the trust comes from the federated subject, not from a shared
+secret.
+
+```bash
+gh secret set AZURE_CLIENT_ID --body $APP_REG
+gh secret set AZURE_TENANT_ID --body $(az account show --query tenantId -o tsv)
+gh secret set AZURE_SUBSCRIPTION_ID --body $(az account show --query id -o tsv)
+```
+
+**The workflow must exist on the default branch before it can be run at all.**
+`workflow_dispatch` is only listed from the default branch, so until the Azure
+branch merges, `gh workflow run deploy-azure.yml` returns `404 not found on the
+default branch` even though the file is present on the feature branch.
+
+Once merged, deploy from **Actions → Deploy to Azure → Run workflow**, typing
+`deploy` to confirm. The workflow builds in ACR, runs `ptah-migrate` to
+completion, and only then promotes the new revision — so a failed migration
+leaves the running version serving.
 
 ## 11. Custom domain
 
