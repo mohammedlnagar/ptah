@@ -361,6 +361,7 @@ def save_campaign_from_csv(user, file, title, template, purpose, replaces=None):
         )
     )
 
+    retention_days = user.organization.campaign_retention_days
     try:
         with transaction.atomic():
             campaign = Campaign(
@@ -372,6 +373,12 @@ def save_campaign_from_csv(user, file, title, template, purpose, replaces=None):
                 template_revision=template_revision,
                 created_by=user,
                 status=Campaign.Status.READY,
+                # Zero means the organization keeps patient details forever.
+                scrub_after=(
+                    timezone.now() + datetime.timedelta(days=retention_days)
+                    if retention_days
+                    else None
+                ),
             )
             campaign.full_clean()
             campaign.save()

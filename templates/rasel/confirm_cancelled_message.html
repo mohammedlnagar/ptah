@@ -7,14 +7,14 @@
   <span class="eyebrow">Cancelled appointment</span>
   <h1>Send this reminder anyway?</h1>
   <p>
-    The appointment for <strong>{{ item.patient_name_snapshot }}</strong> is marked
+    The appointment for <strong>{{ item.patient_name_snapshot|default:"this patient" }}</strong> is marked
     <span class="badge badge--cancelled">Cancelled</span>. Reminders for cancelled
     appointments are usually sent by mistake.
   </p>
 
   <dl class="confirm-details">
-    <div><dt>Patient</dt><dd>{{ item.patient_name_snapshot }}</dd></div>
-    <div><dt>Phone</dt><dd>{{ item.phone_number_snapshot }}</dd></div>
+    <div><dt>Patient</dt><dd>{{ item.patient_name_snapshot|default:"Details removed" }}</dd></div>
+    <div><dt>Phone</dt><dd>{{ item.phone_number_snapshot|default:"Details removed" }}</dd></div>
     {% if item.doctor_name_snapshot %}<div><dt>Doctor</dt><dd>{{ item.doctor_name_snapshot }}</dd></div>{% endif %}
     {% if item.appointment_date %}<div><dt>Appointment</dt><dd>{{ item.appointment_date|date:"d M Y" }}{% if item.appointment_time %} · {{ item.appointment_time|time:"H:i" }}{% endif %}</dd></div>{% endif %}
   </dl>

@@ -7,12 +7,43 @@
   <div>
     <a class="section-link" href="{% url 'manage_appointments' %}">← All campaigns</a>
     <h1>{{ appointment_list.title }}</h1>
-    <p>{{ appointment_list.get_purpose_display }} · Created {{ appointment_list.created_at|date:"d M Y · H:i" }} · <span class="badge badge--{{ appointment_list.status }}">{{ appointment_list.get_status_display }}</span></p>
+    <p>{{ appointment_list.get_purpose_display }} · Created {{ appointment_list.created_at|date:"d M Y · H:i" }} · <span class="badge badge--{{ appointment_list.status }}">{{ appointment_list.get_status_display }}</span>{% if appointment_list.is_scrubbed %} · <span class="badge badge--neutral">Patient details removed</span>{% endif %}</p>
   </div>
   <div class="page-header-actions">
     <a class="button button--secondary" href="{% url 'export_assigned_messages_to_csv' appointment_list.id %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"><svg><use href="#icon-download"></use></svg>Export CSV</a>
   </div>
 </header>
+
+<section class="panel panel--padded retention-panel">
+  {% if appointment_list.is_scrubbed %}
+    <p class="dispatch-note">
+      Patient names and phone numbers were removed from this list on
+      {{ appointment_list.scrubbed_at|date:"d M Y · H:i" }}. MRNs, doctors,
+      appointment details and all reporting are unaffected.
+    </p>
+  {% else %}
+    <div class="retention-state">
+      <div>
+        <span class="work-label">Patient details</span>
+        {% if appointment_list.scrub_after %}
+          <p class="dispatch-note">Name and phone will be removed on <strong>{{ appointment_list.scrub_after|date:"d M Y · H:i" }}</strong>. Everything else is kept.</p>
+        {% else %}
+          <p class="dispatch-note">Kept indefinitely on this list.</p>
+        {% endif %}
+      </div>
+      {% if perms.campaigns.change_campaign %}
+        <form method="post" action="{% url 'update_campaign_retention' appointment_list.id %}" class="retention-form">
+          {% csrf_token %}
+          <label class="visually-hidden" for="retain-days">Days to keep patient details</label>
+          <input class="filter-control" id="retain-days" name="retain_days" type="number" min="0" step="1"
+                 placeholder="Days" value="">
+          <button class="button button--secondary button--small" type="submit" name="action" value="set">Set</button>
+          <button class="button button--secondary button--small" type="submit" name="action" value="never">Keep forever</button>
+        </form>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
 
 <section class="campaign-summary" aria-label="Campaign message progress">
   <article class="summary-chip"><small>Total messages</small><strong>{{ message_metrics.total }}</strong></article>
@@ -40,10 +71,10 @@
       <article class="work-item" data-work-item="{{ campaign_message.id }}">
         <section class="work-section">
           <span class="work-label">Recipient</span>
-          <div class="patient-name">{{ item.patient_name_snapshot }}</div>
+          <div class="patient-name">{{ item.patient_name_snapshot|default:"Patient details removed" }}</div>
           <div class="patient-meta">
             <span><svg><use href="#icon-user"></use></svg>MRN {{ item.mrn_snapshot|default:"Not provided" }}</span>
-            <span><svg><use href="#icon-whatsapp"></use></svg>{{ item.phone_number_snapshot }}</span>
+            <span><svg><use href="#icon-whatsapp"></use></svg>{{ item.phone_number_snapshot|default:"Removed" }}</span>
           </div>
         </section>
 
@@ -117,12 +148,32 @@
   <section class="content-section" aria-labelledby="doctor-share-heading">
     <div class="section-header"><div><h2 id="doctor-share-heading">Share doctor summaries</h2><p>Open each generated summary in WhatsApp. Waslni records only that the link was opened.</p></div></div>
     <div class="doctor-summary-grid">
-      {% for summary in doctor_summary_records %}
+      {% for record in doctor_summary_records %}
+        {% with summary=record.summary appointments=record.appointments %}
         <article class="doctor-summary">
           <div class="doctor-summary__head"><div><strong>{{ summary.doctor.name }}</strong><small>{{ summary.doctor.department.name|default:"Department not provided" }}</small></div><span class="badge badge--{{ summary.status }}">{{ summary.get_status_display }}</span></div>
-          <p>{{ summary.rendered_content }}</p>
+
+          <span class="work-label">Message to send</span>
+          <p class="doctor-summary__message">{{ summary.rendered_content }}</p>
+
+          {% if appointments %}
+            <details class="doctor-summary__roster">
+              <summary>All {{ appointments|length }} appointment{{ appointments|pluralize }}</summary>
+              <ol class="appointment-lines">
+                {% for row in appointments %}
+                  <li>
+                    <span class="appointment-lines__time">{% if row.item.appointment_time %}{{ row.item.appointment_time|time:"H:i" }}{% else %}--:--{% endif %}</span>
+                    <span class="appointment-lines__name">{{ row.name|default:"Patient details removed" }}</span>
+                    {% if row.item.appointment_status %}<span class="badge badge--{{ row.item.appointment_status }}">{{ row.item.get_appointment_status_display }}</span>{% endif %}
+                  </li>
+                {% endfor %}
+              </ol>
+            </details>
+          {% endif %}
+
           {% if summary.doctor.phone_number and perms.campaigns.change_doctorsummary %}<a class="button button--success button--compact" target="_blank" rel="noopener" href="{% url 'open_doctor_summary' summary.id %}"><svg><use href="#icon-whatsapp"></use></svg>Open WhatsApp</a>{% else %}<small>Add the doctor's phone number in Admin to enable sharing.</small>{% endif %}
         </article>
+        {% endwith %}
       {% endfor %}
     </div>
   </section>

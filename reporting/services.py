@@ -1,8 +1,12 @@
+from collections import defaultdict
+
 from django.db import transaction
 from django.db.models import Count, Q
 
 from campaigns.models import CampaignItem, DoctorSummary
 from messaging.models import CampaignMessage
+
+from .messages import build_doctor_summary
 
 
 @transaction.atomic
@@ -42,6 +46,14 @@ def refresh_campaign_summary(campaign):
         )
         .order_by("doctor__name", "doctor_id")
     )
+    # Fetched once and grouped in memory rather than per doctor inside the
+    # loop, which would be a query each.
+    items_by_doctor = defaultdict(list)
+    for item in campaign.items.filter(doctor__isnull=False).order_by(
+        "appointment_date", "appointment_time", "row_number"
+    ):
+        items_by_doctor[item.doctor_id].append(item)
+
     active_doctor_ids = []
     doctor_metrics = {}
     for row in doctor_rows:
@@ -58,11 +70,14 @@ def refresh_campaign_summary(campaign):
             "department": row["doctor__department__name"] or "",
             **metrics,
         }
-        rendered_content = (
-            f"{doctor_name} appointment summary for {campaign.title}: "
-            f"{metrics['total']} total, {metrics['booked']} booked, "
-            f"{metrics['confirmed']} confirmed, and "
-            f"{metrics['cancelled']} cancelled."
+        rendered_content = build_doctor_summary(
+            campaign_title=campaign.title,
+            doctor_name=doctor_name,
+            department=row["doctor__department__name"] or "",
+            items=items_by_doctor[row["doctor_id"]],
+            metrics=metrics,
+            # A scrubbed list has no names left to share.
+            name_patients=not campaign.is_scrubbed,
         )
         DoctorSummary.objects.update_or_create(
             campaign=campaign,

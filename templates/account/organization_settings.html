@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Workspace settings &middot; Waslni{% endblock %}
+
+{% block content %}
+<header class="page-header">
+  <div>
+    <span class="eyebrow">Workspace</span>
+    <h1>Settings</h1>
+    <p>How {{ organization.name }} sends messages and how long it keeps patient details.</p>
+  </div>
+  <div class="page-header-actions">
+    <a class="button button--secondary" href="{% url 'manage_team' %}">Team members</a>
+  </div>
+</header>
+
+<section class="panel panel--padded" style="max-width:40rem">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="flash flash--error" role="alert"><span>{{ form.non_field_errors|striptags }}</span></div>{% endif %}
+    <div class="form-grid">
+      {% for field in form %}
+        <div class="form-field form-field--full">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<small>Required</small>{% endif %}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="field-help">{{ field.help_text }}</div>{% endif %}
+          {% if field.errors %}<ul class="field-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      {% endfor %}
+      <button class="button button--primary" type="submit">Save settings</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel panel--padded" style="max-width:40rem">
+  <div class="section-header"><div><h2>What removing patient details does</h2></div></div>
+  <p class="dispatch-note">
+    On the day a list reaches its retention age, the patient name and phone
+    number are cleared from every row and the prepared WhatsApp text is
+    emptied. The MRN, doctor, department, appointment date and status stay, so
+    campaign totals and per-doctor reports keep working. The patient directory
+    and appointment history are separate records and are not affected.
+  </p>
+</section>
+{% endblock %}

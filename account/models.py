@@ -45,6 +45,13 @@ class Organization(TimeStampedModel):
         default="https://wa.me/{phone}?text={message}",
         help_text="Must contain the {phone} and {message} placeholders.",
     )
+    campaign_retention_days = models.PositiveIntegerField(
+        default=2,
+        help_text=(
+            "Days before patient name and phone are removed from a finished "
+            "list. Set 0 to keep them indefinitely."
+        ),
+    )
     is_active = models.BooleanField(default=True)
 
     class Meta:
