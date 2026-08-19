@@ -1,0 +1,67 @@
+# One-shot job to create the first platform administrator.
+#
+# createsuperuser is interactive, so it is driven by DJANGO_SUPERUSER_*
+# environment variables instead. The password is a plain secret here rather
+# than a Key Vault reference because it is used once: run the job, then
+# DELETE it so the credential does not remain in Azure configuration.
+#
+#   az containerapp job start  -g ptah-uae -n ptah-createsu
+#   az containerapp job delete -g ptah-uae -n ptah-createsu --yes
+#
+# The account created is a platform administrator with no organization: it can
+# reach /admin/ but not the tenant workspace. Create the workspace itself by
+# registering at /Account/register/.
+#
+# Substitute before use:
+#   <SUBSCRIPTION_ID>  az account show --query id -o tsv
+#   <VAULT_URI>        az keyvault show -g ptah-uae -n ptah-kv-uae01 --query properties.vaultUri -o tsv
+#   <ADMIN_EMAIL>      the login address (USERNAME_FIELD is email)
+#   <ADMIN_PASSWORD>   a strong password, changed after first sign-in
+identity:
+  type: SystemAssigned
+properties:
+  environmentId: /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/ptah-uae/providers/Microsoft.App/managedEnvironments/ptah-env
+  configuration:
+    triggerType: Manual
+    replicaTimeout: 600
+    replicaRetryLimit: 0
+    manualTriggerConfig:
+      parallelism: 1
+      replicaCompletionCount: 1
+    registries:
+      - server: ptahuae.azurecr.io
+        identity: system
+    secrets:
+      - name: django-secret
+        keyVaultUrl: <VAULT_URI>secrets/django-secret-key
+        identity: system
+      - name: database-url
+        keyVaultUrl: <VAULT_URI>secrets/database-url
+        identity: system
+      - name: su-password
+        value: <ADMIN_PASSWORD>
+  template:
+    containers:
+      - image: ptahuae.azurecr.io/ptah:bootstrap
+        name: ptah-createsu
+        command:
+          - /bin/sh
+        args:
+          - -c
+          - python manage.py createsuperuser --noinput
+        env:
+          - name: SECRET_KEY
+            secretRef: django-secret
+          - name: DATABASE_URL
+            secretRef: database-url
+          - name: DEBUG
+            value: "False"
+          - name: DJANGO_SUPERUSER_EMAIL
+            value: <ADMIN_EMAIL>
+          - name: DJANGO_SUPERUSER_USERNAME
+            value: admin
+          - name: DJANGO_SUPERUSER_PASSWORD
+            secretRef: su-password
+        resources:
+          cpu: 0.5
+          memory: 1.0Gi

@@ -1,0 +1,49 @@
+# Retention scrub: removes patient name and phone from lists whose window has
+# closed. Replaces the Heroku Scheduler job.
+#
+# Cron is always UTC, so 02:00 here is 06:00 in Dubai.
+#
+# Substitute before use:
+#   <SUBSCRIPTION_ID>  az account show --query id -o tsv
+#   <VAULT_URI>        az keyvault show -g ptah-uae -n ptah-kv-uae01 --query properties.vaultUri -o tsv
+identity:
+  type: SystemAssigned
+properties:
+  environmentId: /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/ptah-uae/providers/Microsoft.App/managedEnvironments/ptah-env
+  configuration:
+    triggerType: Schedule
+    replicaTimeout: 900
+    replicaRetryLimit: 1
+    scheduleTriggerConfig:
+      cronExpression: "0 2 * * *"
+      parallelism: 1
+      replicaCompletionCount: 1
+    registries:
+      - server: ptahuae.azurecr.io
+        identity: system
+    secrets:
+      - name: django-secret
+        keyVaultUrl: <VAULT_URI>secrets/django-secret-key
+        identity: system
+      - name: database-url
+        keyVaultUrl: <VAULT_URI>secrets/database-url
+        identity: system
+  template:
+    containers:
+      - image: ptahuae.azurecr.io/ptah:bootstrap
+        name: ptah-scrub
+        command:
+          - /bin/sh
+        args:
+          - -c
+          - python manage.py scrub_expired_campaigns
+        env:
+          - name: SECRET_KEY
+            secretRef: django-secret
+          - name: DATABASE_URL
+            secretRef: database-url
+          - name: DEBUG
+            value: "False"
+        resources:
+          cpu: 0.5
+          memory: 1.0Gi

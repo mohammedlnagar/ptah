@@ -16,12 +16,14 @@ permissions:
   id-token: write   # required for OIDC login to Azure
   contents: read
 
+# These match the resources provisioned in UAE North; see docs/azure.md.
 env:
   RESOURCE_GROUP: ptah-uae
   REGISTRY: ptahuae
   IMAGE: ptah
   CONTAINER_APP: ptah-web
   MIGRATE_JOB: ptah-migrate
+  SCRUB_JOB: ptah-scrub
 
 jobs:
   guard:
@@ -95,6 +97,15 @@ jobs:
         run: |
           az containerapp update \
             --name "$CONTAINER_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --image "$REGISTRY.azurecr.io/$IMAGE:${{ github.sha }}"
+
+      - name: Point the scheduled scrub at the new image
+        # Kept in step with the app so the nightly job never runs older code
+        # than the revision serving traffic.
+        run: |
+          az containerapp job update \
+            --name "$SCRUB_JOB" \
             --resource-group "$RESOURCE_GROUP" \
             --image "$REGISTRY.azurecr.io/$IMAGE:${{ github.sha }}"
 
