@@ -1,0 +1,116 @@
+name: Deploy to Azure
+
+# Manual only for now. Once you trust the pipeline, add:
+#   push:
+#     branches: [agent/ptah-domain-refactor]
+# so a merge deploys automatically.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to confirm a production deployment'
+        required: true
+        default: ''
+
+permissions:
+  id-token: write   # required for OIDC login to Azure
+  contents: read
+
+env:
+  RESOURCE_GROUP: ptah-uae
+  REGISTRY: ptahuae
+  IMAGE: ptah
+  CONTAINER_APP: ptah-web
+  MIGRATE_JOB: ptah-migrate
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the confirmation input
+        if: inputs.confirm != 'deploy'
+        run: |
+          echo "::error::Type 'deploy' in the confirm box to run this workflow."
+          exit 1
+
+  deploy:
+    needs: guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Sign in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build the image in Azure Container Registry
+        # Built by ACR rather than this runner, so the image is produced and
+        # stored inside the UAE region.
+        run: |
+          az acr build \
+            --registry "$REGISTRY" \
+            --image "$IMAGE:${{ github.sha }}" \
+            --image "$IMAGE:latest" \
+            --file Dockerfile .
+
+      - name: Run migrations
+        # This is the release gate that replaces Heroku's release phase. The
+        # job runs to completion before the web app is touched, so a failed
+        # migration leaves the current revision serving.
+        run: |
+          az containerapp job update \
+            --name "$MIGRATE_JOB" \
+            --resource-group "$RESOURCE_GROUP" \
+            --image "$REGISTRY.azurecr.io/$IMAGE:${{ github.sha }}"
+
+          execution=$(az containerapp job start \
+            --name "$MIGRATE_JOB" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query name --output tsv)
+          echo "Migration execution: $execution"
+
+          for attempt in $(seq 1 60); do
+            status=$(az containerapp job execution show \
+              --name "$MIGRATE_JOB" \
+              --resource-group "$RESOURCE_GROUP" \
+              --job-execution-name "$execution" \
+              --query properties.status --output tsv)
+            echo "  status: $status"
+            case "$status" in
+              Succeeded) exit 0 ;;
+              Failed|Cancelled)
+                echo "::error::Migrations $status - the web app was not updated."
+                exit 1 ;;
+            esac
+            sleep 10
+          done
+
+          echo "::error::Migrations did not finish within 10 minutes."
+          exit 1
+
+      - name: Promote the new revision
+        run: |
+          az containerapp update \
+            --name "$CONTAINER_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --image "$REGISTRY.azurecr.io/$IMAGE:${{ github.sha }}"
+
+      - name: Verify the app responds
+        run: |
+          fqdn=$(az containerapp show \
+            --name "$CONTAINER_APP" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn --output tsv)
+
+          for attempt in $(seq 1 20); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://$fqdn/healthz/" || true)
+            echo "  attempt $attempt: /healthz/ -> $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 10
+          done
+
+          echo "::error::App did not report healthy after deployment."
+          exit 1

@@ -1,11 +1,30 @@
+from django.db import connections
 from django.db.models import Count, Q
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.views.decorators.http import require_GET
 
 from account.models import OrganizationSubscription
 from campaigns.models import Campaign, CampaignItem
 from directory.models import Contact, Doctor
 from messaging.models import CampaignMessage, MessageTemplate
+
+
+@require_GET
+def healthz(request):
+    """Liveness probe for the container platform.
+
+    Reports unhealthy when the database is unreachable, so a revision that
+    cannot serve real traffic is never left in rotation. Deliberately
+    unauthenticated and free of tenant data.
+    """
+    try:
+        with connections["default"].cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except Exception:
+        return JsonResponse({"status": "unhealthy"}, status=503)
+    return JsonResponse({"status": "ok"})
 
 
 def home(request):
