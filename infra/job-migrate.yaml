@@ -1,0 +1,53 @@
+# Migration job: the release gate.
+#
+# The deploy workflow updates this job's image, runs it to completion, and only
+# promotes a new web revision if it succeeds — so a failed migration leaves the
+# running version serving.
+#
+# Defined in YAML rather than with --command/--args because passing arguments
+# through the Windows az.cmd wrapper collapses them into a single string, and
+# the job then silently runs the wrong command.
+#
+# Substitute before use:
+#   <SUBSCRIPTION_ID>  az account show --query id -o tsv
+#   <VAULT_URI>        az keyvault show -g ptah-uae -n ptah-kv-uae01 --query properties.vaultUri -o tsv
+identity:
+  type: SystemAssigned
+properties:
+  environmentId: /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/ptah-uae/providers/Microsoft.App/managedEnvironments/ptah-env
+  configuration:
+    triggerType: Manual
+    replicaTimeout: 900
+    replicaRetryLimit: 1
+    manualTriggerConfig:
+      parallelism: 1
+      replicaCompletionCount: 1
+    registries:
+      - server: ptahuae.azurecr.io
+        identity: system
+    secrets:
+      - name: django-secret
+        keyVaultUrl: <VAULT_URI>secrets/django-secret-key
+        identity: system
+      - name: database-url
+        keyVaultUrl: <VAULT_URI>secrets/database-url
+        identity: system
+  template:
+    containers:
+      - image: ptahuae.azurecr.io/ptah:bootstrap
+        name: ptah-migrate
+        command:
+          - /bin/sh
+        args:
+          - -c
+          - python manage.py migrate --noinput
+        env:
+          - name: SECRET_KEY
+            secretRef: django-secret
+          - name: DATABASE_URL
+            secretRef: database-url
+          - name: DEBUG
+            value: "False"
+        resources:
+          cpu: 0.5
+          memory: 1.0Gi

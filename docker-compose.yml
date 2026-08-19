@@ -1,0 +1,48 @@
+# Local development against the same Python and Postgres versions as
+# production. Run: docker compose up --build
+#
+# Nothing here is used in Azure; the deployed app runs the same image with
+# real environment variables injected by Container Apps.
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ptah
+      POSTGRES_PASSWORD: ptah-local-only
+      POSTGRES_DB: ptah
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ptah -d ptah"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    # Overrides the image's gunicorn command: the dev server reloads on edit.
+    command: >-
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    environment:
+      SECRET_KEY: local-development-only-not-a-real-secret
+      DEBUG: "True"
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      TIME_ZONE: Asia/Dubai
+      # sslmode=disable because the local container has no TLS. Settings only
+      # force sslmode=require when DEBUG is off, and honour an explicit value.
+      DATABASE_URL: postgres://ptah:ptah-local-only@db:5432/ptah?sslmode=disable
+    ports:
+      - "8000:8000"
+    volumes:
+      # Source is mounted so edits are picked up without rebuilding.
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

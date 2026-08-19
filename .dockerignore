@@ -1,0 +1,29 @@
+# Keep secrets and local state out of the image.
+.env
+.env.*
+!.env.example
+*.sqlite3
+db.sqlite3
+
+# Local environments and caches.
+.venv
+.venv_test
+venv
+venv_old
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Collected output is rebuilt inside the image.
+staticfiles/
+media/
+
+# Repository and tooling metadata.
+.git
+.github
+.gitignore
+.claude
+docs/
+*.md
+!README.md

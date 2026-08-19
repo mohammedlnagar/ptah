@@ -6,7 +6,7 @@ from campaigns.services import due_for_scrub, scrub_campaign
 class Command(BaseCommand):
     help = (
         "Remove patient name and phone from lists whose retention window has "
-        "closed. Intended to run daily from the Heroku Scheduler."
+        "closed. Intended to run daily from a scheduled job."
     )
 
     def add_arguments(self, parser):
