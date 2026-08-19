@@ -74,21 +74,24 @@ class ResolveServiceTests(TestCase):
         self.assertEqual(second.name, "Aisha Updated")
         self.assertEqual(Contact.objects.for_organization(self.organization).count(), 1)
 
-    def test_resolve_contact_rejects_a_conflicting_mrn(self):
-        resolve_contact(
+    def test_a_shared_phone_creates_one_contact_per_mrn(self):
+        # Families share a mobile; each member keeps their own file number.
+        mother = resolve_contact(
             organization=self.organization,
             name="Aisha",
             phone_number="+971501110000",
             mrn="MRN-1",
         )
+        child = resolve_contact(
+            organization=self.organization,
+            name="Omar",
+            phone_number="+971501110000",
+            mrn="MRN-2",
+        )
 
-        with self.assertRaises(ValidationError):
-            resolve_contact(
-                organization=self.organization,
-                name="Aisha",
-                phone_number="+971501110000",
-                mrn="MRN-2",
-            )
+        self.assertNotEqual(mother.pk, child.pk)
+        self.assertEqual(mother.phone_number, child.phone_number)
+        self.assertEqual(Contact.objects.for_organization(self.organization).count(), 2)
 
     def test_resolve_department_is_idempotent_per_organization(self):
         first = resolve_department(organization=self.organization, name="Cardiology")

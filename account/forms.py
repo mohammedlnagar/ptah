@@ -1,4 +1,5 @@
 import re
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
@@ -110,6 +111,36 @@ class OrganizationInviteForm(forms.ModelForm):
     class Meta:
         model = OrganizationInvite
         fields = ("role",)
+
+
+class OrganizationSettingsForm(forms.ModelForm):
+    """Workspace settings a tenant Owner can change without the Django admin."""
+
+    class Meta:
+        model = Organization
+        fields = ("name", "timezone", "whatsapp_url_template", "campaign_retention_days")
+        labels = {
+            "campaign_retention_days": "Remove patient details after (days)",
+            "whatsapp_url_template": "WhatsApp link format",
+        }
+        help_texts = {
+            "campaign_retention_days": (
+                "Patient name and phone are removed from a list this many days "
+                "after it is created. The MRN, doctor, appointment details and "
+                "all reporting are kept. Set 0 to keep patient details "
+                "indefinitely."
+            ),
+        }
+
+    def clean_timezone(self):
+        value = (self.cleaned_data.get("timezone") or "").strip()
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError) as exc:
+            raise forms.ValidationError(
+                "Enter a valid timezone name, for example Asia/Dubai."
+            ) from exc
+        return value
 
 
 class LoginForm(AuthenticationForm):

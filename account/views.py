@@ -17,6 +17,7 @@ from .forms import (
     InvitedUserCreationForm,
     LoginForm,
     OrganizationInviteForm,
+    OrganizationSettingsForm,
 )
 from .models import CustomUser, OrganizationInvite
 from .services import check_seat_available, usage_summary
@@ -121,6 +122,25 @@ def edit_profile(request):
         request,
         "account/edit_profile.html",
         {"user_form": user_form},
+    )
+
+
+@login_required
+@permission_required("account.change_organization", raise_exception=True)
+def organization_settings(request):
+    organization = tenant_or_403(request)
+    if request.method == "POST":
+        form = OrganizationSettingsForm(request.POST, instance=organization)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Workspace settings saved.")
+            return redirect("organization_settings")
+    else:
+        form = OrganizationSettingsForm(instance=organization)
+    return render(
+        request,
+        "account/organization_settings.html",
+        {"form": form, "organization": organization},
     )
 
 

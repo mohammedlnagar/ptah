@@ -13,5 +13,6 @@ urlpatterns = [
     path("item/<int:item_id>/appointment-status/", views.update_appointment_status, name="update_appointment_status"),
     path("list/<int:list_id>/filter-messages/", views.filter_assigned_messages, name="filter_assigned_messages"),
     path("list/<int:list_id>/export-csv/", views.export_assigned_messages_to_csv, name="export_assigned_messages_to_csv"),
+    path("list/<int:list_id>/retention/", views.update_campaign_retention, name="update_campaign_retention"),
     path("update-contact/", views.update_contact_details, name="update_contact_details"),
 ]

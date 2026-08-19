@@ -54,6 +54,15 @@ class Campaign(TenantModel):
         max_length=20, choices=Status.choices, default=Status.DRAFT
     )
     summary = models.JSONField(default=dict, blank=True)
+    scrub_after = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text=(
+            "When patient name and phone are removed from this list. "
+            "Empty means they are kept indefinitely."
+        ),
+    )
+    scrubbed_at = models.DateTimeField(blank=True, null=True, editable=False)
 
     class Meta:
         db_table = "rasel_campaign"
@@ -100,6 +109,10 @@ class Campaign(TenantModel):
             raise ValidationError(
                 {"template": "Select a template matching the campaign purpose."}
             )
+
+    @property
+    def is_scrubbed(self):
+        return self.scrubbed_at is not None
 
     def __str__(self):
         return self.title

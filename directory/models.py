@@ -115,9 +115,14 @@ class Contact(TenantModel):
         db_table = "rasel_contact"
         ordering = ("name",)
         constraints = [
+            # Families share a mobile, so a phone number may repeat as long as
+            # each patient carries their own MRN. Only one MRN-less patient may
+            # hold a given number, so rows without an MRN still de-duplicate
+            # instead of piling up on every re-import.
             models.UniqueConstraint(
                 fields=("organization", "phone_number"),
-                name="unique_contact_phone_per_org",
+                condition=Q(normalized_mrn=""),
+                name="unique_contact_phone_without_mrn_per_org",
             ),
             models.UniqueConstraint(
                 fields=("organization", "normalized_mrn"),

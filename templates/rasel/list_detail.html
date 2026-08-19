@@ -7,12 +7,43 @@
   <div>
     <a class="section-link" href="{% url 'manage_appointments' %}">← All campaigns</a>
     <h1>{{ appointment_list.title }}</h1>
-    <p>{{ appointment_list.get_purpose_display }} · Created {{ appointment_list.created_at|date:"d M Y · H:i" }} · <span class="badge badge--{{ appointment_list.status }}">{{ appointment_list.get_status_display }}</span></p>
+    <p>{{ appointment_list.get_purpose_display }} · Created {{ appointment_list.created_at|date:"d M Y · H:i" }} · <span class="badge badge--{{ appointment_list.status }}">{{ appointment_list.get_status_display }}</span>{% if appointment_list.is_scrubbed %} · <span class="badge badge--neutral">Patient details removed</span>{% endif %}</p>
   </div>
   <div class="page-header-actions">
     <a class="button button--secondary" href="{% url 'export_assigned_messages_to_csv' appointment_list.id %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}"><svg><use href="#icon-download"></use></svg>Export CSV</a>
   </div>
 </header>
+
+<section class="panel panel--padded retention-panel">
+  {% if appointment_list.is_scrubbed %}
+    <p class="dispatch-note">
+      Patient names and phone numbers were removed from this list on
+      {{ appointment_list.scrubbed_at|date:"d M Y · H:i" }}. MRNs, doctors,
+      appointment details and all reporting are unaffected.
+    </p>
+  {% else %}
+    <div class="retention-state">
+      <div>
+        <span class="work-label">Patient details</span>
+        {% if appointment_list.scrub_after %}
+          <p class="dispatch-note">Name and phone will be removed on <strong>{{ appointment_list.scrub_after|date:"d M Y · H:i" }}</strong>. Everything else is kept.</p>
+        {% else %}
+          <p class="dispatch-note">Kept indefinitely on this list.</p>
+        {% endif %}
+      </div>
+      {% if perms.campaigns.change_campaign %}
+        <form method="post" action="{% url 'update_campaign_retention' appointment_list.id %}" class="retention-form">
+          {% csrf_token %}
+          <label class="visually-hidden" for="retain-days">Days to keep patient details</label>
+          <input class="filter-control" id="retain-days" name="retain_days" type="number" min="0" step="1"
+                 placeholder="Days" value="">
+          <button class="button button--secondary button--small" type="submit" name="action" value="set">Set</button>
+          <button class="button button--secondary button--small" type="submit" name="action" value="never">Keep forever</button>
+        </form>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
 
 <section class="campaign-summary" aria-label="Campaign message progress">
   <article class="summary-chip"><small>Total messages</small><strong>{{ message_metrics.total }}</strong></article>
@@ -40,10 +71,10 @@
       <article class="work-item" data-work-item="{{ campaign_message.id }}">
         <section class="work-section">
           <span class="work-label">Recipient</span>
-          <div class="patient-name">{{ item.patient_name_snapshot }}</div>
+          <div class="patient-name">{{ item.patient_name_snapshot|default:"Patient details removed" }}</div>
           <div class="patient-meta">
             <span><svg><use href="#icon-user"></use></svg>MRN {{ item.mrn_snapshot|default:"Not provided" }}</span>
-            <span><svg><use href="#icon-whatsapp"></use></svg>{{ item.phone_number_snapshot }}</span>
+            <span><svg><use href="#icon-whatsapp"></use></svg>{{ item.phone_number_snapshot|default:"Removed" }}</span>
           </div>
         </section>
 

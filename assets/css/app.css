@@ -308,6 +308,12 @@ p { margin-bottom: 1rem; }
 .roster-link { flex: 1 1 100%; display: grid; gap: 0.3rem; min-width: 0; }
 .roster-link-controls { display: flex; gap: 0.5rem; }
 .roster-inline-form { display: flex; gap: 0.4rem; align-items: center; }
+
+/* Retention controls on a campaign */
+.retention-panel { padding-top: 0.9rem; padding-bottom: 0.9rem; }
+.retention-state { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.25rem; }
+.retention-form { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; }
+.retention-form .filter-control { width: 7rem; }
 .roster-link-controls .invite-link { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.65rem; }
 .doctor-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.75rem; }
 .doctor-summary { padding: 0.9rem; background: var(--white); border: 1px solid var(--ink-200); border-radius: var(--radius-md); }

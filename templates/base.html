@@ -91,6 +91,11 @@
               <svg><use href="#icon-user"></use></svg><span>Team members</span>
             </a>
           {% endif %}
+          {% if perms.account.change_organization %}
+            <a href="{% url 'organization_settings' %}" class="nav-item {% if request.resolver_match.url_name == 'organization_settings' %}is-active{% endif %}">
+              <svg><use href="#icon-settings"></use></svg><span>Workspace settings</span>
+            </a>
+          {% endif %}
           {% if perms.account.add_organizationinvite %}
             <a href="{% url 'manage_invites' %}" class="nav-item {% if request.resolver_match.url_name == 'manage_invites' %}is-active{% endif %}">
               <svg><use href="#icon-arrow"></use></svg><span>Invitations</span>

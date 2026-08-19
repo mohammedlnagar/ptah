@@ -1,4 +1,5 @@
 import csv
+import datetime
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -146,6 +147,51 @@ def appointment_list_detail(request, list_id):
             ).order_by("doctor__name"),
         },
     )
+
+
+@login_required
+@permission_required("campaigns.change_campaign", raise_exception=True)
+@require_POST
+def update_campaign_retention(request, list_id):
+    organization = _tenant_or_403(request)
+    campaign = get_object_or_404(
+        Campaign.objects.for_organization(organization), pk=list_id
+    )
+    if campaign.is_scrubbed:
+        messages.error(
+            request, "Patient details have already been removed from this list."
+        )
+        return redirect("appointment_list_detail", list_id=campaign.pk)
+
+    if request.POST.get("action") == "never":
+        campaign.scrub_after = None
+        campaign.save(update_fields=("scrub_after", "updated_at"))
+        messages.success(
+            request, "Patient details will be kept on this list indefinitely."
+        )
+        return redirect("appointment_list_detail", list_id=campaign.pk)
+
+    raw_days = (request.POST.get("retain_days") or "").strip()
+    try:
+        days = int(raw_days)
+    except ValueError:
+        messages.error(request, "Enter a whole number of days.")
+        return redirect("appointment_list_detail", list_id=campaign.pk)
+    if days < 0:
+        messages.error(request, "Enter zero or more days.")
+        return redirect("appointment_list_detail", list_id=campaign.pk)
+
+    # Counted from the upload, so "2 days" means the same thing whenever it is
+    # set; a past date simply makes the list due at the next scheduled run.
+    campaign.scrub_after = campaign.created_at + datetime.timedelta(days=days)
+    campaign.save(update_fields=("scrub_after", "updated_at"))
+    # localtime, so the flash agrees with the date the template renders.
+    shown = timezone.localtime(campaign.scrub_after)
+    messages.success(
+        request,
+        f"Patient details will be removed on {shown:%d %b %Y at %H:%M}.",
+    )
+    return redirect("appointment_list_detail", list_id=campaign.pk)
 
 
 @login_required
