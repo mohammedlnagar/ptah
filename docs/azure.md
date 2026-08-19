@@ -22,6 +22,31 @@ Expected running cost is roughly **$25-40/month** at this app's size. Verify
 against current UAE North pricing before committing — regional prices differ
 from the US list prices you may see quoted.
 
+## Before you start: two local gotchas
+
+**TLS-intercepting antivirus breaks the CLI.** If `az` fails with
+`CERTIFICATE_VERIFY_FAILED`, something is re-signing HTTPS traffic. Norton's
+"Web/Mail Shield" does this, and its root certificate has `Basic Constraints`
+not marked critical, which modern OpenSSL rejects outright — so adding it to a
+CA bundle does not help. Turn off the product's SSL/TLS scanning, or run these
+commands from [Azure Cloud Shell](https://shell.azure.com) instead. The same
+interception also breaks `docker build` locally, for the same reason.
+
+**Set UTF-8 before long-running commands.** On a Windows console `az acr build`
+can crash with `'charmap' codec can't encode characters` while streaming build
+logs. The build keeps running in Azure; only the log stream dies. Avoid it
+with:
+
+```bash
+export PYTHONIOENCODING=utf-8      # PowerShell: $env:PYTHONIOENCODING = "utf-8"
+```
+
+If it does crash, the build is still going. Check it with:
+
+```bash
+az acr task list-runs --registry ptahuae --top 3 --output table
+```
+
 ## 1. Sign in and set variables
 
 ```bash
@@ -78,9 +103,21 @@ az postgres flexible-server create \
   --yes
 ```
 
+`--public-access None` leaves the server with public networking switched off
+entirely, so it must be turned back on before the firewall rules below mean
+anything. The server is not VNet-injected, so this is the supported path:
+
+```bash
+az postgres flexible-server update \
+  --resource-group $RG --name $PG_SERVER --public-access Enabled
+```
+
+Create the application database. Note `--name` is the *database* and
+`--server-name` is the server:
+
 ```bash
 az postgres flexible-server db create \
-  --resource-group $RG --server-name $PG_SERVER --database-name ptah
+  --resource-group $RG --server-name $PG_SERVER --name ptah
 ```
 
 ## 4. Create the Container Apps environment and app
@@ -133,10 +170,12 @@ OUTBOUND_IP=$(az containerapp env show -g $RG -n $ENVIRONMENT \
   --query properties.staticIp -o tsv)
 
 az postgres flexible-server firewall-rule create \
-  --resource-group $RG --name $PG_SERVER \
-  --rule-name containerapps \
+  --resource-group $RG --server-name $PG_SERVER \
+  --name containerapps \
   --start-ip-address $OUTBOUND_IP --end-ip-address $OUTBOUND_IP
 ```
+
+For firewall rules `--server-name` is the server and `--name` is the rule.
 
 To run `manage.py` commands from your own machine, add a temporary rule for
 your IP and remove it afterwards:
@@ -144,11 +183,11 @@ your IP and remove it afterwards:
 ```bash
 MY_IP=$(curl -s https://api.ipify.org)
 az postgres flexible-server firewall-rule create \
-  --resource-group $RG --name $PG_SERVER --rule-name temp-admin \
+  --resource-group $RG --server-name $PG_SERVER --name temp-admin \
   --start-ip-address $MY_IP --end-ip-address $MY_IP
 # ... later ...
 az postgres flexible-server firewall-rule delete \
-  --resource-group $RG --name $PG_SERVER --rule-name temp-admin --yes
+  --resource-group $RG --server-name $PG_SERVER --name temp-admin --yes
 ```
 
 ## 6. Set the application secrets
