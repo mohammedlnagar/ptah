@@ -55,16 +55,11 @@ def _tidy_case(token):
     return token
 
 
-def first_name(full_name):
-    """Return the greeting name from a full name as it appeared in the CSV.
-
-    Leading honorifics are dropped and the result is tidied to title case, so
-    an export row of "MR. AHMED AL MANSOORI" greets as "Ahmed". The full name
-    is untouched wherever it is stored; only the rendered message is shortened.
-    """
+def _name_tokens(full_name):
+    """Split a name into tokens and find where the honorifics stop."""
     cleaned = " ".join(str(full_name or "").split())
     if not cleaned:
-        return ""
+        return [], 0
     tokens = cleaned.split(" ")
     index = 0
     while (
@@ -73,10 +68,36 @@ def first_name(full_name):
         and _opens_like_a_name(tokens[index + 1])
     ):
         index += 1
+    return tokens, index
+
+
+def first_name(full_name):
+    """Return the greeting name from a full name as it appeared in the CSV.
+
+    Leading honorifics are dropped and the result is tidied to title case, so
+    an export row of "MR. AHMED AL MANSOORI" greets as "Ahmed". The full name
+    is untouched wherever it is stored; only the rendered message is shortened.
+    """
+    tokens, index = _name_tokens(full_name)
+    if not tokens:
+        return ""
     chosen = [tokens[index]]
     if chosen[0].rstrip(".").casefold() in NAME_PARTICLES and index + 1 < len(tokens):
         chosen.append(tokens[index + 1])
     return " ".join(_tidy_case(part) for part in chosen)
+
+
+def display_name(full_name):
+    """The whole name, without honorifics and tidied for reading.
+
+    Used where staff need to identify a patient rather than be greeted, such
+    as the roster a doctor receives: "MR. AHMED AL MANSOORI" reads as
+    "Ahmed Al Mansoori" while still naming the person in full.
+    """
+    tokens, index = _name_tokens(full_name)
+    if not tokens:
+        return ""
+    return " ".join(_tidy_case(part) for part in tokens[index:])
 
 
 def validate_template_content(content):

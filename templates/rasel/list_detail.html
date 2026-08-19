@@ -148,12 +148,32 @@
   <section class="content-section" aria-labelledby="doctor-share-heading">
     <div class="section-header"><div><h2 id="doctor-share-heading">Share doctor summaries</h2><p>Open each generated summary in WhatsApp. Waslni records only that the link was opened.</p></div></div>
     <div class="doctor-summary-grid">
-      {% for summary in doctor_summary_records %}
+      {% for record in doctor_summary_records %}
+        {% with summary=record.summary appointments=record.appointments %}
         <article class="doctor-summary">
           <div class="doctor-summary__head"><div><strong>{{ summary.doctor.name }}</strong><small>{{ summary.doctor.department.name|default:"Department not provided" }}</small></div><span class="badge badge--{{ summary.status }}">{{ summary.get_status_display }}</span></div>
-          <p>{{ summary.rendered_content }}</p>
+
+          <span class="work-label">Message to send</span>
+          <p class="doctor-summary__message">{{ summary.rendered_content }}</p>
+
+          {% if appointments %}
+            <details class="doctor-summary__roster">
+              <summary>All {{ appointments|length }} appointment{{ appointments|pluralize }}</summary>
+              <ol class="appointment-lines">
+                {% for row in appointments %}
+                  <li>
+                    <span class="appointment-lines__time">{% if row.item.appointment_time %}{{ row.item.appointment_time|time:"H:i" }}{% else %}--:--{% endif %}</span>
+                    <span class="appointment-lines__name">{{ row.name|default:"Patient details removed" }}</span>
+                    {% if row.item.appointment_status %}<span class="badge badge--{{ row.item.appointment_status }}">{{ row.item.get_appointment_status_display }}</span>{% endif %}
+                  </li>
+                {% endfor %}
+              </ol>
+            </details>
+          {% endif %}
+
           {% if summary.doctor.phone_number and perms.campaigns.change_doctorsummary %}<a class="button button--success button--compact" target="_blank" rel="noopener" href="{% url 'open_doctor_summary' summary.id %}"><svg><use href="#icon-whatsapp"></use></svg>Open WhatsApp</a>{% else %}<small>Add the doctor's phone number in Admin to enable sharing.</small>{% endif %}
         </article>
+        {% endwith %}
       {% endfor %}
     </div>
   </section>

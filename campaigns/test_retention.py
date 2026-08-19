@@ -175,6 +175,25 @@ class ScrubEffectTests(RetentionFixture):
         self.assertEqual(self.campaign.summary, summary_before)
         self.assertTrue(DoctorSummary.objects.filter(campaign=self.campaign).exists())
 
+    def test_the_doctor_summary_stops_naming_patients(self):
+        # The summary names patients while the list is short, so it has to be
+        # rebuilt on scrub or the names would outlive the cleanup.
+        summary = DoctorSummary.objects.get(campaign=self.campaign)
+        self.assertIn("Mona Saleh", summary.rendered_content)
+
+        scrub_campaign(self.campaign)
+
+        summary.refresh_from_db()
+        self.assertNotIn("Mona Saleh", summary.rendered_content)
+        self.assertNotIn("Omar Saleh", summary.rendered_content)
+
+    def test_the_rebuilt_doctor_summary_keeps_its_counts(self):
+        scrub_campaign(self.campaign)
+
+        summary = DoctorSummary.objects.get(campaign=self.campaign)
+        self.assertIn("2 total:", summary.rendered_content)
+        self.assertEqual(summary.metrics["total"], 2)
+
     def test_contacts_and_appointments_are_untouched(self):
         contacts_before = set(
             Contact.objects.for_organization(self.organization).values_list(

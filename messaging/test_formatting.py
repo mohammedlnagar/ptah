@@ -2,7 +2,7 @@
 
 from django.test import SimpleTestCase
 
-from messaging.formatting import first_name
+from messaging.formatting import display_name, first_name
 
 
 class FirstNameTests(SimpleTestCase):
@@ -69,3 +69,30 @@ class FirstNameTests(SimpleTestCase):
         self.assert_first_name("", "")
         self.assert_first_name("   ", "")
         self.assert_first_name(None, "")
+
+
+class DisplayNameTests(SimpleTestCase):
+    """The full name, for staff who must identify the patient."""
+
+    def assert_display_name(self, full_name, expected):
+        self.assertEqual(display_name(full_name), expected)
+
+    def test_the_whole_name_is_kept(self):
+        self.assert_display_name("Ahmed Al Mansoori", "Ahmed Al Mansoori")
+
+    def test_honorifics_are_dropped(self):
+        self.assert_display_name("MR. AHMED AL MANSOORI", "Ahmed Al Mansoori")
+        self.assert_display_name("Ms Sara Khalid", "Sara Khalid")
+
+    def test_shouting_is_tidied(self):
+        self.assert_display_name("FATIMA HASSAN", "Fatima Hassan")
+
+    def test_mixed_case_is_preserved(self):
+        self.assert_display_name("Ahmed McDonald", "Ahmed McDonald")
+
+    def test_an_arabic_name_is_untouched(self):
+        self.assert_display_name("محمد علي", "محمد علي")
+
+    def test_empty_input_returns_empty(self):
+        self.assert_display_name("", "")
+        self.assert_display_name(None, "")

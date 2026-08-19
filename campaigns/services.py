@@ -81,4 +81,12 @@ def scrub_campaign(campaign):
     now = timezone.now()
     Campaign.objects.filter(pk=campaign.pk).update(scrubbed_at=now, updated_at=now)
     campaign.scrubbed_at = now
+
+    # Doctor summaries name their patients when the list is short enough, so
+    # they have to be rebuilt or the names would outlive the scrub. Rebuilding
+    # rather than blanking keeps the counts and schedule window useful.
+    # Imported here because reporting reaches back into this app's models.
+    from reporting.services import refresh_campaign_summary
+
+    refresh_campaign_summary(campaign)
     return len(items)

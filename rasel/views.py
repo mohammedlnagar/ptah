@@ -14,6 +14,7 @@ from account.services import check_campaign_available
 from appointments.services import change_appointment_status
 from campaigns.models import Campaign, CampaignItem, DoctorSummary
 from common.access import tenant_or_403
+from messaging.formatting import display_name
 from directory.models import Contact
 from messaging.models import CampaignMessage, MessageHandoffEvent, MessageTemplate
 from messaging.services import (
@@ -142,11 +143,36 @@ def appointment_list_detail(request, list_id):
                 ).count(),
             },
             "doctor_summaries": doctor_summaries,
-            "doctor_summary_records": campaign.doctor_summaries.select_related(
-                "doctor"
-            ).order_by("doctor__name"),
+            # The WhatsApp message condenses long lists, but the operator on
+            # this screen always sees every appointment.
+            "doctor_summary_records": _doctor_summaries_with_appointments(campaign),
         },
     )
+
+
+def _doctor_summaries_with_appointments(campaign):
+    """Each doctor's summary paired with every appointment behind it."""
+    grouped = {}
+    items = campaign.items.filter(doctor__isnull=False).order_by(
+        "appointment_date", "appointment_time", "row_number"
+    )
+    for item in items:
+        grouped.setdefault(item.doctor_id, []).append(item)
+    summaries = campaign.doctor_summaries.select_related(
+        "doctor", "doctor__department"
+    ).order_by("doctor__name")
+    return [
+        {
+            "summary": summary,
+            "appointments": [
+                # Tidied the same way as the message, so screen and WhatsApp
+                # show a patient's name identically.
+                {"item": item, "name": display_name(item.patient_name_snapshot)}
+                for item in grouped.get(summary.doctor_id, [])
+            ],
+        }
+        for summary in summaries
+    ]
 
 
 @login_required
