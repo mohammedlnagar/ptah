@@ -276,6 +276,10 @@ p { margin-bottom: 1rem; }
 .patient-meta, .appointment-meta { display: flex; flex-direction: column; gap: 0.18rem; color: var(--ink-600); font-size: 0.71rem; }
 .patient-meta span, .appointment-meta span { display: flex; align-items: center; gap: 0.35rem; }
 .patient-meta svg, .appointment-meta svg { width: 0.78rem; height: 0.78rem; }
+/* Free-text note from the source file. Wraps hard because operators paste long
+   unbroken strings into it, which would otherwise widen the whole row. */
+.appointment-remarks { display: flex; align-items: flex-start; gap: 0.35rem; margin: 0.5rem 0 0; padding: 0.42rem 0.55rem; color: var(--ink-700); background: var(--ink-50); border-radius: 0.5rem; font-size: 0.68rem; line-height: 1.45; overflow-wrap: anywhere; }
+.appointment-remarks svg { flex: none; width: 0.78rem; height: 0.78rem; margin-top: 0.1rem; color: var(--ink-500); }
 .doctor-name { margin-bottom: 0.25rem; font-size: 0.8rem; font-weight: 700; }
 .status-select { width: 100%; min-height: 2.3rem; padding: 0.45rem 1.8rem 0.45rem 0.6rem; color: var(--ink-800); background: var(--ink-50); border: 1px solid var(--ink-300); border-radius: 0.52rem; font-size: 0.72rem; font-weight: 650; }
 .message-editor { min-height: 6rem; padding: 0.65rem; font-size: 0.73rem; }
