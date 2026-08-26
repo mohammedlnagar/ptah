@@ -17,6 +17,7 @@
     <div><dt>Phone</dt><dd>{{ item.phone_number_snapshot|default:"Details removed" }}</dd></div>
     {% if item.doctor_name_snapshot %}<div><dt>Doctor</dt><dd>{{ item.doctor_name_snapshot }}</dd></div>{% endif %}
     {% if item.appointment_date %}<div><dt>Appointment</dt><dd>{{ item.appointment_date|date:"d M Y" }}{% if item.appointment_time %} · {{ item.appointment_time|time:"H:i" }}{% endif %}</dd></div>{% endif %}
+    {% if item.appointment_remarks %}<div><dt>Remarks</dt><dd>{{ item.appointment_remarks }}</dd></div>{% endif %}
   </dl>
 
   <label class="work-label" for="cancelled-message-preview">Prepared message</label>

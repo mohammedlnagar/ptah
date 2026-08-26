@@ -86,6 +86,9 @@
             {% if item.appointment_date %}<span><svg><use href="#icon-calendar"></use></svg>{{ item.appointment_date|date:"d M Y" }}</span>{% endif %}
             {% if item.appointment_time %}<span><svg><use href="#icon-clock"></use></svg>{{ item.appointment_time|time:"H:i" }}</span>{% endif %}
           </div>
+          {% if item.appointment_remarks %}
+            <p class="appointment-remarks"><svg><use href="#icon-info"></use></svg><span>{{ item.appointment_remarks }}</span></p>
+          {% endif %}
           {% if item.appointment_status %}
             <div style="margin-top:.55rem">
               {% if perms.campaigns.change_campaignitem %}

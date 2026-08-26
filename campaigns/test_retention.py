@@ -433,3 +433,46 @@ class RetentionViewTests(RetentionFixture):
         )
 
         self.assertEqual(response.status_code, 404)
+
+
+class RemarksDisplayTests(RetentionFixture):
+    """The Remarks column from the source file is shown to the operator.
+
+    Rendered against the real template, so these fail if the markup drops it.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.user.user_permissions.add(
+            Permission.objects.get(
+                content_type__app_label="campaigns", codename="view_campaign"
+            ),
+            Permission.objects.get(
+                content_type__app_label="messaging", codename="change_campaignmessage"
+            ),
+        )
+        self.campaign = self.build_campaign()
+        self.client.force_login(self.user)
+
+    def test_the_remark_is_imported_from_the_csv(self):
+        item = CampaignItem.objects.get(campaign=self.campaign, row_number=1)
+
+        self.assertEqual(item.appointment_remarks, "Arrive early")
+
+    def test_the_remark_is_shown_on_the_list_screen(self):
+        response = self.client.get(
+            reverse("appointment_list_detail", args=[self.campaign.pk])
+        )
+
+        self.assertContains(response, "Arrive early")
+
+    def test_a_row_without_a_remark_renders_nothing(self):
+        item = CampaignItem.objects.get(campaign=self.campaign, row_number=2)
+        self.assertEqual(item.appointment_remarks, "")
+
+        response = self.client.get(
+            reverse("appointment_list_detail", args=[self.campaign.pk])
+        )
+
+        # One remark in the file, so exactly one block on the screen.
+        self.assertContains(response, "appointment-remarks", count=1)
