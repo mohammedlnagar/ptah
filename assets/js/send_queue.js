@@ -123,6 +123,16 @@
       appt.hidden = true;
     }
 
+    /* The clinic's own note against the appointment. Shown above the message
+       because it often explains what to say — or whether to send at all. */
+    const remarks = root.querySelector("[data-cur-remarks]");
+    if (row.dataset.remarks) {
+      remarks.querySelector("span").textContent = row.dataset.remarks;
+      remarks.hidden = false;
+    } else {
+      remarks.hidden = true;
+    }
+
     root.querySelector("[data-cur-message]").textContent = row.dataset.message;
     root.querySelector("[data-open-wa]").href = row.dataset.waUrl;
     root.querySelector("[data-cur-stamp]").textContent =

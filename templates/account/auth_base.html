@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% comment %}
+Split auth layout shared by sign-in and registration: dark story panel on the
+left, form on the right. Children fill auth_kicker / auth_headline / auth_sub
+and auth_form.
+{% endcomment %}
+
+{% block content %}
+<div class="route-view auth-split">
+  <section class="auth-aside">
+    <a class="auth-brand" href="{% url 'home' %}">
+      <span class="mark" aria-hidden="true">W</span>
+      <strong>Waslni</strong>
+    </a>
+    <div>
+      <div class="auth-kicker">{% block auth_kicker %}{% endblock %}</div>
+      <h1>{% block auth_headline %}{% endblock %}</h1>
+      <p>{% block auth_sub %}{% endblock %}</p>
+    </div>
+    <div class="auth-steps">
+      <div class="auth-step">
+        <span class="num">1</span>
+        <span><strong>Review the queue</strong> — pending messages and appointment statuses at a glance.</span>
+      </div>
+      <div class="auth-step">
+        <span class="num">2</span>
+        <span><strong>Open WhatsApp</strong> — send each approved message personally.</span>
+      </div>
+      <div class="auth-step">
+        <span class="num">3</span>
+        <span><strong>Record the result</strong> — keep the entire team aligned.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="auth-panel">
+    <div class="auth-form">
+      {% block auth_form %}{% endblock %}
+    </div>
+  </section>
+</div>
+{% endblock %}

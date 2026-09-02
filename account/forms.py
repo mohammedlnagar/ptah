@@ -148,6 +148,13 @@ class LoginForm(AuthenticationForm):
 
 
 class CustomUserUpdateForm(MobileNumberFieldMixin, forms.ModelForm):
+    """Contact details the operator maintains themselves.
+
+    Username is deliberately absent: email is USERNAME_FIELD, so the username
+    is an internal handle nobody signs in with, and exposing it invites edits
+    that change nothing the person can see.
+    """
+
     class Meta:
         model = CustomUser
-        fields = ("username", "email", "mobile_number")
+        fields = ("first_name", "last_name", "email", "mobile_number")

@@ -1,35 +1,41 @@
-{% extends "base.html" %}
+{% extends "account/auth_base.html" %}
+
 {% block title %}Sign in · Waslni{% endblock %}
-{% block content %}
-<div class="auth-layout">
-  <section class="auth-story">
-    <div><span class="auth-kicker">Welcome back</span><h1>Keep every patient conversation moving.</h1><p>Open your organization workspace to review today’s reminders, record appointment outcomes, and prepare the next campaign.</p></div>
-    <div class="auth-steps">
-      <div class="auth-step"><span>1</span><div><strong>Review the queue</strong><small>See pending messages and appointment statuses.</small></div></div>
-      <div class="auth-step"><span>2</span><div><strong>Open WhatsApp</strong><small>Send each approved message personally.</small></div></div>
-      <div class="auth-step"><span>3</span><div><strong>Record the result</strong><small>Keep the entire team aligned.</small></div></div>
+
+{% block auth_kicker %}Welcome back{% endblock %}
+{% block auth_headline %}Your queue is ready when you are.{% endblock %}
+{% block auth_sub %}Pick up the pending reminders and send each one personally, in your own words.{% endblock %}
+
+{% block auth_form %}
+  <h2>Sign in</h2>
+  <p>Use the email address connected to your organization.</p>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="form-error">{{ form.non_field_errors|join:" " }}</div>
+    {% endif %}
+
+    <div class="auth-fields">
+      <div class="field">
+        <label for="{{ form.username.id_for_label }}">Email</label>
+        <input class="field-input field-input--lg" type="email" autocomplete="username"
+               id="{{ form.username.id_for_label }}" name="{{ form.username.html_name }}"
+               value="{{ form.username.value|default:'' }}" required autofocus>
+        {% if form.username.errors %}<div class="form-error">{{ form.username.errors|join:" " }}</div>{% endif %}
+      </div>
+
+      <div class="field">
+        <label for="{{ form.password.id_for_label }}">Password</label>
+        <input class="field-input field-input--lg" type="password" autocomplete="current-password"
+               id="{{ form.password.id_for_label }}" name="{{ form.password.html_name }}" required>
+        {% if form.password.errors %}<div class="form-error">{{ form.password.errors|join:" " }}</div>{% endif %}
+      </div>
+
+      {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+      <button class="btn btn--teal btn--block" type="submit">Sign in</button>
     </div>
-  </section>
-  <section class="auth-form-wrap">
-    <div class="auth-card">
-      <div class="auth-card__heading"><span class="eyebrow">Secure workspace</span><h2>Sign in to Waslni</h2><p>Use the email address connected to your organization.</p></div>
-      <form method="post" novalidate>
-        {% csrf_token %}
-        {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
-        {% if form.non_field_errors %}<div class="flash flash--error" role="alert"><svg><use href="#icon-info"></use></svg><span>{{ form.non_field_errors|striptags }}</span></div>{% endif %}
-        <div class="form-grid">
-          {% for field in form %}
-            <div class="form-field">
-              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field }}
-              {% if field.errors %}<ul class="field-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
-            </div>
-          {% endfor %}
-          <button class="button button--primary" type="submit">Sign in <svg><use href="#icon-arrow"></use></svg></button>
-        </div>
-      </form>
-      <p class="auth-switch">New to Waslni? <a href="{% url 'register' %}">Create an organization workspace</a></p>
-    </div>
-  </section>
-</div>
+  </form>
+
+  <p class="auth-alt">No workspace yet? <a href="{% url 'register' %}">Create one free</a></p>
 {% endblock %}

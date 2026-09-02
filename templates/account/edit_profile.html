@@ -1,20 +1,64 @@
 {% extends "base.html" %}
-{% block title %}Edit profile · Waslni{% endblock %}
-{% block content %}
-<header class="page-header">
-  <div><span class="eyebrow">Account settings</span><h1>Edit profile</h1><p>Update your personal and emergency contact details.</p></div>
-  <div class="page-header-actions"><a href="{% url 'profile' %}" class="button button--secondary">Cancel</a></div>
-</header>
 
-<form method="post" enctype="multipart/form-data" class="panel panel--padded" novalidate>
-  {% csrf_token %}
-  {% if user_form.non_field_errors %}<div class="flash flash--error" role="alert"><svg><use href="#icon-info"></use></svg><span>Please correct the errors below.</span></div>{% endif %}
-  <div class="section-header"><div><h2>Contact information</h2><p>The details attached to your team account.</p></div></div>
-  <div class="form-grid">
-    {% for field in user_form %}
-      <div class="form-field"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.errors %}<ul class="field-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}</div>
-    {% endfor %}
-  </div>
-  <div class="form-actions"><a class="button button--secondary" href="{% url 'profile' %}">Cancel</a><button class="button button--primary" type="submit">Save changes</button></div>
-</form>
+{% block title %}Edit profile · Waslni{% endblock %}
+
+{% block content %}
+<div class="route-view page page--narrow">
+  <header style="margin-bottom:22px">
+    <a class="back-link" href="{% url 'profile' %}">← My profile</a>
+    <h1 class="editor-title">Edit profile</h1>
+    <p class="queue-counts">Update the contact details attached to your team account.</p>
+  </header>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <section class="editor-card">
+      {% if user_form.non_field_errors %}
+        <div class="form-error">{{ user_form.non_field_errors|join:" " }}</div>
+      {% endif %}
+
+      <div class="form-grid-2">
+        <div class="field">
+          <label for="{{ user_form.first_name.id_for_label }}">First name</label>
+          <input class="field-input field-input--lg" type="text"
+                 id="{{ user_form.first_name.id_for_label }}"
+                 name="{{ user_form.first_name.html_name }}"
+                 value="{{ user_form.first_name.value|default:'' }}">
+          {% if user_form.first_name.errors %}<div class="form-error">{{ user_form.first_name.errors|join:" " }}</div>{% endif %}
+        </div>
+        <div class="field">
+          <label for="{{ user_form.last_name.id_for_label }}">Last name</label>
+          <input class="field-input field-input--lg" type="text"
+                 id="{{ user_form.last_name.id_for_label }}"
+                 name="{{ user_form.last_name.html_name }}"
+                 value="{{ user_form.last_name.value|default:'' }}">
+          {% if user_form.last_name.errors %}<div class="form-error">{{ user_form.last_name.errors|join:" " }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="{{ user_form.email.id_for_label }}">Email address</label>
+        <input class="field-input field-input--lg" type="email"
+               id="{{ user_form.email.id_for_label }}"
+               name="{{ user_form.email.html_name }}"
+               value="{{ user_form.email.value|default:'' }}" required>
+        {% if user_form.email.errors %}<div class="form-error">{{ user_form.email.errors|join:" " }}</div>{% endif %}
+      </div>
+
+      <div class="field">
+        <label for="{{ user_form.mobile_number.id_for_label }}">Mobile number</label>
+        <input class="field-input field-input--lg" type="text"
+               id="{{ user_form.mobile_number.id_for_label }}"
+               name="{{ user_form.mobile_number.html_name }}"
+               value="{{ user_form.mobile_number.value|default:'' }}">
+        {% if user_form.mobile_number.errors %}<div class="form-error">{{ user_form.mobile_number.errors|join:" " }}</div>{% endif %}
+      </div>
+
+      <div class="editor-foot">
+        <a class="btn btn--secondary" href="{% url 'profile' %}">Cancel</a>
+        <button class="btn btn--teal" type="submit">Save changes</button>
+      </div>
+    </section>
+  </form>
+</div>
 {% endblock %}

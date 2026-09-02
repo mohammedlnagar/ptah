@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Admin center · Waslni{% endblock %}
+
+{% block content %}
+<div class="route-view page page--admin">
+  <header style="margin-bottom:22px">
+    <div class="kicker">Workspace administration</div>
+    <h1 class="editor-title">Admin center</h1>
+    <p class="queue-counts">Approve templates, manage doctors and team access, and review your plan.</p>
+  </header>
+
+  <div class="tab-row" role="tablist">
+    {% if can_view_templates %}
+      <a class="tab{% if tab == 'templates' %} on{% endif %}" role="tab" href="?tab=templates"
+         aria-selected="{% if tab == 'templates' %}true{% else %}false{% endif %}">
+        Template approval
+        {% if awaiting_count %}<span class="badge badge--warning">{{ awaiting_count }}</span>{% endif %}
+      </a>
+    {% endif %}
+    {% if can_view_doctors %}
+      <a class="tab{% if tab == 'doctors' %} on{% endif %}" role="tab" href="?tab=doctors"
+         aria-selected="{% if tab == 'doctors' %}true{% else %}false{% endif %}">Doctors</a>
+    {% endif %}
+    {% if can_view_team %}
+      <a class="tab{% if tab == 'team' %} on{% endif %}" role="tab" href="?tab=team"
+         aria-selected="{% if tab == 'team' %}true{% else %}false{% endif %}">Team</a>
+    {% endif %}
+    {% if can_view_plan %}
+      <a class="tab{% if tab == 'plan' %} on{% endif %}" role="tab" href="?tab=plan"
+         aria-selected="{% if tab == 'plan' %}true{% else %}false{% endif %}">Plan</a>
+    {% endif %}
+  </div>
+
+  {% if tab == 'templates' %}
+    {% if can_view_templates %}
+      {% for revision in awaiting %}
+        <section class="approval-card">
+          <div>
+            <h3>{{ revision.template.name }}</h3>
+            <p class="meta">
+              Draft by {{ revision.created_by.get_full_name|default:revision.created_by.email }} ·
+              {{ revision.created_at|date:"j M" }} · {{ revision.template.get_purpose_display }}
+            </p>
+            <p class="approval-body">{{ revision.content }}</p>
+          </div>
+          {% if can_approve %}
+            <div class="approval-actions">
+              <form method="post" action="{% url 'approve_template' revision.id %}">
+                {% csrf_token %}
+                <button class="btn btn--success btn--block" type="submit">Approve</button>
+              </form>
+              <form method="post" action="{% url 'reject_template' revision.id %}">
+                {% csrf_token %}
+                <button class="btn btn--danger-outline btn--block" type="submit">Reject</button>
+              </form>
+            </div>
+          {% endif %}
+        </section>
+      {% empty %}
+        <div class="card empty"><strong>Nothing waiting</strong>No templates are pending approval.</div>
+      {% endfor %}
+    {% else %}
+      <div class="card empty"><strong>No access</strong>You cannot review templates.</div>
+    {% endif %}
+
+  {% elif tab == 'doctors' %}
+    <section class="card card--flush">
+      <div class="table-head">
+        <span>Doctor</span><span>Department</span><span>WhatsApp</span><span style="width:70px"></span>
+      </div>
+      {% for doctor in doctors %}
+        <div class="table-row">
+          <strong>{{ doctor.name }}</strong>
+          <span>{{ doctor.department.name|default:"—" }}</span>
+          {% if doctor.phone_number %}
+            <span>{{ doctor.phone_number }}</span>
+          {% else %}
+            <span class="faint">Not added</span>
+          {% endif %}
+          <a class="btn btn--tiny" href="{% url 'doctor_edit' doctor.id %}">Edit</a>
+        </div>
+      {% empty %}
+        <div class="empty"><strong>No doctors yet</strong>Doctors are created automatically from your CSV imports.</div>
+      {% endfor %}
+    </section>
+
+  {% elif tab == 'team' %}
+    <section class="card card--flush">
+      {% for row in team_rows %}
+        <div class="member-row">
+          <span class="avatar-sm{% cycle '' ' avatar-sm--blue' ' avatar-sm--rose' %}">{{ row.member.get_full_name|default:row.member.email|slice:":1"|upper }}</span>
+          <span class="stack">
+            <strong>{{ row.member.get_full_name|default:row.member.username }}</strong>
+            <small>{{ row.member.email }}</small>
+          </span>
+          <span class="badge {% if 'Owner' in row.roles %}badge--teal{% else %}badge--muted{% endif %}">
+            {% if row.roles %}{{ row.roles|join:" · " }}{% else %}Member{% endif %}
+          </span>
+          {% if row.member.is_active %}
+            <span class="presence online">● Active</span>
+          {% else %}
+            <span class="presence">Suspended</span>
+          {% endif %}
+        </div>
+      {% empty %}
+        <div class="empty"><strong>No team members</strong>Invite colleagues to share the sending work.</div>
+      {% endfor %}
+    </section>
+
+  {% elif tab == 'plan' %}
+    <section class="plan-grid">
+      <div class="plan-card">
+        <div class="metric__label">Current plan</div>
+        <h3>{{ subscription.plan.name|default:"No plan" }}</h3>
+        <p>
+          {% if subscription %}
+            Up to {{ subscription.plan.max_users }} users and
+            {{ subscription.plan.max_monthly_campaigns }} campaigns per month.
+          {% else %}
+            No subscription is attached to this workspace yet.
+          {% endif %}
+        </p>
+        {% if subscription %}
+          <span class="plan-chip">
+            {{ subscription.get_status_display }}{% if subscription.ends_on %} · renews {{ subscription.ends_on|date:"j M" }}{% endif %}
+          </span>
+        {% endif %}
+      </div>
+      <div class="usage-card">
+        <div class="usage-row">
+          <div class="usage-label">
+            <span>Campaigns this month</span>
+            <span>{{ usage.campaigns_used }} / {{ usage.campaign_limit|default:"∞" }}</span>
+          </div>
+          <span class="bar bar--lg"><i style="width: {% if usage.campaign_limit %}{% widthratio usage.campaigns_used usage.campaign_limit 100 %}{% else %}0{% endif %}%"></i></span>
+        </div>
+        <div class="usage-row">
+          <div class="usage-label">
+            <span>Team seats</span>
+            <span>{{ usage.seats_used }} / {{ usage.seat_limit|default:"∞" }}</span>
+          </div>
+          <span class="bar bar--lg"><i style="width: {% if usage.seat_limit %}{% widthratio usage.seats_used usage.seat_limit 100 %}{% else %}0{% endif %}%"></i></span>
+        </div>
+        <a class="btn btn--secondary btn--tool" href="{% url 'organization_settings' %}">Workspace settings</a>
+      </div>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

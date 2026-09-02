@@ -106,7 +106,25 @@ def user_logout(request):
 
 @login_required
 def profile(request):
-    return render(request, "account/profile.html", {"profile_user": request.user})
+    """Profile card with the operator's own real totals.
+
+    Both counts are attributed through sent_by, so they describe work this
+    person did rather than what happened in their workspace.
+    """
+    from messaging.models import CampaignMessage
+
+    sent = CampaignMessage.objects.filter(
+        sent_by=request.user, status=CampaignMessage.Status.SENT
+    )
+    return render(
+        request,
+        "account/profile.html",
+        {
+            "profile_user": request.user,
+            "messages_sent": sent.count(),
+            "campaigns_worked": sent.values("campaign_item__campaign").distinct().count(),
+        },
+    )
 
 
 @login_required
@@ -115,6 +133,7 @@ def edit_profile(request):
         user_form = CustomUserUpdateForm(request.POST, instance=request.user)
         if user_form.is_valid():
             user_form.save()
+            messages.success(request, "Profile updated")
             return redirect("profile")
     else:
         user_form = CustomUserUpdateForm(instance=request.user)
