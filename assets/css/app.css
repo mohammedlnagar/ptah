@@ -367,3 +367,151 @@ svg.i {
   box-shadow: var(--shadow-float); animation: popIn 320ms var(--ease) both;
 }
 .toast svg { width: 16px; height: 16px; color: var(--mint); fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* --------------------------------------------------------------------------
+   Campaigns
+   -------------------------------------------------------------------------- */
+
+.page-header--tight h1 { font-size: clamp(24px, 3.2vw, 34px); }
+.stack-gap { margin-bottom: 14px; }
+
+.count-chip {
+  background: var(--hairline); color: #3a5752;
+  font-size: 11px; font-weight: 750; padding: 5px 11px; border-radius: var(--r-pill);
+}
+
+.crow--roomy { padding: 15px 20px; grid-template-columns: minmax(0, 1.4fr) auto minmax(140px, .9fr) auto; }
+
+.section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 14px;
+}
+.section-head h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.section-head p { margin: 3px 0 0; font-size: 12.5px; color: var(--muted); }
+
+.tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.tpl-card {
+  display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; align-items: center;
+  background: var(--muted-surface); border: 1px solid var(--hairline);
+  border-radius: 13px; padding: 13px 15px;
+}
+.tpl-card strong { font-size: 13px; color: var(--heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tpl-card small { font-size: 11px; color: var(--muted); }
+.tpl-card .badge { font-size: 10px; padding: 3px 9px; }
+.btn--tiny {
+  justify-self: end; min-height: 26px; padding: 0 10px;
+  background: #fff; border: 1px solid var(--input-border); border-radius: 8px;
+  font-weight: 700; font-size: 10.5px; color: #3a5752; min-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Modals
+   -------------------------------------------------------------------------- */
+
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 300; display: grid; place-items: center;
+  background: rgba(13, 28, 25, .55); backdrop-filter: blur(4px);
+  animation: fadeIn 200ms ease both; padding: 16px;
+}
+.modal-backdrop[hidden] { display: none; }
+.modal {
+  width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow-y: auto;
+  background: #fff; border-radius: var(--r-modal); padding: 26px;
+  box-shadow: var(--shadow-modal); animation: popIn 320ms var(--ease) both;
+}
+.modal--wa { width: min(440px, calc(100vw - 32px)); padding: 0; overflow: hidden; }
+.modal--sm { width: min(400px, calc(100vw - 32px)); text-align: center; }
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.modal-head h2 { margin: 0; font-size: 20px; font-weight: 800; }
+.modal-close {
+  width: 32px; height: 32px; border: 0; background: var(--page);
+  border-radius: 9px; cursor: pointer; color: #3a5752; font-size: 14px;
+  display: grid; place-items: center;
+}
+.modal-close:hover { background: var(--hairline); }
+.modal-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; }
+.modal-foot .btn { border-radius: var(--r-input); }
+
+/* Wizard */
+.wiz-progress { display: flex; align-items: center; gap: 6px; margin-bottom: 22px; }
+.wiz-progress span { flex: 1; height: 4px; border-radius: var(--r-pill); background: var(--progress-track); transition: background 300ms; }
+.wiz-progress span.done { background: var(--teal); }
+.wiz-step { display: flex; flex-direction: column; gap: 14px; }
+.wiz-step[hidden] { display: none; }
+.wiz-step > div > strong { font-size: 14px; color: var(--heading); }
+.wiz-step > div > p { margin: 4px 0 0; font-size: 12.5px; color: var(--muted); }
+
+.dropzone {
+  display: grid; place-items: center; gap: 8px; min-height: 130px;
+  background: #f2faf8; border: 2px dashed #9fd8cb; border-radius: var(--r-card-sm);
+  cursor: pointer; text-align: center; padding: 18px;
+}
+.dropzone.is-over { background: #eafaf5; border-color: var(--teal); }
+.dropzone svg { width: 26px; height: 26px; fill: none; stroke: var(--teal); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dropzone strong { font-size: 13px; font-weight: 700; color: var(--teal-darker); }
+.dropzone small { font-size: 11px; color: var(--muted); }
+.dropzone input[type="file"] { display: none; }
+
+.file-ok {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--muted-surface); border-radius: 12px; padding: 11px 14px;
+  font-size: 12.5px; color: var(--body-soft);
+}
+.file-ok[hidden] { display: none; }
+.file-ok svg { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: var(--wa-green); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+.field-label { display: block; font-size: 12px; font-weight: 700; color: var(--body-soft); margin-bottom: 6px; }
+.field-input {
+  width: 100%; min-height: 44px; padding: 0 14px;
+  border: 1px solid var(--input-border); border-radius: var(--r-input);
+  font-size: 13.5px; outline: none; background: #fff; color: var(--body);
+}
+.field-input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(11, 143, 123, .12); }
+textarea.field-input { padding: 12px 14px; line-height: 1.55; resize: vertical; }
+
+.pick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pick {
+  display: flex; flex-direction: column; gap: 4px; padding: 15px;
+  background: #fff; border: 2px solid var(--card-border); border-radius: 14px;
+  cursor: pointer; text-align: left; font: inherit;
+}
+.pick strong { font-size: 13px; color: var(--body-soft); }
+.pick small { font-size: 11px; color: var(--muted); }
+.pick.on { background: #eafaf5; border-color: var(--teal); }
+.pick.on strong { color: var(--teal-darker); }
+.pick.on small { color: var(--secondary); }
+
+.tpl-pick-list { display: flex; flex-direction: column; gap: 8px; }
+.tpl-pick {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
+  padding: 13px 15px; background: #fff; border: 2px solid var(--card-border);
+  border-radius: 13px; cursor: pointer; text-align: left; font: inherit; width: 100%;
+}
+.tpl-pick svg { width: 16px; height: 16px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tpl-pick strong { font-size: 12.5px; color: var(--body-soft); }
+.tpl-pick small { font-size: 10.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; max-width: 34ch; }
+.tpl-pick.on { background: #eafaf5; border-color: var(--teal); }
+.tpl-pick.on svg { stroke: var(--teal); }
+.tpl-pick.on strong { color: var(--teal-darker); }
+.tpl-pick.on small { color: var(--secondary); }
+
+.stat-trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat-tile { background: var(--muted-surface); border-radius: 12px; padding: 12px; text-align: center; }
+.stat-tile strong { display: block; font-family: var(--display); font-size: 20px; font-weight: 800; color: var(--heading); }
+.stat-tile small { font-size: 11px; color: var(--muted); }
+
+/* WhatsApp chat surfaces */
+.wa-chat { background: var(--wa-chat); border-radius: var(--r-card-sm); padding: 18px; }
+.wa-bubble {
+  max-width: 88%; background: var(--wa-bubble); border-radius: 12px 12px 12px 4px;
+  padding: 12px 14px; font-size: 13px; line-height: 1.55; color: #152b26;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .08); white-space: pre-wrap;
+}
+.wa-bubble--sent { border-radius: 12px 12px 4px 12px; margin-left: auto; }
+
+.form-error {
+  margin: 14px 0 0; padding: 10px 14px;
+  background: var(--danger-bg); color: var(--danger-fg);
+  border-radius: 10px; font-size: 12.5px; font-weight: 600;
+}
+.form-error[hidden] { display: none; }

@@ -1,72 +1,85 @@
 {% extends "base.html" %}
 {% load static %}
+
 {% block title %}Campaigns · Waslni{% endblock %}
 
 {% block content %}
-<header class="page-header">
-  <div><span class="eyebrow">Outreach operations</span><h1>Campaigns</h1><p>Upload appointment or marketing data, assign an approved template, and work through each message personally.</p></div>
-  <div class="page-header-actions">{% if perms.messaging.add_messagetemplate %}<a class="button button--secondary" href="{% url 'template_create' %}"><svg><use href="#icon-template"></use></svg>New template</a>{% endif %}{% if perms.campaigns.add_campaign %}<a class="button button--primary" href="#new-campaign"><svg><use href="#icon-upload"></use></svg>Upload CSV</a>{% endif %}</div>
-</header>
-
-<section class="metric-grid" aria-label="Campaign metrics">
-  <article class="metric-card"><div class="metric-card__top"><div><span class="metric-label">Campaigns</span><strong class="metric-value">{{ campaign_stats.campaigns }}</strong></div><span class="metric-icon"><svg><use href="#icon-campaign"></use></svg></span></div><div class="metric-detail"><span>Isolated to {{ user.organization.name }}</span></div></article>
-  <article class="metric-card"><div class="metric-card__top"><div><span class="metric-label">Messages prepared</span><strong class="metric-value">{{ campaign_stats.messages }}</strong></div><span class="metric-icon"><svg><use href="#icon-template"></use></svg></span></div><div class="metric-detail"><span>Editable before opening WhatsApp</span></div></article>
-  <article class="metric-card"><div class="metric-card__top"><div><span class="metric-label">Marked sent</span><strong class="metric-value">{{ campaign_stats.sent }}</strong></div><span class="metric-icon"><svg><use href="#icon-check"></use></svg></span></div><div class="metric-detail"><span>Recorded by operators</span></div></article>
-  <article class="metric-card"><div class="metric-card__top"><div><span class="metric-label">Approved templates</span><strong class="metric-value">{{ campaign_stats.templates }}</strong></div><span class="metric-icon"><svg><use href="#icon-template"></use></svg></span></div><div class="metric-detail"><span>Ready to assign to a campaign</span></div></article>
-</section>
-
-<section class="content-section panel" aria-labelledby="campaign-list-heading">
-  <div class="panel-header"><div><h2 id="campaign-list-heading">All campaigns</h2><p>Open a campaign to review recipients and send messages one by one.</p></div><span class="badge badge--neutral">{{ campaign_stats.campaigns }} total</span></div>
-  {% if appointment_lists %}
-    <div class="campaign-list">
-      {% for campaign in appointment_lists %}
-        <a class="campaign-row campaign-row--full" href="{% url 'appointment_list_detail' campaign.id %}">
-          <span class="campaign-primary"><strong>{{ campaign.title }}</strong><small>Created {{ campaign.created_at|date:"d M Y · H:i" }}</small></span>
-          <span class="campaign-meta"><small>Purpose</small><span class="badge badge--{{ campaign.purpose }}">{{ campaign.get_purpose_display }}</span></span>
-          <span class="campaign-meta"><small>Recipients</small><strong>{{ campaign.item_count }}</strong></span>
-          <span class="campaign-meta"><small>Operator marked sent</small><strong>{{ campaign.sent_count }} / {{ campaign.item_count }}</strong></span>
-          <span class="campaign-meta"><small>Status</small><span class="badge badge--{{ campaign.status }}">{{ campaign.get_status_display }}</span></span>
-          <svg><use href="#icon-chevron"></use></svg>
-        </a>
-      {% endfor %}
+<div class="route-view page">
+  <header class="page-header page-header--tight">
+    <div>
+      <div class="kicker">Outreach operations</div>
+      <h1>Campaigns</h1>
+      <p>Each CSV upload becomes an isolated campaign with its own send queue and audit trail.</p>
     </div>
-  {% else %}
-    <div class="empty-state"><span class="empty-state__icon"><svg><use href="#icon-campaign"></use></svg></span><h3>No campaigns yet</h3><p>Create an approved message template, then upload your first CSV to prepare a patient outreach queue.</p>{% if perms.campaigns.add_campaign %}<a class="button button--primary button--compact" href="#new-campaign">Create campaign</a>{% endif %}</div>
-  {% endif %}
-</section>
+    {% if perms.campaigns.add_campaign %}
+      <button class="btn btn--teal" type="button" data-wizard-open>
+        <svg aria-hidden="true"><use href="#r-upload"></use></svg>New campaign
+      </button>
+    {% endif %}
+  </header>
 
-<div class="split-layout content-section">
-  <section class="panel panel--padded" id="new-campaign" aria-labelledby="new-campaign-heading">
-    <div class="section-header"><div><span class="eyebrow">Step 1</span><h2 id="new-campaign-heading">Create a campaign</h2><p>Every upload creates a separate campaign and import record.</p></div><span class="metric-icon"><svg><use href="#icon-upload"></use></svg></span></div>
-    <div class="form-intro"><svg><use href="#icon-info"></use></svg><p><strong>Choose the matching CSV format.</strong>Appointment campaigns require patient, mobile, date/time, doctor, department, and status. Marketing campaigns require patient and mobile details.</p></div>
-    {% if perms.campaigns.add_campaign %}<form id="appointmentListForm" method="post" enctype="multipart/form-data" action="{% url 'manage_appointments' %}" novalidate>
-      {% csrf_token %}
-      <div class="form-grid">
-        <div class="form-field form-field--full"><label class="form-label" for="{{ appointments_list_form.title.id_for_label }}">Campaign name <small>Required</small></label>{{ appointments_list_form.title }}<small class="field-help">Use a name your team will recognize, such as “Cardiology · 14 August”.</small><div class="field-errors" data-error-for="title"></div></div>
-        <div class="form-field"><label class="form-label" for="{{ appointments_list_form.purpose.id_for_label }}">Purpose <small>Required</small></label>{{ appointments_list_form.purpose }}<div class="field-errors" data-error-for="purpose"></div></div>
-        <div class="form-field"><label class="form-label" for="{{ appointments_list_form.template.id_for_label }}">Approved template <small>Required</small></label>{{ appointments_list_form.template }}<small class="field-help">Only approved, active templates appear here.</small><div class="field-errors" data-error-for="template"></div></div>
-        <div class="form-field form-field--full"><label class="form-label" for="{{ appointments_list_form.csv_file.id_for_label }}">CSV file <small>Maximum 10 MB</small></label>{{ appointments_list_form.csv_file }}<small class="field-help">CSV only. A corrected re-upload should be made only when the original import failed.</small><div class="field-errors" data-error-for="csv_file"></div></div>
+  <section class="card card--flush stack-gap">
+    <div class="panel-head">
+      <div>
+        <h2>All campaigns</h2>
+        <p>Open one to work its send queue.</p>
       </div>
-      <div class="form-actions"><span class="muted">Messages are generated after validation.</span><button type="submit" id="listSubmitButton" class="button button--primary"><svg><use href="#icon-upload"></use></svg>Create campaign</button></div>
-    </form>{% else %}<p class="muted">You have read-only access to campaigns.</p>{% endif %}
+      <span class="count-chip">{{ campaign_stats.campaigns }} total</span>
+    </div>
+    {% for campaign in appointment_lists %}
+      <a class="crow crow--roomy" href="{% url 'appointment_list_detail' campaign.id %}">
+        <span class="crow__main">
+          <strong>{{ campaign.title }}</strong>
+          <small>{{ campaign.item_count }} recipient{{ campaign.item_count|pluralize }} · {{ campaign.created_at|date:"j M" }}</small>
+        </span>
+        <span class="badge {% if campaign.purpose == 'appointment' %}badge--info{% else %}badge--warning{% endif %}">{{ campaign.get_purpose_display }}</span>
+        <span class="crow__progress">
+          <span>{{ campaign.sent_count }} / {{ campaign.item_count }} sent</span>
+          <span class="bar"><i style="width: {% widthratio campaign.sent_count campaign.item_count|default:1 100 %}%"></i></span>
+        </span>
+        <span class="crow__chev" aria-hidden="true">→</span>
+      </a>
+    {% empty %}
+      <div class="empty">
+        <strong>No campaigns yet</strong>
+        Upload a CSV to create your first campaign.
+      </div>
+    {% endfor %}
   </section>
 
-  <section class="panel panel--padded" id="templates" aria-labelledby="templates-heading">
-    <div class="section-header"><div><span class="eyebrow">Reusable copy</span><h2 id="templates-heading">Message templates</h2><p>Authoring and approval live on the templates screen.</p></div><span class="metric-icon"><svg><use href="#icon-template"></use></svg></span></div>
-
-    <div class="content-section">
-      <div class="section-header"><div><h3>Saved templates</h3></div><span class="badge badge--neutral">{{ message_templates|length }}</span></div>
-      {% if message_templates %}
-        <div class="template-list">
-          {% for message in message_templates %}
-            <div class="template-item"><span class="template-icon"><svg><use href="#icon-template"></use></svg></span><span class="template-copy"><strong>{{ message.name }}</strong><small>{{ message.get_purpose_display }}</small></span><span class="badge badge--{{ message.approval_status }}">{{ message.get_approval_status_display }}</span></div>
-          {% endfor %}
+  <section class="card card--pad">
+    <div class="section-head">
+      <div>
+        <h2>Message templates</h2>
+        <p>Approved copy your campaigns can use. Drafts go to an approver.</p>
+      </div>
+      <div class="panel-head-actions">
+        <a class="btn btn--secondary btn--sm" href="{% url 'admin_center' %}?tab=templates">Approval queue</a>
+        {% if perms.messaging.add_messagetemplate %}
+          <a class="btn btn--dark btn--sm" href="{% url 'template_create' %}">+ New template</a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="tpl-grid">
+      {% for template in message_templates %}
+        <div class="tpl-card">
+          <strong>{{ template.name }}</strong>
+          <span class="badge {% if template.approval_status == 'approved' %}badge--success{% elif template.approval_status == 'rejected' %}badge--danger{% else %}badge--warning{% endif %}">{{ template.get_approval_status_display }}</span>
+          <small>{{ template.get_purpose_display }} · {{ template.placeholder_count }} placeholder{{ template.placeholder_count|pluralize }}</small>
+          {% if perms.messaging.change_messagetemplate %}
+            <a class="btn btn--tiny" href="{% url 'template_edit' template.id %}">Edit</a>
+          {% endif %}
         </div>
-      {% else %}<p class="muted">No templates have been created yet.</p>{% endif %}
-      <div class="form-actions"><a class="button button--secondary" href="{% url 'template_approvals' %}"><svg><use href="#icon-template"></use></svg>Manage templates</a></div>
+      {% empty %}
+        <p class="muted-note">No templates yet. Create one to start a campaign.</p>
+      {% endfor %}
     </div>
   </section>
 </div>
+
+{% include 'rasel/_campaign_wizard.html' %}
 {% endblock %}
 
-{% block scripts %}<script src="{% static 'js/ajax_form_submission.js' %}"></script>{% endblock %}
+{% block scripts %}
+  <script src="{% static 'js/campaign_wizard.js' %}" defer></script>
+{% endblock %}

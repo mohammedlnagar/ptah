@@ -50,6 +50,14 @@ class MessageTemplate(TenantModel):
         null=True,
     )
 
+    @property
+    def placeholder_count(self):
+        """How many distinct placeholders the copy uses, for the card meta line."""
+        from .formatting import PLACEHOLDER_NAMES, PLACEHOLDER_PATTERN
+
+        found = set(PLACEHOLDER_PATTERN.findall(self.content or ""))
+        return len(found & set(PLACEHOLDER_NAMES))
+
     class Meta:
         db_table = "rasel_messagetemplate"
         ordering = ("name",)
