@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    admin_center,
     approve_member,
     change_member_role,
     edit_profile,
@@ -19,6 +20,7 @@ from .views import (
 
 
 urlpatterns = [
+    path('admin-center/', admin_center, name='admin_center'),
     path('register/', register, name='register'),
     path('register/<str:token>/', register_with_invite, name='register_with_invite'),
     path('login/', user_login, name='login'),

@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if user.is_authenticated %}Overview · Waslni{% else %}Waslni · Patient outreach made personal{% endif %}{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">Workspace overview</span>
+      <h1>Good {% now "H" as current_hour %}{% if current_hour < "12" %}morning{% elif current_hour < "18" %}afternoon{% else %}evening{% endif %}, {{ user.first_name|default:user.username }}</h1>
+      <p>Track patient outreach, appointment responses, and the campaigns your team is working through.</p>
+    </div>
+    <div class="page-header-actions">
+      <a class="button button--secondary" href="{% url 'template_create' %}">
+        <svg><use href="#icon-template"></use></svg>New template
+      </a>
+      <a class="button button--primary" href="{% url 'manage_appointments' %}#new-campaign">
+        <svg><use href="#icon-upload"></use></svg>Upload CSV
+      </a>
+    </div>
+  </header>
+
+  <section class="metric-grid" aria-label="Workspace metrics">
+    <article class="metric-card">
+      <div class="metric-card__top"><div><span class="metric-label">Campaigns</span><strong class="metric-value">{{ dashboard.campaigns }}</strong></div><span class="metric-icon"><svg><use href="#icon-campaign"></use></svg></span></div>
+      <div class="metric-detail"><span>{{ dashboard.messages }} personal messages created</span></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__top"><div><span class="metric-label">Marked sent</span><strong class="metric-value">{{ dashboard.sent }}</strong></div><span class="metric-icon"><svg><use href="#icon-check"></use></svg></span></div>
+      <div class="metric-detail"><span>Recorded manually by your team</span></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__top"><div><span class="metric-label">Upcoming appointments</span><strong class="metric-value">{{ dashboard.upcoming }}</strong></div><span class="metric-icon"><svg><use href="#icon-calendar"></use></svg></span></div>
+      <div class="metric-detail"><strong>{{ dashboard.confirmed_today }} confirmed</strong><span>of {{ dashboard.today }} today</span></div>
+    </article>
+    <article class="metric-card">
+      <div class="metric-card__top"><div><span class="metric-label">Active doctors</span><strong class="metric-value">{{ dashboard.doctors }}</strong></div><span class="metric-icon"><svg><use href="#icon-doctor"></use></svg></span></div>
+      <div class="metric-detail"><span>{{ dashboard.contacts }} contacts in this workspace</span></div>
+    </article>
+  </section>
+
+  <div class="dashboard-grid">
+    <section class="panel" aria-labelledby="recent-campaigns-heading">
+      <div class="panel-header">
+        <div><h2 id="recent-campaigns-heading">Recent campaigns</h2><p>Continue where your team left off.</p></div>
+        <a class="section-link" href="{% url 'manage_appointments' %}">View all <svg><use href="#icon-arrow"></use></svg></a>
+      </div>
+      {% if recent_campaigns %}
+        <div class="campaign-list">
+          {% for campaign in recent_campaigns %}
+            <a class="campaign-row" href="{% url 'appointment_list_detail' campaign.id %}">
+              <span class="campaign-primary"><strong>{{ campaign.title }}</strong><small>{{ campaign.created_at|date:"d M Y · H:i" }}</small></span>
+              <span class="campaign-meta"><small>Purpose</small><span class="badge badge--{{ campaign.purpose }}">{{ campaign.get_purpose_display }}</span></span>
+              <span class="campaign-meta"><small>Progress</small><strong>{{ campaign.sent_count }} / {{ campaign.item_count }}</strong></span>
+              <span class="campaign-meta"><small>Status</small><span class="badge badge--{{ campaign.status }}">{{ campaign.get_status_display }}</span></span>
+              <svg><use href="#icon-chevron"></use></svg>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <span class="empty-state__icon"><svg><use href="#icon-upload"></use></svg></span>
+          <h3>Your first campaign starts with a CSV</h3>
+          <p>Upload appointment or marketing data, choose an approved template, and Waslni will prepare each personal message.</p>
+          <a class="button button--primary button--compact" href="{% url 'manage_appointments' %}#new-campaign">Create campaign</a>
+        </div>
+      {% endif %}
+    </section>
+
+    <aside class="quick-actions" aria-label="Quick actions">
+      <section class="panel panel--padded">
+        <div class="section-header"><div><h3>Quick actions</h3><p>Common workspace tasks</p></div></div>
+        <div class="quick-actions">
+          <a class="quick-action" href="{% url 'manage_appointments' %}#new-campaign"><span class="quick-action__icon"><svg><use href="#icon-upload"></use></svg></span><span><strong>Upload appointment CSV</strong><small>Create a one-by-one reminder queue</small></span><svg><use href="#icon-chevron"></use></svg></a>
+          <a class="quick-action" href="{% url 'template_approvals' %}"><span class="quick-action__icon"><svg><use href="#icon-template"></use></svg></span><span><strong>Manage message templates</strong><small>{{ dashboard.templates }} approved · {{ dashboard.pending_templates }} awaiting review</small></span><svg><use href="#icon-chevron"></use></svg></a>
+          {% if perms.directory.view_doctor %}<a class="quick-action" href="{% url 'doctor_list' %}"><span class="quick-action__icon"><svg><use href="#icon-doctor"></use></svg></span><span><strong>Manage doctors</strong><small>Departments and contact details</small></span><svg><use href="#icon-chevron"></use></svg></a>{% endif %}
+        </div>
+      </section>
+      {% if subscription %}
+        <section class="panel panel--padded">
+          <span class="eyebrow">Subscription</span>
+          <h3>{{ subscription.plan.name }} plan</h3>
+          <p class="muted">Up to {{ subscription.plan.max_users }} users and {{ subscription.plan.max_monthly_campaigns }} campaigns per month.</p>
+          <span class="badge badge--{{ subscription.status }}">{{ subscription.get_status_display }}</span>
+        </section>
+      {% endif %}
+    </aside>
+  </div>
+{% else %}
+  <section class="landing-hero">
+    <div class="landing-copy">
+      <span class="auth-kicker">Healthcare messaging, made human</span>
+      <h1>Turn appointment data into <span>personal follow-up.</span></h1>
+      <p>Waslni helps healthcare teams prepare, review, and open every WhatsApp message individually—so reminders stay personal and operators stay in control.</p>
+      <div class="landing-actions">
+        <a class="button button--primary" href="{% url 'register' %}">Create your workspace <svg><use href="#icon-arrow"></use></svg></a>
+        <a class="button button--secondary" href="{% url 'login' %}">Sign in</a>
+      </div>
+      <div class="landing-note"><svg><use href="#icon-check"></use></svg><span>No bulk sender. No hidden automation. Your team sends one message at a time.</span></div>
+    </div>
+    <div class="product-preview" aria-label="Waslni campaign preview">
+      <div class="preview-window">
+        <div class="preview-bar"><span class="preview-dot"></span><span class="preview-dot"></span><span class="preview-dot"></span></div>
+        <div class="preview-body">
+          <div class="preview-heading"></div>
+          <div class="preview-stats"><div class="preview-stat"></div><div class="preview-stat"></div><div class="preview-stat"></div></div>
+          <div class="preview-patient"><div><div class="preview-line"></div><div class="preview-line preview-line--short"></div></div><div class="preview-line"></div><span class="preview-send"></span></div>
+          <div class="preview-patient"><div><div class="preview-line"></div><div class="preview-line preview-line--short"></div></div><div class="preview-line"></div><span class="preview-send"></span></div>
+          <div class="preview-patient"><div><div class="preview-line"></div><div class="preview-line preview-line--short"></div></div><div class="preview-line"></div><span class="preview-send"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="how-section" id="how-it-works">
+    <div class="how-section__head"><span class="eyebrow">A clear three-step workflow</span><h2>From spreadsheet to WhatsApp, without losing control.</h2><p>Every campaign is isolated to your organization and every message remains visible and editable before it is opened.</p></div>
+    <div class="steps-grid">
+      <article class="step-card"><span class="step-number">01</span><h3>Upload your CSV</h3><p>Use the appointment or marketing format. Each upload becomes its own campaign with a clear audit trail.</p></article>
+      <article class="step-card"><span class="step-number">02</span><h3>Review each message</h3><p>Filter by doctor, patient, MRN, date, or status. Edit the generated copy before it leaves your workspace.</p></article>
+      <article class="step-card"><span class="step-number">03</span><h3>Open WhatsApp</h3><p>Waslni opens the prepared message in WhatsApp. The operator sends it personally and records the outcome.</p></article>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

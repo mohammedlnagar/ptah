@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.http import require_GET
 
-from account.models import OrganizationSubscription
+from account.models import CustomUser, OrganizationSubscription
 from campaigns.models import Campaign, CampaignItem
 from directory.models import Contact, Doctor
 from messaging.models import CampaignMessage, MessageTemplate
@@ -27,9 +27,19 @@ def healthz(request):
     return JsonResponse({"status": "ok"})
 
 
+def _greeting(now):
+    hour = now.hour
+    if hour < 12:
+        return "morning"
+    if hour < 18:
+        return "afternoon"
+    return "evening"
+
+
 def home(request):
+    """Marketing landing for visitors, operator dashboard for members."""
     if not request.user.is_authenticated or not request.user.organization_id:
-        return render(request, "pages/home.html")
+        return render(request, "pages/landing.html")
 
     organization = request.user.organization
     campaigns = Campaign.objects.for_organization(organization)
@@ -47,10 +57,25 @@ def home(request):
         organization=organization
     ).select_related("plan").first()
 
+    # Real operator activity rather than the prototype's fixed three names:
+    # everyone in the workspace, ordered by what they have actually sent.
+    team = list(
+        CustomUser.objects.filter(organization=organization, is_active=True)
+        .annotate(
+            sent_total=Count(
+                "sent_campaign_messages",
+                filter=Q(sent_campaign_messages__status=CampaignMessage.Status.SENT),
+                distinct=True,
+            )
+        )
+        .order_by("-sent_total", "email")[:4]
+    )
+
     return render(
         request,
-        "pages/home.html",
+        "pages/dashboard.html",
         {
+            "greeting": _greeting(timezone.localtime()),
             "dashboard": {
                 "campaigns": campaigns.count(),
                 "messages": messages.count(),
@@ -81,8 +106,12 @@ def home(request):
                     appointment_date=today,
                     appointment_status=CampaignItem.AppointmentStatus.CONFIRMED,
                 ).count(),
+                "pending": messages.filter(
+                    status=CampaignMessage.Status.PENDING
+                ).count(),
             },
             "recent_campaigns": recent_campaigns,
+            "team": team,
             "subscription": subscription,
         },
     )

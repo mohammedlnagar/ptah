@@ -455,3 +455,31 @@ def update_appointment_status(request, item_id):
     )
     item.refresh_from_db(fields=("appointment_status",))
     return JsonResponse({"success": True})
+
+
+@login_required
+@permission_required("campaigns.view_campaign", raise_exception=True)
+def send_queue(request):
+    """Send queue entry point for the nav, which has no campaign id to hand.
+
+    Sends the operator to the campaign with work left in it — the most recently
+    created one still holding pending messages — so "Send queue" resumes rather
+    than making them pick from a list first. Falls back to the campaign index
+    when nothing is pending.
+    """
+    organization = _tenant_or_403(request)
+    campaign = (
+        Campaign.objects.for_organization(organization)
+        .filter(items__message__status=CampaignMessage.Status.PENDING)
+        .order_by("-created_at")
+        .distinct()
+        .first()
+    )
+    if campaign is None:
+        campaign = (
+            Campaign.objects.for_organization(organization).order_by("-created_at").first()
+        )
+    if campaign is None:
+        messages.info(request, "Create a campaign to start sending.")
+        return redirect("manage_appointments")
+    return redirect("appointment_list_detail", list_id=campaign.pk)
