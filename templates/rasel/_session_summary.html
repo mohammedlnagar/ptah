@@ -1,0 +1,25 @@
+{% comment %}
+Shown when the filtered queue has no pending items left. Counts are for this
+session only — what the operator handled since the page loaded — not the
+campaign totals in the header.
+{% endcomment %}
+<div class="modal-backdrop" id="session-summary" role="dialog" aria-modal="true" aria-labelledby="session-summary-title" hidden>
+  <div class="modal modal--sm">
+    <div class="done-disc" aria-hidden="true">
+      <svg><use href="#r-check"></use></svg>
+    </div>
+    <h2 id="session-summary-title">Queue complete</h2>
+    <p class="lede">Every message in this batch has been handled.</p>
+    <div class="summary-tiles">
+      <div class="summary-tile summary-tile--sent">
+        <strong data-summary-sent>0</strong>
+        <small>sent personally</small>
+      </div>
+      <div class="summary-tile summary-tile--skipped">
+        <strong data-summary-skipped>0</strong>
+        <small>skipped</small>
+      </div>
+    </div>
+    <a class="btn btn--dark btn--block" href="{% url 'manage_appointments' %}">Back to workspace</a>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+{% comment %}
+WhatsApp handoff. Opening the real wa.me link is what marks the message
+"opened" server-side; this panel is the return path that offers the
+mark-as-sent confirmation, since Waslni cannot observe the send itself.
+{% endcomment %}
+<div class="modal-backdrop" id="wa-handoff" role="dialog" aria-modal="true" aria-labelledby="wa-handoff-name" hidden>
+  <div class="modal modal--wa modal--wa-chat">
+    <div class="wa-modal-head">
+      <span class="wa-avatar" data-wa-initial aria-hidden="true"></span>
+      <div class="stack">
+        <strong id="wa-handoff-name" data-wa-patient></strong>
+        <small data-wa-phone></small>
+      </div>
+      <button class="wa-modal-close" type="button" data-wa-close aria-label="Close">✕</button>
+    </div>
+    <div class="wa-modal-body">
+      <div class="wa-bubble wa-bubble--sent">
+        <span data-wa-message></span>
+        <div class="wa-stamp">now</div>
+      </div>
+    </div>
+    <div class="wa-modal-foot">
+      <button class="btn btn--wa" type="button" data-wa-confirm>I sent it — mark as sent</button>
+      <button class="btn btn--secondary" type="button" data-wa-close>Back</button>
+    </div>
+  </div>
+</div>

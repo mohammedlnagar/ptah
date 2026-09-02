@@ -108,6 +108,14 @@ def appointment_list_detail(request, list_id):
         campaign_item__campaign=campaign
     )
     campaign_messages = _filtered_messages(request, campaign)
+    # Chips carry their own counts, so the operator can see where the work is
+    # before filtering rather than after.
+    doctor_counts = (
+        campaign.items.exclude(doctor_name_snapshot="")
+        .values("doctor_name_snapshot")
+        .annotate(total=Count("id"))
+        .order_by("doctor_name_snapshot")
+    )
     doctors = campaign.items.order_by("doctor_name_snapshot").values_list(
         "doctor_name_snapshot", flat=True
     ).distinct()
@@ -129,6 +137,7 @@ def appointment_list_detail(request, list_id):
             "appointment_list": campaign,
             "assigned_messages": campaign_messages,
             "doctors": doctors,
+            "doctor_counts": doctor_counts,
             "result_count": campaign_messages.count(),
             "message_metrics": {
                 "total": all_campaign_messages.count(),
@@ -140,6 +149,9 @@ def appointment_list_detail(request, list_id):
                 ).count(),
                 "sent": all_campaign_messages.filter(
                     status=CampaignMessage.Status.SENT
+                ).count(),
+                "skipped": all_campaign_messages.filter(
+                    status=CampaignMessage.Status.SKIPPED
                 ).count(),
             },
             "doctor_summaries": doctor_summaries,
