@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>a{color:inherit}a:hover{color:inherit}.dc-switch{position:fixed;z-index:200;bottom:1rem;left:50%;transform:translateX(-50%);display:flex;gap:.3rem;padding:.35rem;background:#102320;border-radius:999px;box-shadow:0 10px 30px rgba(16,35,32,.35)}.dc-switch button{border:0;background:transparent;color:#a9bfba;font:inherit;font-size:.68rem;font-weight:700;padding:.42rem .7rem;border-radius:999px;cursor:pointer}.dc-switch button.on{background:#087b6c;color:#fff}</style>
+</helmet>
+<svg class="icon-sprite" aria-hidden="true">
+  <symbol id="icon-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></symbol>
+  <symbol id="icon-campaign" viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h10"></path><circle cx="18" cy="17.5" r="2.5"></circle></symbol>
+  <symbol id="icon-template" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v5h4M9 12h7M9 16h7"></path></symbol>
+  <symbol id="icon-doctor" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.5"></circle><path d="M5 21a7 7 0 0 1 14 0M18 11v5M15.5 13.5h5"></path></symbol>
+  <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"></path></symbol>
+  <symbol id="icon-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></symbol>
+  <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></symbol>
+  <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"></path></symbol>
+  <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5"></path></symbol>
+  <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></symbol>
+  <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></symbol>
+  <symbol id="icon-whatsapp" viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"></path><path d="M9 8.5c.4 2.7 2.2 4.5 5 5"></path></symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></symbol>
+  <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></symbol>
+  <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 10h18"></path></symbol>
+  <symbol id="icon-edit" viewBox="0 0 24 24"><path d="m4 20 4.5-1 10-10-3.5-3.5-10 10zM13.5 7l3.5 3.5"></path></symbol>
+  <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7h.01"></path></symbol>
+  <symbol id="icon-logout" viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M8 12h10"></path></symbol>
+  <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></symbol>
+</svg>
+
+<sc-if value="{{ isPublic }}" hint-placeholder-val="{{ false }}">
+  <div>
+    <header class="public-header">
+      <a class="brand" href="#landing" onClick="{{ goLanding }}"><span class="brand-mark">W</span><span><strong>Waslni</strong><small>Patient outreach</small></span></a>
+      <nav class="public-nav" aria-label="Public navigation">
+        <a href="#how" onClick="{{ noop }}">How it works</a>
+        <a href="#login" onClick="{{ goLogin }}">Sign in</a>
+        <a class="button button--primary button--compact" href="#register" onClick="{{ goRegister }}">Start free</a>
+      </nav>
+    </header>
+    <main class="public-main">
+      <sc-if value="{{ isLanding }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <section class="landing-hero">
+            <div class="landing-copy">
+              <span class="auth-kicker">Healthcare messaging, made human</span>
+              <h1>Turn appointment data into <span>personal follow-up.</span></h1>
+              <p>Waslni helps healthcare teams prepare, review, and open every WhatsApp message individually—so reminders stay personal and operators stay in control.</p>
+              <div class="landing-actions">
+                <a class="button button--primary" href="#register" onClick="{{ goRegister }}">Create your workspace <svg><use href="#icon-arrow"></use></svg></a>
+                <a class="button button--secondary" href="#login" onClick="{{ goLogin }}">Sign in</a>
+              </div>
+              <div class="landing-note"><svg><use href="#icon-check"></use></svg><span>No bulk sender. No hidden automation. Your team sends one message at a time.</span></div>
+            </div>
+            <div class="product-preview" aria-label="Waslni campaign preview">
+              <div class="preview-window">
+                <div class="preview-bar"><span class="preview-dot"></span><span class="preview-dot"></span><span class="preview-dot"></span></div>
+                <div class="preview-body">
+                  <div class="preview-heading"></div>
+                  <div class="preview-stats"><div class="preview-stat"></div><div class="preview-stat"></div><div class="preview-stat"></div></div>
+                  <div class="preview-patient"><div><div class="preview-line"></div><div class="preview-line preview-line--short"></div></div><div class="preview-line"></div><span class="preview-send"></span></div>
+                  <div class="preview-patient"><div><div class="preview-line"></div><div class="preview-line preview-line--short"></div></div><div class="preview-line"></div><span class="preview-send"></span></div>
+                  <div class="preview-patient"><div><div class="preview-line"></div><div class="preview-line preview-line--short"></div></div><div class="preview-line"></div><span class="preview-send"></span></div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="how-section" id="how-it-works">
+            <div class="how-section__head"><span class="eyebrow">A clear three-step workflow</span><h2>From spreadsheet to WhatsApp, without losing control.</h2><p>Every campaign is isolated to your organization and every message remains visible and editable before it is opened.</p></div>
+            <div class="steps-grid">
+              <article class="step-card"><span class="step-number">01</span><h3>Upload your CSV</h3><p>Use the appointment or marketing format. Each upload becomes its own campaign with a clear audit trail.</p></article>
+              <article class="step-card"><span class="step-number">02</span><h3>Review each message</h3><p>Filter by doctor, patient, MRN, date, or status. Edit the generated copy before it leaves your workspace.</p></article>
+              <article class="step-card"><span class="step-number">03</span><h3>Open WhatsApp</h3><p>Waslni opens the prepared message in WhatsApp. The operator sends it personally and records the outcome.</p></article>
+            </div>
+          </section>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}">
+        <div class="auth-layout">
+          <section class="auth-story">
+            <div><span class="auth-kicker">Welcome back</span><h1>Keep every patient conversation moving.</h1><p>Open your organization workspace to review today’s reminders, record appointment outcomes, and prepare the next campaign.</p></div>
+            <div class="auth-steps">
+              <div class="auth-step"><span>1</span><div><strong>Review the queue</strong><small>See pending messages and appointment statuses.</small></div></div>
+              <div class="auth-step"><span>2</span><div><strong>Open WhatsApp</strong><small>Send each approved message personally.</small></div></div>
+              <div class="auth-step"><span>3</span><div><strong>Record the result</strong><small>Keep the entire team aligned.</small></div></div>
+            </div>
+          </section>
+          <section class="auth-form-wrap">
+            <div class="auth-card">
+              <div class="auth-card__heading"><span class="eyebrow">Secure workspace</span><h2>Sign in to Waslni</h2><p>Use the email address connected to your organization.</p></div>
+              <div class="form-grid">
+                <div class="form-field"><label class="form-label" for="cur-login-email">Email address</label><input id="cur-login-email" type="email" placeholder="you@clinic.com"></div>
+                <div class="form-field"><label class="form-label" for="cur-login-pass">Password</label><input id="cur-login-pass" type="password" placeholder="••••••••"></div>
+                <button class="button button--primary" type="button" onClick="{{ goDashboard }}">Sign in <svg><use href="#icon-arrow"></use></svg></button>
+              </div>
+              <p class="auth-switch">New to Waslni? <a href="#register" onClick="{{ goRegister }}">Create an organization workspace</a></p>
+            </div>
+          </section>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isRegister }}" hint-placeholder-val="{{ false }}">
+        <div class="auth-layout">
+          <section class="auth-story">
+            <div><span class="auth-kicker">Start your organization</span><h1>A private outreach workspace for your healthcare team.</h1><p>Your data, templates, campaigns, doctors, and employees stay isolated inside one organization.</p></div>
+            <div class="auth-steps">
+              <div class="auth-step"><span>1</span><div><strong>Create the workspace</strong><small>You become its first Owner.</small></div></div>
+              <div class="auth-step"><span>2</span><div><strong>Prepare your templates</strong><small>Use approved copy for consistent outreach.</small></div></div>
+              <div class="auth-step"><span>3</span><div><strong>Upload your first campaign</strong><small>Start with an appointment or marketing CSV.</small></div></div>
+            </div>
+          </section>
+          <section class="auth-form-wrap">
+            <div class="auth-card">
+              <div class="auth-card__heading"><span class="eyebrow">14-day trial workspace</span><h2>Create your organization</h2><p>Set up the Owner account that will manage your team.</p></div>
+              <div class="form-grid">
+                <div class="form-field"><label class="form-label" for="cur-reg-org">Organization name<small>Required</small></label><input id="cur-reg-org" type="text" placeholder="Al Noor Clinic"></div>
+                <div class="form-field"><label class="form-label" for="cur-reg-email">Email address<small>Required</small></label><input id="cur-reg-email" type="email" placeholder="you@clinic.com"></div>
+                <div class="form-field"><label class="form-label" for="cur-reg-pass">Password<small>Required</small></label><input id="cur-reg-pass" type="password" placeholder="••••••••"></div>
+                <div class="form-field"><label class="form-label" for="cur-reg-pass2">Confirm password<small>Required</small></label><input id="cur-reg-pass2" type="password" placeholder="••••••••"></div>
+                <button class="button button--primary" type="button" onClick="{{ goDashboard }}">Create workspace <svg><use href="#icon-arrow"></use></svg></button>
+              </div>
+              <p class="auth-switch">Already have a workspace? <a href="#login" onClick="{{ goLogin }}">Sign in</a></p>
+            </div>
+          </section>
+        </div>
+      </sc-if>
+    </main>
+    <footer class="public-footer"><span>© 2026 Waslni</span><span>Personal outreach. Clear follow-up. Better attendance.</span></footer>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ true }}">
+  <div class="app-shell">
+    <aside class="sidebar" id="primary-sidebar" aria-label="Primary navigation">
+      <div class="sidebar-header">
+        <a class="brand brand--sidebar" href="#dashboard" onClick="{{ goDashboard }}" aria-label="Waslni dashboard"><span class="brand-mark">W</span><span><strong>Waslni</strong><small>Patient outreach</small></span></a>
+      </div>
+      <div class="tenant-card"><span class="tenant-avatar">A</span><span><small>Workspace</small><strong>Al Noor Clinic</strong></span><span class="status-dot" title="Workspace active"></span></div>
+      <nav class="sidebar-nav">
+        <p class="nav-label">Workspace</p>
+        <a href="#dashboard" onClick="{{ goDashboard }}" class="{{ navDashboard }}"><svg><use href="#icon-grid"></use></svg><span>Overview</span></a>
+        <a href="#campaigns" onClick="{{ goCampaigns }}" class="{{ navCampaigns }}"><svg><use href="#icon-campaign"></use></svg><span>Campaigns</span></a>
+        <a href="#campaigns" onClick="{{ goCampaigns }}" class="nav-item"><svg><use href="#icon-template"></use></svg><span>Message templates</span></a>
+        <a href="#doctors" onClick="{{ noop }}" class="nav-item"><svg><use href="#icon-doctor"></use></svg><span>Doctors</span></a>
+        <p class="nav-label">Administration</p>
+        <a href="#admin" onClick="{{ noop }}" class="nav-item"><svg><use href="#icon-settings"></use></svg><span>Admin center</span></a>
+        <a href="#profile" onClick="{{ goProfile }}" class="{{ navProfile }}"><svg><use href="#icon-user"></use></svg><span>My profile</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-help"><span class="help-icon"><svg><use href="#icon-info"></use></svg></span><div><strong>Need help?</strong><small>Review the CSV format before uploading.</small></div></div>
+        <form><button class="nav-item nav-item--button" type="button" onClick="{{ goLanding }}"><svg><use href="#icon-logout"></use></svg><span>Sign out</span></button></form>
+      </div>
+    </aside>
+    <div class="app-main">
+      <header class="topbar">
+        <div class="topbar-context"><span class="eyebrow">Al Noor Clinic</span><strong>Patient outreach workspace</strong></div>
+        <div class="topbar-actions">
+          <a class="button button--primary button--compact topbar-create" href="#campaigns" onClick="{{ goCampaigns }}"><svg><use href="#icon-plus"></use></svg><span>New campaign</span></a>
+          <a class="profile-menu" href="#profile" onClick="{{ goProfile }}" aria-label="Open your profile"><span class="profile-avatar">N</span><span class="profile-copy"><strong>Nadia Salem</strong><small>Operator</small></span><svg><use href="#icon-chevron"></use></svg></a>
+        </div>
+      </header>
+      <main id="main-content" class="page-content">
+
+        <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+          <div data-screen-label="Dashboard">
+            <header class="page-header">
+              <div><span class="eyebrow">Workspace overview</span><h1>Good morning, Nadia</h1><p>Track patient outreach, appointment responses, and the campaigns your team is working through.</p></div>
+              <div class="page-header-actions">
+                <a class="button button--secondary" href="#campaigns" onClick="{{ goCampaigns }}"><svg><use href="#icon-template"></use></svg>New template</a>
+                <a class="button button--primary" href="#campaigns" onClick="{{ goCampaigns }}"><svg><use href="#icon-upload"></use></svg>Upload CSV</a>
+              </div>
+            </header>
+            <section class="metric-grid" aria-label="Workspace metrics">
+              <article class="metric-card"><div class="metric-card__top"><div><span class="metric-label">Campaigns</span><strong class="metric-value">12</strong></div><span class="metric-icon"><svg><use href="#icon-campaign"></use></svg></span></div><div class="metric-detail"><span>486 personal messages created</span></div></article>
+              <article class="metric-card"><div class="metric-card__top"><div><span class="metric-label">Marked sent</span><strong class="metric-value">341</strong></div><span class="metric-icon"><svg><use href="#icon-check"></use></svg></span></div><div class="metric-detail"><span>Recorded manually by your team</span></div></article>
+              <article class="metric-card"><div class="metric-card__top"><div><span class="metric-label">Upcoming appointments</span><strong class="metric-value">58</strong></div><span class="metric-icon"><svg><use href="#icon-calendar"></use></svg></span></div><div class="metric-detail"><strong>14 confirmed</strong><span>of 22 today</span></div></article>
+              <article class="metric-card"><div class="metric-card__top"><div><span class="metric-label">Active doctors</span><strong class="metric-value">9</strong></div><span class="metric-icon"><svg><use href="#icon-doctor"></use></svg></span></div><div class="metric-detail"><span>1,240 contacts in this workspace</span></div></article>
+            </section>
+            <div class="dashboard-grid">
+              <section class="panel">
+                <div class="panel-header"><div><h2>Recent campaigns</h2><p>Continue where your team left off.</p></div><a class="section-link" href="#campaigns" onClick="{{ goCampaigns }}">View all <svg><use href="#icon-arrow"></use></svg></a></div>
+                <div class="campaign-list">
+                  <a class="campaign-row" href="#detail" onClick="{{ goDetail }}"><span class="campaign-primary"><strong>Cardiology · 14 August</strong><small>12 Aug 2026 · 09:12</small></span><span class="campaign-meta"><small>Purpose</small><span class="badge badge--appointment">Appointment</span></span><span class="campaign-meta"><small>Progress</small><strong>61 / 82</strong></span><span class="campaign-meta"><small>Status</small><span class="badge badge--active">Active</span></span><svg><use href="#icon-chevron"></use></svg></a>
+                  <a class="campaign-row" href="#detail" onClick="{{ goDetail }}"><span class="campaign-primary"><strong>Dermatology recall · September</strong><small>28 Aug 2026 · 14:40</small></span><span class="campaign-meta"><small>Purpose</small><span class="badge badge--marketing">Marketing</span></span><span class="campaign-meta"><small>Progress</small><strong>45 / 120</strong></span><span class="campaign-meta"><small>Status</small><span class="badge badge--active">Active</span></span><svg><use href="#icon-chevron"></use></svg></a>
+                  <a class="campaign-row" href="#detail" onClick="{{ goDetail }}"><span class="campaign-primary"><strong>Orthopedics · 18 August</strong><small>16 Aug 2026 · 08:05</small></span><span class="campaign-meta"><small>Purpose</small><span class="badge badge--appointment">Appointment</span></span><span class="campaign-meta"><small>Progress</small><strong>96 / 96</strong></span><span class="campaign-meta"><small>Status</small><span class="badge badge--completed">Completed</span></span><svg><use href="#icon-chevron"></use></svg></a>
+                </div>
+              </section>
+              <aside class="quick-actions" aria-label="Quick actions">
+                <section class="panel panel--padded">
+                  <div class="section-header"><div><h3>Quick actions</h3><p>Common workspace tasks</p></div></div>
+                  <div class="quick-actions">
+                    <a class="quick-action" href="#campaigns" onClick="{{ goCampaigns }}"><span class="quick-action__icon"><svg><use href="#icon-upload"></use></svg></span><span><strong>Upload appointment CSV</strong><small>Create a one-by-one reminder queue</small></span><svg><use href="#icon-chevron"></use></svg></a>
+                    <a class="quick-action" href="#campaigns" onClick="{{ goCampaigns }}"><span class="quick-action__icon"><svg><use href="#icon-template"></use></svg></span><span><strong>Create message template</strong><small>6 approved · 2 awaiting review</small></span><svg><use href="#icon-chevron"></use></svg></a>
+                    <a class="quick-action" href="#doctors" onClick="{{ noop }}"><span class="quick-action__icon"><svg><use href="#icon-doctor"></use></svg></span><span><strong>Manage doctors</strong><small>Departments and contact details</small></span><svg><use href="#icon-chevron"></use></svg></a>
+                  </div>
+                </section>
+                <section class="panel panel--padded">
+                  <span class="eyebrow">Subscription</span>
+                  <h3>Clinic plan</h3>
+                  <p class="muted">Up to 10 users and 40 campaigns per month.</p>
+                  <span class="badge badge--active">Active</span>
+                </section>
+              </aside>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCampaigns }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="Campaigns">
+            <header class="page-header">
+              <div><span class="eyebrow">Outreach operations</span><h1>Campaigns</h1><p>Upload appointment or marketing data, assign an approved template, and work through each message personally.</p></div>
+              <div class="page-header-actions"><a class="button button--secondary" href="#templates" onClick="{{ noop }}"><svg><use href="#icon-template"></use></svg>New template</a><a class="button button--primary" href="#new-campaign" onClick="{{ noop }}"><svg><use href="#icon-upload"></use></svg>Upload CSV</a></div>
+            </header>
+            <section class="metric-grid" aria-label="Campaign metrics">
+              <article class="metric-card"><div class="metric-card__top"><div><span class="metric-label">Campaigns</span><strong class="metric-value">12</strong></div><span class="metric-icon"><svg><use href="#icon-campaign"></use></svg></span></div><div class="metric-detail"><span>Isolated to Al Noor Clinic</span></div></article>
+              <article class="metric-card"><div class="metric-card__top"><div><span class="metric-label">Messages prepared</span><strong class="metric-value">486</strong></div><span class="metric-icon"><svg><use href="#icon-template"></use></svg></span></div><div class="metric-detail"><span>Editable before opening WhatsApp</span></div></article>
+              <article class="metric-card"><div class="metric-card__top"><div><span class="metric-label">Marked sent</span><strong class="metric-value">341</strong></div><span class="metric-icon"><svg><use href="#icon-check"></use></svg></span></div><div class="metric-detail"><span>Recorded by operators</span></div></article>
+              <article class="metric-card"><div class="metric-card__top"><div><span class="metric-label">Approved templates</span><strong class="metric-value">6</strong></div><span class="metric-icon"><svg><use href="#icon-template"></use></svg></span></div><div class="metric-detail"><span>Ready to assign to a campaign</span></div></article>
+            </section>
+            <section class="content-section panel">
+              <div class="panel-header"><div><h2>All campaigns</h2><p>Open a campaign to review recipients and send messages one by one.</p></div><span class="badge badge--neutral">12 total</span></div>
+              <div class="campaign-list">
+                <a class="campaign-row campaign-row--full" href="#detail" onClick="{{ goDetail }}"><span class="campaign-primary"><strong>Cardiology · 14 August</strong><small>Created 12 Aug 2026 · 09:12</small></span><span class="campaign-meta"><small>Purpose</small><span class="badge badge--appointment">Appointment</span></span><span class="campaign-meta"><small>Recipients</small><strong>82</strong></span><span class="campaign-meta"><small>Operator marked sent</small><strong>61 / 82</strong></span><span class="campaign-meta"><small>Status</small><span class="badge badge--active">Active</span></span><svg><use href="#icon-chevron"></use></svg></a>
+                <a class="campaign-row campaign-row--full" href="#detail" onClick="{{ goDetail }}"><span class="campaign-primary"><strong>Dermatology recall · September</strong><small>Created 28 Aug 2026 · 14:40</small></span><span class="campaign-meta"><small>Purpose</small><span class="badge badge--marketing">Marketing</span></span><span class="campaign-meta"><small>Recipients</small><strong>120</strong></span><span class="campaign-meta"><small>Operator marked sent</small><strong>45 / 120</strong></span><span class="campaign-meta"><small>Status</small><span class="badge badge--active">Active</span></span><svg><use href="#icon-chevron"></use></svg></a>
+                <a class="campaign-row campaign-row--full" href="#detail" onClick="{{ goDetail }}"><span class="campaign-primary"><strong>Orthopedics · 18 August</strong><small>Created 16 Aug 2026 · 08:05</small></span><span class="campaign-meta"><small>Purpose</small><span class="badge badge--appointment">Appointment</span></span><span class="campaign-meta"><small>Recipients</small><strong>96</strong></span><span class="campaign-meta"><small>Operator marked sent</small><strong>96 / 96</strong></span><span class="campaign-meta"><small>Status</small><span class="badge badge--completed">Completed</span></span><svg><use href="#icon-chevron"></use></svg></a>
+              </div>
+            </section>
+            <div class="split-layout content-section">
+              <section class="panel panel--padded" id="new-campaign">
+                <div class="section-header"><div><span class="eyebrow">Step 1</span><h2>Create a campaign</h2><p>Every upload creates a separate campaign and import record.</p></div><span class="metric-icon"><svg><use href="#icon-upload"></use></svg></span></div>
+                <div class="form-intro"><svg><use href="#icon-info"></use></svg><p><strong>Choose the matching CSV format.</strong>Appointment campaigns require patient, mobile, date/time, doctor, department, and status. Marketing campaigns require patient and mobile details.</p></div>
+                <div class="form-grid">
+                  <div class="form-field form-field--full"><label class="form-label" for="cur-camp-name">Campaign name <small>Required</small></label><input id="cur-camp-name" type="text" placeholder="Cardiology · 14 August"><small class="field-help">Use a name your team will recognize, such as “Cardiology · 14 August”.</small></div>
+                  <div class="form-field"><label class="form-label" for="cur-camp-purpose">Purpose <small>Required</small></label><select id="cur-camp-purpose"><option>Appointment reminder</option><option>Marketing</option></select></div>
+                  <div class="form-field"><label class="form-label" for="cur-camp-template">Approved template <small>Required</small></label><select id="cur-camp-template"><option>Appointment reminder · EN</option><option>Recall · Dermatology</option></select><small class="field-help">Only approved, active templates appear here.</small></div>
+                  <div class="form-field form-field--full"><label class="form-label" for="cur-camp-file">CSV file <small>Maximum 10 MB</small></label><input id="cur-camp-file" type="file"><small class="field-help">CSV only. A corrected re-upload should be made only when the original import failed.</small></div>
+                </div>
+                <div class="form-actions"><span class="muted">Messages are generated after validation.</span><button type="button" class="button button--primary"><svg><use href="#icon-upload"></use></svg>Create campaign</button></div>
+              </section>
+              <section class="panel panel--padded" id="templates">
+                <div class="section-header"><div><span class="eyebrow">Reusable copy</span><h2>Message templates</h2><p>Create a draft for an Admin or Approver to review.</p></div><span class="metric-icon"><svg><use href="#icon-template"></use></svg></span></div>
+                <div class="form-grid">
+                  <div class="form-field form-field--full"><label class="form-label" for="cur-tpl-name">Template name</label><input id="cur-tpl-name" type="text"></div>
+                  <div class="form-field form-field--full"><label class="form-label" for="cur-tpl-purpose">Purpose</label><select id="cur-tpl-purpose"><option>Appointment reminder</option><option>Marketing</option></select></div>
+                  <div class="form-field form-field--full"><label class="form-label" for="cur-tpl-content">Message content</label><textarea id="cur-tpl-content"></textarea>
+                    <div class="placeholder-guide" aria-label="Available placeholders"><span class="placeholder-token">#patient_name</span><span class="placeholder-token">#mrn</span><span class="placeholder-token">#doctor</span><span class="placeholder-token">#department</span><span class="placeholder-token">#appointment_date</span><span class="placeholder-token">#appointment_time</span><span class="placeholder-token">#appointment_status</span></div>
+                  </div>
+                </div>
+                <div class="form-actions"><button type="button" class="button button--primary"><svg><use href="#icon-plus"></use></svg>Save draft</button></div>
+                <div class="content-section">
+                  <div class="section-header"><div><h3>Saved templates</h3></div><span class="badge badge--neutral">8</span></div>
+                  <div class="template-list">
+                    <div class="template-item"><span class="template-icon"><svg><use href="#icon-template"></use></svg></span><span class="template-copy"><strong>Appointment reminder · EN</strong><small>Appointment reminder</small></span><span class="badge badge--approved">Approved</span></div>
+                    <div class="template-item"><span class="template-icon"><svg><use href="#icon-template"></use></svg></span><span class="template-copy"><strong>Recall · Dermatology</strong><small>Marketing</small></span><span class="badge badge--approved">Approved</span></div>
+                    <div class="template-item"><span class="template-icon"><svg><use href="#icon-template"></use></svg></span><span class="template-copy"><strong>No-show follow-up</strong><small>Appointment reminder</small></span><span class="badge badge--pending">Pending review</span></div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="Campaign detail">
+            <header class="page-header">
+              <div>
+                <a class="section-link" href="#campaigns" onClick="{{ goCampaigns }}">← All campaigns</a>
+                <h1>Cardiology · 14 August</h1>
+                <p>Appointment reminder · Created 12 Aug 2026 · 09:12 · <span class="badge badge--active">Active</span></p>
+              </div>
+              <div class="page-header-actions"><a class="button button--secondary" href="#export" onClick="{{ noop }}"><svg><use href="#icon-download"></use></svg>Export CSV</a></div>
+            </header>
+            <section class="campaign-summary" aria-label="Campaign message progress">
+              <article class="summary-chip"><small>Total messages</small><strong>82</strong></article>
+              <article class="summary-chip"><small>Pending</small><strong>18</strong></article>
+              <article class="summary-chip"><small>WhatsApp opened</small><strong>3</strong></article>
+              <article class="summary-chip"><small>Marked sent</small><strong>61</strong></article>
+            </section>
+            <div class="filter-panel" aria-label="Filter campaign messages">
+              <div class="filter-grid">
+                <div class="filter-field"><label for="cur-f-search">Search recipients</label><div class="search-control"><svg><use href="#icon-search"></use></svg><input class="filter-control" id="cur-f-search" placeholder="Patient, MRN, phone, doctor or department"></div></div>
+                <div class="filter-field"><label for="cur-f-doctor">Doctor</label><select class="filter-control" id="cur-f-doctor"><option>All doctors</option><option>Dr. Al-Rashid</option><option>Dr. Osman</option></select></div>
+                <div class="filter-field"><label for="cur-f-appt">Appointment status</label><select class="filter-control" id="cur-f-appt"><option>All statuses</option><option>Booked</option><option>Confirmed</option><option>Cancelled</option></select></div>
+                <div class="filter-field"><label for="cur-f-msg">Message status</label><select class="filter-control" id="cur-f-msg"><option>All statuses</option><option>Pending</option><option>WhatsApp opened</option><option>Operator marked sent</option><option>Skipped</option></select></div>
+                <div class="filter-actions"><button class="button button--secondary button--compact" type="button">Clear</button><button class="button button--primary button--compact" type="button">Apply filters</button></div>
+              </div>
+            </div>
+            <div class="results-bar"><p><strong>3</strong> messages shown</p><p>Open and send each message individually in WhatsApp.</p></div>
+            <section class="work-list" aria-label="Campaign message queue">
+              <sc-for list="{{ workItems }}" as="w" hint-placeholder-count="3">
+                <article class="work-item">
+                  <section class="work-section">
+                    <span class="work-label">Recipient</span>
+                    <div class="patient-name">{{ w.patient }}</div>
+                    <div class="patient-meta"><span><svg><use href="#icon-user"></use></svg>MRN {{ w.mrn }}</span><span><svg><use href="#icon-whatsapp"></use></svg>{{ w.phone }}</span></div>
+                  </section>
+                  <section class="work-section">
+                    <span class="work-label">Appointment</span>
+                    <div class="doctor-name">{{ w.doctor }}</div>
+                    <div class="appointment-meta"><span>{{ w.dept }}</span><span><svg><use href="#icon-calendar"></use></svg>{{ w.date }}</span><span><svg><use href="#icon-clock"></use></svg>{{ w.time }}</span></div>
+                    <div style="margin-top:.55rem"><select class="status-select" defaultValue="{{ w.apptStatus }}"><option value="booked">Booked</option><option value="confirmed">Confirmed</option><option value="cancelled">Cancelled</option></select></div>
+                  </section>
+                  <section class="work-section work-section--message">
+                    <span class="work-label">Prepared message</span>
+                    <textarea class="message-editor" defaultValue="{{ w.message }}"></textarea>
+                    <div class="message-actions"><span class="save-state">Edit before opening WhatsApp if needed.</span><button class="button button--secondary button--small" type="button"><svg><use href="#icon-edit"></use></svg>Save edit</button></div>
+                  </section>
+                  <section class="work-section dispatch-box">
+                    <span class="work-label">Message status</span>
+                    <select class="status-select" defaultValue="{{ w.msgStatus }}"><option value="pending">Pending</option><option value="opened">WhatsApp opened</option><option value="operator_marked_sent">Operator marked sent</option><option value="skipped">Skipped</option></select>
+                    <p class="dispatch-note">This opens WhatsApp in a new tab. Waslni does not send automatically.</p>
+                    <a class="button button--success" href="#wa" onClick="{{ noop }}"><svg><use href="#icon-whatsapp"></use></svg>Open WhatsApp</a>
+                  </section>
+                </article>
+              </sc-for>
+            </section>
+            <section class="content-section">
+              <div class="section-header"><div><h2>Doctor summary</h2><p>A quick view of appointment outcomes by doctor in this campaign.</p></div></div>
+              <div class="doctor-summary-grid">
+                <article class="doctor-summary"><div class="doctor-summary__head"><div><strong>Dr. Al-Rashid</strong><small>Cardiology</small></div><span class="badge badge--neutral">46 appointments</span></div><div class="mini-metrics"><div class="mini-metric"><strong>46</strong><small>Total</small></div><div class="mini-metric"><strong>29</strong><small>Confirmed</small></div><div class="mini-metric"><strong>4</strong><small>Cancelled</small></div></div></article>
+                <article class="doctor-summary"><div class="doctor-summary__head"><div><strong>Dr. Osman</strong><small>Cardiology</small></div><span class="badge badge--neutral">36 appointments</span></div><div class="mini-metrics"><div class="mini-metric"><strong>36</strong><small>Total</small></div><div class="mini-metric"><strong>21</strong><small>Confirmed</small></div><div class="mini-metric"><strong>2</strong><small>Cancelled</small></div></div></article>
+              </div>
+            </section>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isEditProfile }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="Edit profile">
+            <header class="page-header">
+              <div><span class="eyebrow">Account settings</span><h1>Edit profile</h1><p>Update your personal and emergency contact details.</p></div>
+              <div class="page-header-actions"><a href="#profile" onClick="{{ goProfile }}" class="button button--secondary">Cancel</a></div>
+            </header>
+            <div class="panel panel--padded">
+              <div class="section-header"><div><h2>Contact information</h2><p>The details attached to your team account.</p></div></div>
+              <div class="form-grid">
+                <div class="form-field"><label class="form-label" for="cur-ep-first">First name</label><input id="cur-ep-first" type="text" defaultValue="Nadia"></div>
+                <div class="form-field"><label class="form-label" for="cur-ep-last">Last name</label><input id="cur-ep-last" type="text" defaultValue="Salem"></div>
+                <div class="form-field"><label class="form-label" for="cur-ep-email">Email address</label><input id="cur-ep-email" type="email" defaultValue="nadia@alnoorclinic.com"></div>
+                <div class="form-field"><label class="form-label" for="cur-ep-mobile">Mobile number</label><input id="cur-ep-mobile" type="text" defaultValue="+966 55 812 3390"></div>
+              </div>
+              <div class="form-actions"><a class="button button--secondary" href="#profile" onClick="{{ goProfile }}">Cancel</a><button class="button button--primary" type="button" onClick="{{ goProfile }}">Save changes</button></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="Profile">
+            <header class="page-header">
+              <div><span class="eyebrow">Account</span><h1>My profile</h1><p>Review your workspace membership and keep your contact details current.</p></div>
+              <div class="page-header-actions"><a href="#edit" onClick="{{ goEditProfile }}" class="button button--primary"><svg><use href="#icon-edit"></use></svg>Edit profile</a></div>
+            </header>
+            <div class="profile-grid">
+              <section class="panel panel--padded profile-summary">
+                <div class="profile-summary__avatar">N</div>
+                <h2>Nadia Salem</h2>
+                <p>nadia@alnoorclinic.com</p>
+                <span class="badge badge--active">Active team member</span>
+              </section>
+              <section class="panel">
+                <div class="panel-header"><div><h2>Workspace details</h2><p>Your organization and role access.</p></div></div>
+                <div class="panel-body">
+                  <dl class="detail-list">
+                    <div class="detail-row"><dt>Organization</dt><dd>Al Noor Clinic</dd></div>
+                    <div class="detail-row"><dt>Email</dt><dd>nadia@alnoorclinic.com</dd></div>
+                    <div class="detail-row"><dt>Mobile number</dt><dd>+966 55 812 3390</dd></div>
+                    <div class="detail-row"><dt>Access role</dt><dd><span class="badge badge--neutral">Operator</span></dd></div>
+                  </dl>
+                </div>
+              </section>
+            </div>
+          </div>
+        </sc-if>
+
+      </main>
+    </div>
+  </div>
+</sc-if>
+
+<div class="dc-switch" role="navigation" aria-label="Preview screens">
+  <button class="{{ swLanding }}" onClick="{{ goLanding }}">Landing</button>
+  <button class="{{ swLogin }}" onClick="{{ goLogin }}">Login</button>
+  <button class="{{ swRegister }}" onClick="{{ goRegister }}">Register</button>
+  <button class="{{ swDashboard }}" onClick="{{ goDashboard }}">Dashboard</button>
+  <button class="{{ swCampaigns }}" onClick="{{ goCampaigns }}">Campaigns</button>
+  <button class="{{ swDetail }}" onClick="{{ goDetail }}">Campaign detail</button>
+  <button class="{{ swProfile }}" onClick="{{ goProfile }}">Profile</button>
+  <button class="{{ swEditProfile }}" onClick="{{ goEditProfile }}">Edit profile</button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { screen: 'dashboard' };
+  renderVals() {
+    const s = this.state.screen;
+    const go = (name) => (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ screen: name }); window.scrollTo(0, 0); };
+    const isPublic = ['landing', 'login', 'register'].includes(s);
+    return {
+      isPublic, isApp: !isPublic,
+      isLanding: s === 'landing', isLogin: s === 'login', isRegister: s === 'register',
+      isDashboard: s === 'dashboard', isCampaigns: s === 'campaigns', isDetail: s === 'detail', isProfile: s === 'profile', isEditProfile: s === 'editProfile',
+      goEditProfile: go('editProfile'), swEditProfile: s === 'editProfile' ? 'on' : '',
+      goLanding: go('landing'), goLogin: go('login'), goRegister: go('register'),
+      goDashboard: go('dashboard'), goCampaigns: go('campaigns'), goDetail: go('detail'), goProfile: go('profile'),
+      noop: (e) => { if (e && e.preventDefault) e.preventDefault(); },
+      navDashboard: 'nav-item' + (s === 'dashboard' ? ' is-active' : ''),
+      navCampaigns: 'nav-item' + (s === 'campaigns' || s === 'detail' ? ' is-active' : ''),
+      navProfile: 'nav-item' + (s === 'profile' || s === 'editProfile' ? ' is-active' : ''),
+      swLanding: s === 'landing' ? 'on' : '', swLogin: s === 'login' ? 'on' : '', swRegister: s === 'register' ? 'on' : '',
+      swDashboard: s === 'dashboard' ? 'on' : '', swCampaigns: s === 'campaigns' ? 'on' : '', swDetail: s === 'detail' ? 'on' : '', swProfile: s === 'profile' ? 'on' : '',
+      workItems: [
+        { patient: 'Layla Hassan', mrn: '448291', phone: '+966 50 123 4567', doctor: 'Dr. Al-Rashid', dept: 'Cardiology', date: '14 Aug 2026', time: '10:30', apptStatus: 'confirmed', msgStatus: 'pending', message: 'Dear Layla, this is a reminder of your appointment with Dr. Al-Rashid (Cardiology) on 14 Aug at 10:30. Reply to confirm. — Al Noor Clinic' },
+        { patient: 'Omar Farouk', mrn: '448302', phone: '+966 55 987 2210', doctor: 'Dr. Al-Rashid', dept: 'Cardiology', date: '14 Aug 2026', time: '11:00', apptStatus: 'booked', msgStatus: 'pending', message: 'Dear Omar, this is a reminder of your appointment with Dr. Al-Rashid (Cardiology) on 14 Aug at 11:00. Reply to confirm. — Al Noor Clinic' },
+        { patient: 'Sara Mansour', mrn: '448317', phone: '+966 54 332 8801', doctor: 'Dr. Osman', dept: 'Cardiology', date: '14 Aug 2026', time: '11:15', apptStatus: 'booked', msgStatus: 'pending', message: 'Dear Sara, this is a reminder of your appointment with Dr. Osman (Cardiology) on 14 Aug at 11:15. Reply to confirm. — Al Noor Clinic' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

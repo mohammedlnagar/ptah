@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Public Sans',ui-sans-serif,sans-serif;background:#f2f6f5;color:#17312d;-webkit-font-smoothing:antialiased}
+a{color:#087b6c}a:hover{color:#07584f}
+@keyframes routeIn{from{opacity:0;transform:translateY(14px) scale(.995)}to{opacity:1;transform:none}}
+@keyframes popIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.route-view{animation:routeIn 380ms cubic-bezier(.2,.8,.2,1) both}
+.fnav{position:fixed;z-index:120;top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px;padding:6px;background:rgba(13,28,25,.92);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.09);border-radius:999px;box-shadow:0 14px 40px rgba(10,26,23,.32);transition:padding 320ms cubic-bezier(.2,.8,.2,1)}
+.fnav button{display:flex;align-items:center;gap:8px;border:0;background:transparent;color:#9fbcb5;font:inherit;font-size:12.5px;font-weight:700;padding:9px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background 200ms,color 200ms,padding 320ms cubic-bezier(.2,.8,.2,1)}
+.fnav button:hover{color:#fff;background:rgba(255,255,255,.08)}
+.fnav button.on{color:#0d1c19;background:#5fd6bd}
+.fnav button svg{width:16px;height:16px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.fnav .lbl{display:inline-block;max-width:130px;overflow:hidden;transition:max-width 320ms cubic-bezier(.2,.8,.2,1),opacity 220ms}
+.fnav.mini button{padding:9px 11px}
+.fnav.mini .lbl{max-width:0;opacity:0}
+.fnav.mini button.on .lbl{max-width:130px;opacity:1}
+.fnav .brandb{color:#fff;font-weight:800;font-size:13px}
+.fnav .brandb:hover{background:transparent}
+.fnav .brandb .bmark{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#0b8f7b,#0a6e60);display:grid;place-items:center;color:#fff;font-size:13px}
+.fnav .divider{width:1px;height:20px;background:rgba(255,255,255,.12);margin:0 4px}
+@media(max-width:760px){.fnav{top:auto;bottom:14px;max-width:calc(100vw - 20px);overflow-x:auto}.fnav .lbl{max-width:0;opacity:0}.fnav button.on .lbl{max-width:110px;opacity:1}}
+input,select,textarea{font:inherit}
+::placeholder{color:#9aaba8}
+</style>
+</helmet>
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <symbol id="r-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></symbol>
+  <symbol id="r-send" viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h10"></path><circle cx="18" cy="17.5" r="2.5"></circle></symbol>
+  <symbol id="r-shield" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 2.8 4 6v6c0 5 3.4 8.4 8 9.2 4.6-.8 8-4.2 8-9.2V6Z"></path></symbol>
+  <symbol id="r-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></symbol>
+  <symbol id="r-wa" viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"></path><path d="M9 8.5c.4 2.7 2.2 4.5 5 5"></path></symbol>
+  <symbol id="r-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></symbol>
+  <symbol id="r-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"></path></symbol>
+  <symbol id="r-arrow" viewBox="0 0 24 24"><path d="M5 12h14M14 7l5 5-5 5"></path></symbol>
+  <symbol id="r-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 10h18"></path></symbol>
+  <symbol id="r-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></symbol>
+  <symbol id="r-edit" viewBox="0 0 24 24"><path d="m4 20 4.5-1 10-10-3.5-3.5-10 10zM13.5 7l3.5 3.5"></path></symbol>
+  <symbol id="r-doc" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.5"></circle><path d="M5 21a7 7 0 0 1 14 0M18 11v5M15.5 13.5h5"></path></symbol>
+  <symbol id="r-skip" viewBox="0 0 24 24"><path d="m5 5 7 7-7 7M13 5l7 7-7 7"></path></symbol>
+  <symbol id="r-file" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v5h4M9 12h7M9 16h7"></path></symbol>
+  <symbol id="r-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"></path></symbol>
+  <symbol id="r-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6z"></path></symbol>
+</svg>
+
+<sc-if value="{{ inApp }}" hint-placeholder-val="{{ true }}">
+  <nav class="{{ fnavClass }}" aria-label="Primary">
+    <button class="brandb" onClick="{{ goDashboard }}"><span class="bmark">W</span><span class="lbl">Waslni</span></button>
+    <span class="divider"></span>
+    <button class="{{ nDash }}" onClick="{{ goDashboard }}"><svg><use href="#r-grid"></use></svg><span class="lbl">Overview</span></button>
+    <button class="{{ nCamp }}" onClick="{{ goCampaigns }}"><svg><use href="#r-send"></use></svg><span class="lbl">Campaigns</span></button>
+    <button class="{{ nQueue }}" onClick="{{ goQueue }}"><svg><use href="#r-wa"></use></svg><span class="lbl">Send queue</span></button>
+    <button class="{{ nAdmin }}" onClick="{{ goAdmin }}"><svg><use href="#r-shield"></use></svg><span class="lbl">Admin</span></button>
+    <button class="{{ nProfile }}" onClick="{{ goProfile }}"><svg><use href="#r-user"></use></svg><span class="lbl">Profile</span></button>
+    <span class="divider"></span>
+    <button onClick="{{ goLanding }}" title="Sign out"><svg><use href="#r-x"></use></svg><span class="lbl">Sign out</span></button>
+  </nav>
+</sc-if>
+
+<sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+  <div class="route-view" data-screen-label="Dashboard" style="max-width:1200px;margin:0 auto;padding:96px 28px 64px">
+    <header style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:26px">
+      <div>
+        <div style="font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0b8f7b">Al Noor Clinic · Monday 1 Sep</div>
+        <h1 style="margin:8px 0 6px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(26px,3.4vw,38px);letter-spacing:-.02em;color:#0d1f1b">Good morning, Nadia</h1>
+        <p style="margin:0;color:#58716d;max-width:560px">22 appointments today. 8 patients still haven't received their reminder.</p>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onClick="{{ goCampaignsWizard }}" style="display:flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;background:#0d1c19;color:#fff;border:0;border-radius:12px;font-weight:700;font-size:13.5px;cursor:pointer"><svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><use href="#r-upload"></use></svg>New campaign</button>
+        <button onClick="{{ goQueue }}" style="display:flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;background:#0b8f7b;color:#fff;border:0;border-radius:12px;font-weight:700;font-size:13.5px;cursor:pointer;box-shadow:0 6px 18px rgba(11,143,123,.28)"><svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#r-bolt"></use></svg>Start sending</button>
+      </div>
+    </header>
+    <section aria-label="Today at a glance" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:22px">
+      <article style="background:#0d1c19;color:#fff;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#7fb5a9">Pending today</span>
+        <strong style="font-family:'Bricolage Grotesque',sans-serif;font-size:34px;font-weight:800">{{ pendingCount }}</strong>
+        <span style="font-size:12px;color:#9fbcb5">reminders waiting in the queue</span>
+      </article>
+      <article style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#728985">Sent this session</span>
+        <strong style="font-family:'Bricolage Grotesque',sans-serif;font-size:34px;font-weight:800;color:#0d1f1b">{{ sentCount }}</strong>
+        <span style="font-size:12px;color:#728985">opened personally in WhatsApp</span>
+      </article>
+      <article style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#728985">Confirmed today</span>
+        <strong style="font-family:'Bricolage Grotesque',sans-serif;font-size:34px;font-weight:800;color:#177245">14<span style="font-size:17px;color:#9aaba8;font-weight:700"> / 22</span></strong>
+        <span style="font-size:12px;color:#728985">patients replied to confirm</span>
+      </article>
+      <article style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#728985">Templates</span>
+        <strong style="font-family:'Bricolage Grotesque',sans-serif;font-size:34px;font-weight:800;color:#0d1f1b">6<span style="font-size:17px;color:#b7860b;font-weight:700"> +2 pending</span></strong>
+        <span style="font-size:12px;color:#728985">approved and ready to assign</span>
+      </article>
+    </section>
+    <div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,.8fr);gap:14px;align-items:start">
+      <section style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid #edf2f1">
+          <div><h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:700;color:#0d1f1b">Active campaigns</h2><p style="margin:3px 0 0;font-size:12.5px;color:#728985">Pick up where the team left off.</p></div>
+          <a href="#campaigns" onClick="{{ goCampaignsA }}" style="font-size:12.5px;font-weight:700;text-decoration:none">View all →</a>
+        </div>
+        <sc-for list="{{ dashCampaigns }}" as="c" hint-placeholder-count="3">
+          <a href="#queue" onClick="{{ c.open }}" style="display:grid;grid-template-columns:minmax(0,1.4fr) auto minmax(120px,.9fr) auto;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid #edf2f1;text-decoration:none;color:inherit">
+            <span style="min-width:0"><strong style="display:block;font-size:14px;color:#0d1f1b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.title }}</strong><small style="color:#728985;font-size:11.5px">{{ c.meta }}</small></span>
+            <span style="background: {{ c.badgeBg }};color: {{ c.badgeFg }};font-size:10.5px;font-weight:750;padding:4px 10px;border-radius:99px">{{ c.purpose }}</span>
+            <span style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;color:#728985;font-weight:600">{{ c.progressLabel }}</span><span style="height:6px;background:#e6eeec;border-radius:99px;overflow:hidden;display:block"><span style="display:block;height:100%;border-radius:99px;background:#0b8f7b;width: {{ c.pct }}"></span></span></span>
+            <span style="color:#9aaba8;font-size:16px">→</span>
+          </a>
+        </sc-for>
+      </section>
+      <aside style="display:flex;flex-direction:column;gap:14px">
+        <section style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;padding:20px">
+          <h3 style="margin:0 0 4px;font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:700;color:#0d1f1b">Team activity</h3>
+          <p style="margin:0 0 14px;font-size:12px;color:#728985">Live operator progress today</p>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:50%;background:#d9f3ed;color:#07584f;display:grid;place-items:center;font-weight:800;font-size:12px">N</span><span style="display:flex;flex-direction:column"><strong style="font-size:12.5px">Nadia (you)</strong><small style="color:#728985;font-size:11px">Cardiology · 14 Aug</small></span><strong style="font-size:12.5px;color:#177245">{{ sentCount }} sent</strong></div>
+            <div style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:50%;background:#e2edfb;color:#315f9b;display:grid;place-items:center;font-weight:800;font-size:12px">K</span><span style="display:flex;flex-direction:column"><strong style="font-size:12.5px">Karim</strong><small style="color:#728985;font-size:11px">Dermatology recall</small></span><strong style="font-size:12.5px;color:#177245">32 sent</strong></div>
+            <div style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:50%;background:#fde5e3;color:#a23b3b;display:grid;place-items:center;font-weight:800;font-size:12px">H</span><span style="display:flex;flex-direction:column"><strong style="font-size:12.5px">Huda</strong><small style="color:#728985;font-size:11px">Idle · last active 09:41</small></span><span style="font-size:12.5px;color:#9aaba8">—</span></div>
+          </div>
+        </section>
+        <section style="background:linear-gradient(135deg,#0b8f7b,#086a5f);color:#fff;border-radius:18px;padding:20px">
+          <h3 style="margin:0 0 6px;font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:700">Keyboard-first sending</h3>
+          <p style="margin:0 0 12px;font-size:12.5px;color:#cdeee6;line-height:1.5">Work the queue without touching the mouse: <strong>↵</strong> open WhatsApp, <strong>S</strong> skip, <strong>E</strong> edit, <strong>→</strong> next.</p>
+          <button onClick="{{ goQueue }}" style="min-height:38px;padding:0 16px;background:#fff;color:#07584f;border:0;border-radius:10px;font-weight:800;font-size:12.5px;cursor:pointer">Try it now</button>
+        </section>
+      </aside>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isQueue }}" hint-placeholder-val="{{ false }}">
+  <div class="route-view" data-screen-label="Send queue" style="max-width:1200px;margin:0 auto;padding:96px 28px 64px">
+    <header style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px">
+      <div>
+        <a href="#campaigns" onClick="{{ goCampaignsA }}" style="font-size:12px;font-weight:700;text-decoration:none">← Campaigns</a>
+        <h1 style="margin:6px 0 4px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(22px,3vw,30px);letter-spacing:-.02em;color:#0d1f1b">Cardiology · 14 August</h1>
+        <p style="margin:0;font-size:13px;color:#58716d">Message {{ queuePos }} · <span style="color:#177245;font-weight:700">{{ sentCount }} sent</span> · {{ skippedCount }} skipped · {{ pendingCount }} pending</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;flex-direction:column;gap:5px;min-width:150px"><span style="font-size:11px;color:#728985;font-weight:700">Session progress</span><span style="height:8px;background:#e6eeec;border-radius:99px;overflow:hidden;display:block"><span style="display:block;height:100%;background:linear-gradient(90deg,#0b8f7b,#5fd6bd);border-radius:99px;width: {{ progressPct }};transition:width 400ms cubic-bezier(.2,.8,.2,1)"></span></span></div>
+        <button onClick="{{ exportCsv }}" style="min-height:40px;padding:0 16px;background:#fff;border:1px solid #c6d1cf;border-radius:11px;font-weight:700;font-size:12.5px;cursor:pointer;color:#3a5752">Export CSV</button>
+        <button onClick="{{ toggleFocus }}" style="min-height:40px;padding:0 16px;background:#0d1c19;color:#fff;border:0;border-radius:11px;font-weight:700;font-size:12.5px;cursor:pointer">{{ focusLabel }}</button>
+      </div>
+    </header>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:16px" aria-label="Filter queue">
+      <input value="{{ search }}" onChange="{{ onSearch }}" placeholder="Search patient, MRN, phone…" aria-label="Search recipients" style="min-height:38px;padding:0 14px;border:1px solid #c6d1cf;border-radius:99px;font-size:12.5px;outline:none;background:#fff;width:230px">
+      <sc-for list="{{ doctors }}" as="d" hint-placeholder-count="3">
+        <button onClick="{{ d.pick }}" style="display:flex;align-items:center;gap:7px;min-height:36px;padding:0 14px;border:0;border-radius:99px;font-weight:700;font-size:12px;cursor:pointer;background: {{ d.bg }};color: {{ d.fg }}">{{ d.name }}<span style="opacity:.6;font-weight:600">{{ d.count }}</span></button>
+      </sc-for>
+      <span style="width:1px;height:20px;background:#dfe8e6"></span>
+      <sc-for list="{{ statusOptions }}" as="o" hint-placeholder-count="4">
+        <button onClick="{{ o.pick }}" style="min-height:32px;padding:0 12px;border:1px solid #dfe8e6;border-radius:99px;font-weight:700;font-size:11.5px;cursor:pointer;background: {{ o.bg }};color: {{ o.fg }}">{{ o.label }}</button>
+      </sc-for>
+      <span style="margin-left:auto;font-size:12px;color:#728985;font-weight:600">{{ resultCount }} shown</span>
+    </div>
+    <div style="display:grid;gap:14px;align-items:start;grid-template-columns: {{ queueCols }}">
+      <sc-if value="{{ notFocusMode }}" hint-placeholder-val="{{ true }}">
+        <section aria-label="Recipient list" style="background:#fff;border:1px solid #dfe8e6;border-radius:16px;overflow:hidden;max-height:70vh;overflow-y:auto">
+          <sc-for list="{{ queueList }}" as="q" hint-placeholder-count="6">
+            <button onClick="{{ q.select }}" style="display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;width:100%;text-align:left;padding:12px 14px;border:0;border-left: {{ q.rowBorder }};border-bottom:1px solid #edf2f1;background: {{ q.rowBg }};opacity: {{ q.rowOpacity }};cursor:pointer;font:inherit">
+              <strong style="font-size:13px;color:#0d1f1b">{{ q.patient }}</strong>
+              <span style="font-size:11px;font-weight:700;color: {{ q.statusColor }}">{{ q.statusLabel }}</span>
+              <span style="grid-column:1/-1;font-size:11px;color:#728985">{{ q.doctor }} · MRN {{ q.mrn }}</span>
+            </button>
+          </sc-for>
+        </section>
+      </sc-if>
+      <sc-if value="{{ hasCur }}" hint-placeholder-val="{{ true }}">
+        <section aria-label="Current message" style="background:#fff;border:1px solid #dfe8e6;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:10px">
+            <div>
+              <div style="font-size:10.5px;font-weight:750;letter-spacing:.07em;text-transform:uppercase;color:#728985">Recipient · {{ queuePos }}</div>
+              <h2 style="margin:6px 0 3px;font-family:'Bricolage Grotesque',sans-serif;font-size:21px;font-weight:800;color:#0d1f1b">{{ cur.patient }}</h2>
+              <div style="font-size:12.5px;color:#58716d">MRN {{ cur.mrn }} · {{ cur.phone }} · {{ cur.doctor }} · {{ cur.time }}</div>
+            </div>
+            <span style="font-size:11px;font-weight:750;padding:5px 11px;border-radius:99px;background: {{ curApptBg }};color: {{ curApptFg }}">{{ curAppt }}</span>
+          </div>
+          <sc-if value="{{ notEditing }}" hint-placeholder-val="{{ true }}">
+            <div style="align-self:flex-start;max-width:520px;background:#dcf8c6;border-radius:14px 14px 14px 4px;padding:13px 16px;font-size:14px;line-height:1.6;color:#152b26;box-shadow:0 1px 2px rgba(16,35,32,.08)">{{ cur.msg }}<div style="text-align:right;font-size:10.5px;color:#6b8a7f;margin-top:5px">10:02 ✓</div></div>
+          </sc-if>
+          <sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <textarea value="{{ draft }}" onChange="{{ onDraft }}" style="width:100%;min-height:120px;padding:13px;border:2px solid #0b8f7b;border-radius:12px;font-size:13.5px;line-height:1.6;resize:vertical;outline:none;box-sizing:border-box"></textarea>
+              <div style="display:flex;gap:8px"><button onClick="{{ saveEdit }}" style="min-height:38px;padding:0 16px;background:#0b8f7b;color:#fff;border:0;border-radius:10px;font-weight:700;font-size:12.5px;cursor:pointer">Save message</button><button onClick="{{ cancelEdit }}" style="min-height:38px;padding:0 14px;background:#fff;border:1px solid #c6d1cf;border-radius:10px;font-weight:700;font-size:12.5px;cursor:pointer;color:#3a5752">Cancel</button></div>
+            </div>
+          </sc-if>
+          <div style="display:flex;flex-wrap:wrap;gap:9px;padding-top:4px">
+            <button onClick="{{ openWA }}" style="flex:1;min-width:180px;display:flex;align-items:center;justify-content:center;gap:9px;min-height:48px;background:#177245;color:#fff;border:0;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 6px 16px rgba(23,114,69,.25)"><svg style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="#r-wa"></use></svg>Open WhatsApp <span style="opacity:.65;font-weight:600;font-size:11.5px">↵</span></button>
+            <button onClick="{{ startEdit }}" style="min-height:48px;padding:0 18px;background:#fff;border:1px solid #c6d1cf;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;color:#24433e">Edit <span style="opacity:.5;font-size:11px">E</span></button>
+            <button onClick="{{ markSkip }}" style="min-height:48px;padding:0 18px;background:#fff;border:1px solid #c6d1cf;border-radius:12px;font-weight:700;font-size:13px;cursor:pointer;color:#a23b3b">Skip <span style="opacity:.5;font-size:11px">S</span></button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:#9aaba8">
+            <span><button onClick="{{ prevMsg }}" style="border:0;background:none;color:#728985;font-weight:700;cursor:pointer;font:inherit;font-size:11.5px">← prev</button> · <button onClick="{{ nextMsg }}" style="border:0;background:none;color:#728985;font-weight:700;cursor:pointer;font:inherit;font-size:11.5px">next →</button></span>
+            <span>Waslni never sends automatically — you send each message in WhatsApp.</span>
+          </div>
+        </section>
+      </sc-if>
+    </div>
+    <section aria-label="Doctor summaries" style="margin-top:22px">
+      <div style="margin-bottom:12px"><h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:700;color:#0d1f1b">Doctor summaries</h2><p style="margin:3px 0 0;font-size:12.5px;color:#728985">Appointment outcomes per doctor — share each in WhatsApp. Waslni records only that the link was opened.</p></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+        <sc-for list="{{ doctorSummaries }}" as="ds" hint-placeholder-count="2">
+          <article style="background:#fff;border:1px solid #dfe8e6;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><span style="display:flex;flex-direction:column"><strong style="font-size:14px;color:#0d1f1b">{{ ds.name }}</strong><small style="font-size:11px;color:#728985">{{ ds.dept }}</small></span><span style="background:#edf2f1;color:#3a5752;font-size:10.5px;font-weight:750;padding:4px 10px;border-radius:99px">{{ ds.total }} appointments</span></div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px">
+              <span style="background:#f7f9f9;border-radius:10px;padding:9px;text-align:center"><strong style="display:block;font-size:15px;color:#0d1f1b">{{ ds.total }}</strong><small style="font-size:10px;color:#728985">Total</small></span>
+              <span style="background:#f7f9f9;border-radius:10px;padding:9px;text-align:center"><strong style="display:block;font-size:15px;color:#177245">{{ ds.confirmed }}</strong><small style="font-size:10px;color:#728985">Confirmed</small></span>
+              <span style="background:#f7f9f9;border-radius:10px;padding:9px;text-align:center"><strong style="display:block;font-size:15px;color:#a23b3b">{{ ds.cancelled }}</strong><small style="font-size:10px;color:#728985">Cancelled</small></span>
+            </div>
+            <p style="margin:0;font-size:12px;line-height:1.55;color:#58716d;background:#f7f9f9;border-radius:10px;padding:10px 12px">{{ ds.msg }}</p>
+            <button onClick="{{ ds.share }}" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;background:#177245;color:#fff;border:0;border-radius:11px;font-weight:700;font-size:12.5px;cursor:pointer"><svg style="width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><use href="#r-wa"></use></svg>Share in WhatsApp</button>
+          </article>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+</sc-if>
+
+<sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+  <div role="status" style="position:fixed;z-index:400;bottom:20px;right:20px;display:flex;align-items:center;gap:10px;background:#0d1c19;color:#fff;border-radius:13px;padding:13px 17px;box-shadow:0 14px 40px rgba(10,26,23,.35);animation:popIn 260ms cubic-bezier(.2,.8,.2,1) both;font-size:12.5px;font-weight:600"><svg style="width:15px;height:15px;fill:none;stroke:#5fd6bd;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><use href="#r-check"></use></svg>{{ toast }}</div>
+</sc-if>
+
+<sc-if value="{{ waOpen }}" hint-placeholder-val="{{ false }}">
+  <div role="dialog" aria-label="WhatsApp handoff" style="position:fixed;inset:0;z-index:300;display:grid;place-items:center;background:rgba(13,28,25,.55);backdrop-filter:blur(4px);animation:fadeIn 200ms ease both">
+    <div style="width:min(440px,calc(100vw - 32px));background:#efe7dd;border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.35);animation:popIn 320ms cubic-bezier(.2,.8,.2,1) both">
+      <div style="display:flex;align-items:center;gap:11px;padding:14px 18px;background:#075e54;color:#fff">
+        <span style="width:36px;height:36px;border-radius:50%;background:#128c7e;display:grid;place-items:center;font-weight:800;font-size:14px">{{ waInitial }}</span>
+        <div style="display:flex;flex-direction:column"><strong style="font-size:14px">{{ waPatient }}</strong><small style="font-size:11px;color:#b8d8d3">{{ waPhone }}</small></div>
+        <button onClick="{{ waCancel }}" aria-label="Close" style="margin-left:auto;border:0;background:none;color:#b8d8d3;cursor:pointer;font-size:18px;line-height:1">✕</button>
+      </div>
+      <div style="padding:22px 18px;min-height:120px">
+        <div style="max-width:88%;margin-left:auto;background:#dcf8c6;border-radius:12px 12px 4px 12px;padding:11px 13px;font-size:13px;line-height:1.55;color:#152b26;box-shadow:0 1px 1px rgba(0,0,0,.08)">{{ waMsg }}<div style="text-align:right;font-size:10px;color:#6b8a7f;margin-top:4px">now</div></div>
+      </div>
+      <div style="display:flex;gap:9px;padding:14px 18px;background:#f7f2ea;border-top:1px solid #e4dbcd">
+        <button onClick="{{ waConfirm }}" style="flex:1;min-height:44px;background:#177245;color:#fff;border:0;border-radius:11px;font-weight:800;font-size:13.5px;cursor:pointer">I sent it — mark as sent</button>
+        <button onClick="{{ waCancel }}" style="min-height:44px;padding:0 16px;background:#fff;border:1px solid #d4c9b8;border-radius:11px;font-weight:700;font-size:12.5px;cursor:pointer;color:#3a5752">Back</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ summaryOpen }}" hint-placeholder-val="{{ false }}">
+  <div role="dialog" aria-label="Session summary" style="position:fixed;inset:0;z-index:300;display:grid;place-items:center;background:rgba(13,28,25,.55);backdrop-filter:blur(4px);animation:fadeIn 200ms ease both">
+    <div style="width:min(420px,calc(100vw - 32px));background:#fff;border-radius:20px;padding:28px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.35);animation:popIn 320ms cubic-bezier(.2,.8,.2,1) both">
+      <div style="width:56px;height:56px;margin:0 auto 14px;border-radius:50%;background:#dff5e9;display:grid;place-items:center;color:#177245"><svg style="width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><use href="#r-check"></use></svg></div>
+      <h2 style="margin:0 0 6px;font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:800;color:#0d1f1b">Queue complete</h2>
+      <p style="margin:0 0 18px;font-size:13px;color:#58716d">Every message in this batch has been handled.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+        <div style="background:#f2f6f5;border-radius:14px;padding:14px"><strong style="display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:800;color:#177245">{{ summarySent }}</strong><small style="font-size:11.5px;color:#728985;font-weight:600">sent personally</small></div>
+        <div style="background:#f2f6f5;border-radius:14px;padding:14px"><strong style="display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:800;color:#a23b3b">{{ summarySkipped }}</strong><small style="font-size:11.5px;color:#728985;font-weight:600">skipped</small></div>
+      </div>
+      <button onClick="{{ closeSummary }}" style="width:100%;min-height:46px;background:#0d1c19;color:#fff;border:0;border-radius:12px;font-weight:800;font-size:13.5px;cursor:pointer">Back to workspace</button>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ isCampaigns }}" hint-placeholder-val="{{ false }}">
+  <div class="route-view" data-screen-label="Campaigns" style="max-width:1200px;margin:0 auto;padding:96px 28px 64px">
+    <header style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px">
+      <div>
+        <div style="font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0b8f7b">Outreach operations</div>
+        <h1 style="margin:8px 0 6px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(24px,3.2vw,34px);letter-spacing:-.02em;color:#0d1f1b">Campaigns</h1>
+        <p style="margin:0;color:#58716d;max-width:560px">Each CSV upload becomes an isolated campaign with its own send queue and audit trail.</p>
+      </div>
+      <button onClick="{{ openWizard }}" style="display:flex;align-items:center;gap:8px;min-height:46px;padding:0 20px;background:#0b8f7b;color:#fff;border:0;border-radius:12px;font-weight:800;font-size:13.5px;cursor:pointer;box-shadow:0 6px 18px rgba(11,143,123,.28)"><svg style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#r-upload"></use></svg>New campaign</button>
+    </header>
+    <section style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;overflow:hidden;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px;border-bottom:1px solid #edf2f1">
+        <div><h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:700;color:#0d1f1b">All campaigns</h2><p style="margin:3px 0 0;font-size:12.5px;color:#728985">Open one to work its send queue.</p></div>
+        <span style="background:#edf2f1;color:#3a5752;font-size:11px;font-weight:750;padding:5px 11px;border-radius:99px">12 total</span>
+      </div>
+      <sc-for list="{{ dashCampaigns }}" as="c" hint-placeholder-count="3">
+        <a href="#queue" onClick="{{ c.open }}" style="display:grid;grid-template-columns:minmax(0,1.4fr) auto minmax(140px,.9fr) auto;align-items:center;gap:14px;padding:15px 20px;border-bottom:1px solid #edf2f1;text-decoration:none;color:inherit">
+          <span style="min-width:0"><strong style="display:block;font-size:14px;color:#0d1f1b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.title }}</strong><small style="color:#728985;font-size:11.5px">{{ c.meta }}</small></span>
+          <span style="background: {{ c.badgeBg }};color: {{ c.badgeFg }};font-size:10.5px;font-weight:750;padding:4px 10px;border-radius:99px">{{ c.purpose }}</span>
+          <span style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;color:#728985;font-weight:600">{{ c.progressLabel }}</span><span style="height:6px;background:#e6eeec;border-radius:99px;overflow:hidden;display:block"><span style="display:block;height:100%;border-radius:99px;background:#0b8f7b;width: {{ c.pct }}"></span></span></span>
+          <span style="color:#9aaba8;font-size:16px">→</span>
+        </a>
+      </sc-for>
+    </section>
+    <section style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;padding:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px">
+        <div><h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:700;color:#0d1f1b">Message templates</h2><p style="margin:3px 0 0;font-size:12.5px;color:#728985">Approved copy your campaigns can use. Drafts go to an approver.</p></div>
+        <div style="display:flex;gap:8px">
+          <button onClick="{{ goAdmin }}" style="min-height:36px;padding:0 14px;background:#fff;border:1px solid #c6d1cf;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;color:#3a5752">Approval queue</button>
+          <button onClick="{{ newTpl }}" style="min-height:36px;padding:0 14px;background:#0d1c19;color:#fff;border:0;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer">+ New template</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
+        <sc-for list="{{ templateCards }}" as="t" hint-placeholder-count="3">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:3px 10px;align-items:center;background:#f7f9f9;border:1px solid #edf2f1;border-radius:13px;padding:13px 15px">
+            <strong style="font-size:13px;color:#0d1f1b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ t.name }}</strong>
+            <span style="background: {{ t.badgeBg }};color: {{ t.badgeFg }};font-size:10px;font-weight:750;padding:3px 9px;border-radius:99px">{{ t.status }}</span>
+            <small style="font-size:11px;color:#728985">{{ t.sub }}</small>
+            <button onClick="{{ t.edit }}" style="justify-self:end;min-height:26px;padding:0 10px;background:#fff;border:1px solid #c6d1cf;border-radius:8px;font-weight:700;font-size:10.5px;cursor:pointer;color:#3a5752">Edit</button>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+</sc-if>
+
+<sc-if value="{{ wizardOpen }}" hint-placeholder-val="{{ false }}">
+  <div role="dialog" aria-label="Create campaign" style="position:fixed;inset:0;z-index:300;display:grid;place-items:center;background:rgba(13,28,25,.55);backdrop-filter:blur(4px);animation:fadeIn 200ms ease both">
+    <div style="width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 48px);overflow-y:auto;background:#fff;border-radius:22px;padding:26px;box-shadow:0 30px 80px rgba(0,0,0,.35);animation:popIn 320ms cubic-bezier(.2,.8,.2,1) both">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;color:#0d1f1b">New campaign</h2>
+        <button onClick="{{ closeWizard }}" aria-label="Close" style="width:32px;height:32px;border:0;background:#f2f6f5;border-radius:9px;cursor:pointer;color:#3a5752;font-size:14px">✕</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:22px">
+        <span style="flex:1;height:4px;border-radius:99px;background: {{ wd1 }};transition:background 300ms"></span>
+        <span style="flex:1;height:4px;border-radius:99px;background: {{ wd2 }};transition:background 300ms"></span>
+        <span style="flex:1;height:4px;border-radius:99px;background: {{ wd3 }};transition:background 300ms"></span>
+      </div>
+      <sc-if value="{{ wStep1 }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div><strong style="font-size:14px;color:#0d1f1b">1 · Upload your CSV</strong><p style="margin:4px 0 0;font-size:12.5px;color:#728985">Appointment campaigns need patient, mobile, date/time, doctor, department, status. Marketing needs patient and mobile only.</p></div>
+          <label style="display:grid;place-items:center;gap:8px;min-height:130px;background:#f2faf8;border:2px dashed #9fd8cb;border-radius:16px;cursor:pointer;text-align:center;padding:18px">
+            <svg style="width:26px;height:26px;fill:none;stroke:#0b8f7b;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#r-upload"></use></svg>
+            <span style="font-size:13px;font-weight:700;color:#07584f">Drop cardiology_14aug.csv here or browse</span>
+            <span style="font-size:11px;color:#728985">CSV only · max 10 MB</span>
+          </label>
+          <div style="display:flex;align-items:center;gap:10px;background:#f7f9f9;border-radius:12px;padding:11px 14px"><svg style="width:16px;height:16px;fill:none;stroke:#177245;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><use href="#r-check"></use></svg><span style="font-size:12.5px;color:#24433e"><strong>cardiology_14aug.csv</strong> · 82 rows · validated</span></div>
+          <div><label for="wiz-name" style="display:block;font-size:12px;font-weight:700;color:#24433e;margin-bottom:6px">Campaign name</label><input id="wiz-name" type="text" defaultValue="Cardiology · 14 August" style="width:100%;min-height:44px;padding:0 14px;border:1px solid #c6d1cf;border-radius:11px;font-size:13.5px;outline:none;box-sizing:border-box"></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ wStep2 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div><strong style="font-size:14px;color:#0d1f1b">2 · Choose purpose and template</strong><p style="margin:4px 0 0;font-size:12.5px;color:#728985">Only approved templates can be assigned.</p></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <button style="display:flex;flex-direction:column;gap:4px;padding:15px;background:#eafaf5;border:2px solid #0b8f7b;border-radius:14px;cursor:pointer;text-align:left;font:inherit"><strong style="font-size:13px;color:#07584f">Appointment reminder</strong><small style="font-size:11px;color:#58716d">Date, time, doctor, status per row</small></button>
+            <button style="display:flex;flex-direction:column;gap:4px;padding:15px;background:#fff;border:2px solid #dfe8e6;border-radius:14px;cursor:pointer;text-align:left;font:inherit"><strong style="font-size:13px;color:#24433e">Marketing</strong><small style="font-size:11px;color:#728985">Patient + mobile only</small></button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:13px 15px;background:#eafaf5;border:2px solid #0b8f7b;border-radius:13px"><svg style="width:16px;height:16px;fill:none;stroke:#0b8f7b;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#r-file"></use></svg><span style="display:flex;flex-direction:column"><strong style="font-size:12.5px;color:#07584f">Appointment reminder · EN</strong><small style="font-size:10.5px;color:#58716d">Dear #patient_name, this is a reminder of your appointment with #doctor…</small></span><span style="background:#dff5e9;color:#177245;font-size:10px;font-weight:750;padding:3px 9px;border-radius:99px">Approved</span></div>
+            <div style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:13px 15px;background:#fff;border:2px solid #dfe8e6;border-radius:13px"><svg style="width:16px;height:16px;fill:none;stroke:#728985;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><use href="#r-file"></use></svg><span style="display:flex;flex-direction:column"><strong style="font-size:12.5px;color:#24433e">Reminder + directions · EN</strong><small style="font-size:10.5px;color:#728985">Includes clinic address and parking note</small></span><span style="background:#dff5e9;color:#177245;font-size:10px;font-weight:750;padding:3px 9px;border-radius:99px">Approved</span></div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ wStep3 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div><strong style="font-size:14px;color:#0d1f1b">3 · Preview and launch</strong><p style="margin:4px 0 0;font-size:12.5px;color:#728985">The first row, rendered with your template. 82 personal messages will be prepared.</p></div>
+          <div style="background:#efe7dd;border-radius:16px;padding:18px">
+            <div style="max-width:88%;background:#dcf8c6;border-radius:12px 12px 12px 4px;padding:12px 14px;font-size:13px;line-height:1.55;color:#152b26;box-shadow:0 1px 1px rgba(0,0,0,.08)">Dear Layla, this is a reminder of your appointment with Dr. Al-Rashid (Cardiology) on 14 Aug at 10:30. Reply to confirm. — Al Noor Clinic</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div style="background:#f7f9f9;border-radius:12px;padding:12px;text-align:center"><strong style="display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;color:#0d1f1b">82</strong><small style="font-size:11px;color:#728985">recipients</small></div>
+            <div style="background:#f7f9f9;border-radius:12px;padding:12px;text-align:center"><strong style="display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;color:#0d1f1b">2</strong><small style="font-size:11px;color:#728985">doctors</small></div>
+            <div style="background:#f7f9f9;border-radius:12px;padding:12px;text-align:center"><strong style="display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;color:#0d1f1b">0</strong><small style="font-size:11px;color:#728985">invalid rows</small></div>
+          </div>
+        </div>
+      </sc-if>
+      <div style="display:flex;justify-content:space-between;gap:10px;margin-top:22px">
+        <sc-if value="{{ wStep1 }}" hint-placeholder-val="{{ true }}"><span></span></sc-if>
+        <sc-if value="{{ wNotStep1 }}" hint-placeholder-val="{{ false }}"><button onClick="{{ wizBack }}" style="min-height:44px;padding:0 18px;background:#fff;border:1px solid #c6d1cf;border-radius:11px;font-weight:700;font-size:13px;cursor:pointer;color:#3a5752">Back</button></sc-if>
+        <sc-if value="{{ wNotStep3 }}" hint-placeholder-val="{{ true }}"><button onClick="{{ wizNext }}" style="min-height:44px;padding:0 22px;background:#0d1c19;color:#fff;border:0;border-radius:11px;font-weight:800;font-size:13px;cursor:pointer">Continue →</button></sc-if>
+        <sc-if value="{{ wStep3 }}" hint-placeholder-val="{{ false }}"><button onClick="{{ wizLaunch }}" style="min-height:44px;padding:0 22px;background:#0b8f7b;color:#fff;border:0;border-radius:11px;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 6px 16px rgba(11,143,123,.3)">Launch campaign →</button></sc-if>
+      </div>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+  <div class="route-view" data-screen-label="Admin" style="max-width:1100px;margin:0 auto;padding:96px 28px 64px">
+    <header style="margin-bottom:22px">
+      <div style="font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0b8f7b">Workspace administration</div>
+      <h1 style="margin:8px 0 6px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(24px,3.2vw,34px);letter-spacing:-.02em;color:#0d1f1b">Admin center</h1>
+      <p style="margin:0;color:#58716d;max-width:560px">Approve templates, manage doctors and team access, and review your plan.</p>
+    </header>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px" role="tablist">
+      <button onClick="{{ pickTemplates }}" style="min-height:38px;padding:0 16px;border:1px solid #dfe8e6;border-radius:99px;font-weight:700;font-size:12.5px;cursor:pointer;background: {{ atTemplates }};color: {{ atTemplatesFg }}">Template approval <span style="opacity:.6">2</span></button>
+      <button onClick="{{ pickDoctors }}" style="min-height:38px;padding:0 16px;border:1px solid #dfe8e6;border-radius:99px;font-weight:700;font-size:12.5px;cursor:pointer;background: {{ atDoctors }};color: {{ atDoctorsFg }}">Doctors</button>
+      <button onClick="{{ pickTeam }}" style="min-height:38px;padding:0 16px;border:1px solid #dfe8e6;border-radius:99px;font-weight:700;font-size:12.5px;cursor:pointer;background: {{ atTeam }};color: {{ atTeamFg }}">Team</button>
+      <button onClick="{{ pickPlan }}" style="min-height:38px;padding:0 16px;border:1px solid #dfe8e6;border-radius:99px;font-weight:700;font-size:12.5px;cursor:pointer;background: {{ atPlan }};color: {{ atPlanFg }}">Plan</button>
+    </div>
+    <sc-if value="{{ tabTemplates }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <section style="background:#fff;border:1px solid #dfe8e6;border-radius:16px;padding:20px">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start">
+            <div><strong style="font-size:14px;color:#0d1f1b">No-show follow-up</strong><div style="font-size:11.5px;color:#728985;margin-top:2px">Draft by Karim · 29 Aug · Appointment</div>
+            <p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#24433e;background:#f7f9f9;border-radius:11px;padding:12px 14px">Dear #patient_name, we missed you at your appointment with #doctor on #appointment_date. Reply to this message to rebook at a convenient time. — Al Noor Clinic</p></div>
+            <div style="display:flex;flex-direction:column;gap:7px"><button style="min-height:38px;padding:0 16px;background:#177245;color:#fff;border:0;border-radius:10px;font-weight:700;font-size:12.5px;cursor:pointer">Approve</button><button style="min-height:38px;padding:0 16px;background:#fff;border:1px solid #c6d1cf;border-radius:10px;font-weight:700;font-size:12.5px;cursor:pointer;color:#a23b3b">Reject</button></div>
+          </div>
+        </section>
+        <section style="background:#fff;border:1px solid #dfe8e6;border-radius:16px;padding:20px">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start">
+            <div><strong style="font-size:14px;color:#0d1f1b">Ramadan hours notice</strong><div style="font-size:11.5px;color:#728985;margin-top:2px">Draft by Huda · 31 Aug · Marketing</div>
+            <p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#24433e;background:#f7f9f9;border-radius:11px;padding:12px 14px">Dear #patient_name, our clinic hours change during Ramadan: 10:00–16:00 and 21:00–00:30. Book your visit early. — Al Noor Clinic</p></div>
+            <div style="display:flex;flex-direction:column;gap:7px"><button style="min-height:38px;padding:0 16px;background:#177245;color:#fff;border:0;border-radius:10px;font-weight:700;font-size:12.5px;cursor:pointer">Approve</button><button style="min-height:38px;padding:0 16px;background:#fff;border:1px solid #c6d1cf;border-radius:10px;font-weight:700;font-size:12.5px;cursor:pointer;color:#a23b3b">Reject</button></div>
+          </div>
+        </section>
+      </div>
+    </sc-if>
+    <sc-if value="{{ tabDoctors }}" hint-placeholder-val="{{ false }}">
+      <section style="background:#fff;border:1px solid #dfe8e6;border-radius:16px;overflow:hidden">
+        <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:12px;padding:11px 20px;background:#f2f6f5;font-size:10.5px;font-weight:750;letter-spacing:.05em;text-transform:uppercase;color:#728985"><span>Doctor</span><span>Department</span><span>WhatsApp</span><span style="width:70px"></span></div>
+        <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:12px;align-items:center;padding:13px 20px;border-bottom:1px solid #edf2f1;font-size:13px"><strong style="color:#0d1f1b">Dr. Al-Rashid</strong><span style="color:#58716d">Cardiology</span><span style="color:#58716d">+966 50 445 8812</span><button style="width:70px;min-height:32px;background:#fff;border:1px solid #c6d1cf;border-radius:8px;font-weight:700;font-size:11.5px;cursor:pointer;color:#3a5752">Edit</button></div>
+        <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:12px;align-items:center;padding:13px 20px;border-bottom:1px solid #edf2f1;font-size:13px"><strong style="color:#0d1f1b">Dr. Osman</strong><span style="color:#58716d">Cardiology</span><span style="color:#58716d">+966 55 210 3347</span><button style="width:70px;min-height:32px;background:#fff;border:1px solid #c6d1cf;border-radius:8px;font-weight:700;font-size:11.5px;cursor:pointer;color:#3a5752">Edit</button></div>
+        <div style="display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:12px;align-items:center;padding:13px 20px;font-size:13px"><strong style="color:#0d1f1b">Dr. Farida Aziz</strong><span style="color:#58716d">Dermatology</span><span style="color:#9aaba8">Not added</span><button style="width:70px;min-height:32px;background:#fff;border:1px solid #c6d1cf;border-radius:8px;font-weight:700;font-size:11.5px;cursor:pointer;color:#3a5752">Edit</button></div>
+      </section>
+    </sc-if>
+    <sc-if value="{{ tabTeam }}" hint-placeholder-val="{{ false }}">
+      <section style="background:#fff;border:1px solid #dfe8e6;border-radius:16px;overflow:hidden">
+        <div style="display:grid;grid-template-columns:auto 1.3fr 1fr auto;gap:12px;align-items:center;padding:13px 20px;border-bottom:1px solid #edf2f1;font-size:13px"><span style="width:34px;height:34px;border-radius:50%;background:#d9f3ed;color:#07584f;display:grid;place-items:center;font-weight:800;font-size:13px">N</span><span style="display:flex;flex-direction:column"><strong style="color:#0d1f1b">Nadia Salem</strong><small style="color:#728985;font-size:11px">nadia@alnoorclinic.com</small></span><span style="background:#edf2f1;color:#3a5752;font-size:10.5px;font-weight:750;padding:4px 10px;border-radius:99px;justify-self:start">Operator</span><span style="color:#177245;font-size:11.5px;font-weight:700">● Online</span></div>
+        <div style="display:grid;grid-template-columns:auto 1.3fr 1fr auto;gap:12px;align-items:center;padding:13px 20px;border-bottom:1px solid #edf2f1;font-size:13px"><span style="width:34px;height:34px;border-radius:50%;background:#e2edfb;color:#315f9b;display:grid;place-items:center;font-weight:800;font-size:13px">K</span><span style="display:flex;flex-direction:column"><strong style="color:#0d1f1b">Karim Fahmy</strong><small style="color:#728985;font-size:11px">karim@alnoorclinic.com</small></span><span style="background:#edf2f1;color:#3a5752;font-size:10.5px;font-weight:750;padding:4px 10px;border-radius:99px;justify-self:start">Operator</span><span style="color:#177245;font-size:11.5px;font-weight:700">● Online</span></div>
+        <div style="display:grid;grid-template-columns:auto 1.3fr 1fr auto;gap:12px;align-items:center;padding:13px 20px;font-size:13px"><span style="width:34px;height:34px;border-radius:50%;background:#fff1cf;color:#9b5d0a;display:grid;place-items:center;font-weight:800;font-size:13px">S</span><span style="display:flex;flex-direction:column"><strong style="color:#0d1f1b">Dr. Samir Odeh</strong><small style="color:#728985;font-size:11px">samir@alnoorclinic.com</small></span><span style="background:#d9f3ed;color:#07584f;font-size:10.5px;font-weight:750;padding:4px 10px;border-radius:99px;justify-self:start">Owner · Approver</span><span style="color:#9aaba8;font-size:11.5px;font-weight:700">Away</span></div>
+      </section>
+    </sc-if>
+    <sc-if value="{{ tabPlan }}" hint-placeholder-val="{{ false }}">
+      <section style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px">
+        <div style="background:#0d1c19;color:#fff;border-radius:18px;padding:24px">
+          <div style="font-size:11px;font-weight:750;letter-spacing:.07em;text-transform:uppercase;color:#7fb5a9">Current plan</div>
+          <h2 style="margin:8px 0 4px;font-family:'Bricolage Grotesque',sans-serif;font-size:24px;font-weight:800">Clinic</h2>
+          <p style="margin:0 0 16px;font-size:13px;color:#9fbcb5">Up to 10 users and 40 campaigns per month.</p>
+          <span style="background:#dff5e9;color:#177245;font-size:11px;font-weight:750;padding:5px 11px;border-radius:99px">Active · renews 1 Oct</span>
+        </div>
+        <div style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;flex-direction:column;gap:5px"><span style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#24433e"><span>Campaigns this month</span><span>12 / 40</span></span><span style="height:8px;background:#e6eeec;border-radius:99px;overflow:hidden"><span style="display:block;height:100%;width:30%;background:#0b8f7b;border-radius:99px"></span></span></div>
+          <div style="display:flex;flex-direction:column;gap:5px"><span style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#24433e"><span>Team seats</span><span>3 / 10</span></span><span style="height:8px;background:#e6eeec;border-radius:99px;overflow:hidden"><span style="display:block;height:100%;width:30%;background:#0b8f7b;border-radius:99px"></span></span></div>
+          <button style="align-self:flex-start;min-height:40px;padding:0 18px;background:#fff;border:1px solid #c6d1cf;border-radius:11px;font-weight:700;font-size:12.5px;cursor:pointer;color:#3a5752">Compare plans</button>
+        </div>
+      </section>
+    </sc-if>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+  <div class="route-view" data-screen-label="Profile" style="max-width:900px;margin:0 auto;padding:96px 28px 64px">
+    <header style="margin-bottom:22px">
+      <div style="font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0b8f7b">Account</div>
+      <h1 style="margin:8px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(24px,3.2vw,34px);letter-spacing:-.02em;color:#0d1f1b">My profile</h1>
+    </header>
+    <div style="display:grid;grid-template-columns:minmax(200px,.6fr) minmax(0,1.4fr);gap:14px;align-items:start">
+      <section style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;padding:26px;text-align:center">
+        <div style="width:72px;height:72px;margin:0 auto 12px;border-radius:22px;background:linear-gradient(135deg,#0b8f7b,#086a5f);color:#fff;display:grid;place-items:center;font-family:'Bricolage Grotesque',sans-serif;font-size:28px;font-weight:800">{{ epInitial }}</div>
+        <h2 style="margin:0 0 3px;font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:800;color:#0d1f1b">{{ epName }}</h2>
+        <p style="margin:0 0 12px;font-size:12.5px;color:#728985">{{ epEmail }}</p>
+        <span style="background:#dff5e9;color:#177245;font-size:11px;font-weight:750;padding:5px 11px;border-radius:99px">Active team member</span>
+        <div style="margin-top:18px;padding-top:16px;border-top:1px solid #edf2f1;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><strong style="display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;color:#0d1f1b">214</strong><small style="font-size:10.5px;color:#728985">messages sent</small></div>
+          <div><strong style="display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;color:#0d1f1b">9</strong><small style="font-size:10.5px;color:#728985">campaigns worked</small></div>
+        </div>
+      </section>
+      <section style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:17px 22px;border-bottom:1px solid #edf2f1">
+          <div><h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:700;color:#0d1f1b">Workspace details</h2><p style="margin:3px 0 0;font-size:12px;color:#728985">Your organization and role access.</p></div>
+          <button onClick="{{ goEditProfile }}" style="min-height:36px;padding:0 14px;background:#0d1c19;color:#fff;border:0;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer">Edit profile</button>
+        </div>
+        <div style="padding:8px 22px 14px">
+          <div style="display:grid;grid-template-columns:130px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid #edf2f1;font-size:13px"><span style="color:#728985;font-weight:600;font-size:12px">Organization</span><strong style="color:#0d1f1b">Al Noor Clinic</strong></div>
+          <div style="display:grid;grid-template-columns:130px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid #edf2f1;font-size:13px"><span style="color:#728985;font-weight:600;font-size:12px">Email</span><span style="color:#24433e">{{ epEmail }}</span></div>
+          <div style="display:grid;grid-template-columns:130px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid #edf2f1;font-size:13px"><span style="color:#728985;font-weight:600;font-size:12px">Mobile number</span><span style="color:#24433e">{{ epMobile }}</span></div>
+          <div style="display:grid;grid-template-columns:130px 1fr;gap:14px;padding:12px 0;font-size:13px"><span style="color:#728985;font-weight:600;font-size:12px">Access role</span><span style="background:#edf2f1;color:#3a5752;font-size:10.5px;font-weight:750;padding:4px 10px;border-radius:99px;justify-self:start">Operator</span></div>
+        </div>
+      </section>
+    </div>
+    <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #dfe8e6;border-radius:16px;padding:16px 22px">
+      <span style="font-size:12.5px;color:#728985">Compare with the current product:</span>
+      <a href="Waslni Current UI.dc.html" style="font-size:12.5px;font-weight:700">Open current UI recreation →</a>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ isLanding }}" hint-placeholder-val="{{ false }}">
+  <div class="route-view" data-screen-label="Landing">
+    <header style="position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:14px clamp(16px,5vw,56px);background:rgba(242,246,245,.9);backdrop-filter:blur(12px)">
+      <span style="display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#0b8f7b,#0a6e60);display:grid;place-items:center;color:#fff;font-weight:800;font-size:15px">W</span><strong style="font-family:'Bricolage Grotesque',sans-serif;font-size:16px;color:#0d1f1b">Waslni</strong></span>
+      <span style="display:flex;align-items:center;gap:16px">
+        <a href="#login" onClick="{{ goLogin }}" style="font-size:13px;font-weight:700;text-decoration:none">Sign in</a>
+        <button onClick="{{ goRegister }}" style="min-height:40px;padding:0 18px;background:#0d1c19;color:#fff;border:0;border-radius:11px;font-weight:800;font-size:12.5px;cursor:pointer">Start free</button>
+      </span>
+    </header>
+    <section style="max-width:1150px;margin:0 auto;padding:clamp(48px,8vw,90px) 28px;display:grid;grid-template-columns:minmax(300px,1.05fr) minmax(300px,.95fr);gap:clamp(28px,5vw,70px);align-items:center">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:7px;background:#d9f3ed;color:#07584f;font-size:11.5px;font-weight:750;padding:6px 13px;border-radius:99px;margin-bottom:18px">Healthcare messaging, made human</div>
+        <h1 style="margin:0 0 16px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(36px,5.4vw,60px);line-height:1.02;letter-spacing:-.03em;color:#0d1f1b">Turn appointment data into <span style="color:#0b8f7b">personal follow-up.</span></h1>
+        <p style="margin:0 0 24px;max-width:480px;font-size:15.5px;line-height:1.6;color:#58716d">Waslni helps healthcare teams prepare, review, and open every WhatsApp message individually—so reminders stay personal and operators stay in control.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button onClick="{{ goRegister }}" style="min-height:48px;padding:0 24px;background:#0b8f7b;color:#fff;border:0;border-radius:13px;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 8px 22px rgba(11,143,123,.3)">Create your workspace →</button>
+          <button onClick="{{ goLogin }}" style="min-height:48px;padding:0 22px;background:#fff;border:1px solid #c6d1cf;border-radius:13px;font-weight:700;font-size:14px;cursor:pointer;color:#24433e">Sign in</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:18px;font-size:12px;color:#728985"><svg style="width:15px;height:15px;fill:none;stroke:#177245;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><use href="#r-check"></use></svg>No bulk sender. No hidden automation. One message at a time.</div>
+      </div>
+      <div style="background:#0d1c19;border-radius:24px;padding:22px;box-shadow:0 30px 70px rgba(13,28,25,.3);transform:rotate(1deg)">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;color:#9fbcb5;font-size:11px;font-weight:700"><span>SEND QUEUE · CARDIOLOGY</span><span style="color:#5fd6bd">61 / 82</span></div>
+          <div style="background:#fff;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:13px;color:#0d1f1b">Layla Hassan</strong><span style="background:#dff5e9;color:#177245;font-size:9.5px;font-weight:750;padding:3px 8px;border-radius:99px">Confirmed</span></div>
+            <div style="background:#dcf8c6;border-radius:10px 10px 10px 3px;padding:9px 11px;font-size:11.5px;line-height:1.5;color:#152b26">Dear Layla, this is a reminder of your appointment with Dr. Al-Rashid on 14 Aug at 10:30…</div>
+            <div style="display:flex;gap:6px"><span style="flex:1;background:#177245;color:#fff;border-radius:8px;padding:8px;text-align:center;font-size:11px;font-weight:800">Open WhatsApp ↵</span><span style="background:#f2f6f5;color:#3a5752;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700">S</span></div>
+          </div>
+          <div style="background:rgba(255,255,255,.06);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11.5px;color:#9fbcb5;font-weight:600">Omar Farouk · 11:00</span><span style="font-size:11px;color:#5fd6bd;font-weight:700">next →</span></div>
+          <div style="background:rgba(255,255,255,.06);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;opacity:.6"><span style="font-size:11.5px;color:#9fbcb5;font-weight:600">Sara Mansour · 11:15</span><span style="font-size:11px;color:#9fbcb5">queued</span></div>
+        </div>
+      </div>
+    </section>
+    <section style="max-width:1150px;margin:0 auto;padding:0 28px clamp(48px,7vw,80px)">
+      <div style="max-width:520px;margin-bottom:28px">
+        <h2 style="margin:0 0 8px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(22px,3vw,30px);letter-spacing:-.02em;color:#0d1f1b">From spreadsheet to WhatsApp, without losing control.</h2>
+        <p style="margin:0;font-size:14px;color:#58716d;line-height:1.6">Every campaign is isolated to your organization and every message stays visible and editable before it is opened.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+        <article style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;padding:22px"><span style="display:grid;place-items:center;width:36px;height:36px;background:#d9f3ed;color:#07584f;border-radius:11px;font-weight:800;font-size:12px;margin-bottom:14px">01</span><h3 style="margin:0 0 6px;font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:700;color:#0d1f1b">Upload your CSV</h3><p style="margin:0;font-size:12.5px;color:#58716d;line-height:1.55">A guided wizard validates every row, maps your columns, and previews the first message before launch.</p></article>
+        <article style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;padding:22px"><span style="display:grid;place-items:center;width:36px;height:36px;background:#d9f3ed;color:#07584f;border-radius:11px;font-weight:800;font-size:12px;margin-bottom:14px">02</span><h3 style="margin:0 0 6px;font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:700;color:#0d1f1b">Work the queue</h3><p style="margin:0;font-size:12.5px;color:#58716d;line-height:1.55">Batch by doctor, edit any message, and move keyboard-first: Enter to open, S to skip, arrows to navigate.</p></article>
+        <article style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;padding:22px"><span style="display:grid;place-items:center;width:36px;height:36px;background:#d9f3ed;color:#07584f;border-radius:11px;font-weight:800;font-size:12px;margin-bottom:14px">03</span><h3 style="margin:0 0 6px;font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:700;color:#0d1f1b">Send it yourself</h3><p style="margin:0;font-size:12.5px;color:#58716d;line-height:1.55">Waslni opens the prepared message in WhatsApp. You send it personally and the outcome is recorded.</p></article>
+      </div>
+    </section>
+    <footer style="display:flex;justify-content:space-between;gap:12px;padding:20px clamp(16px,5vw,56px);border-top:1px solid #dfe8e6;font-size:11.5px;color:#728985"><span>© 2026 Waslni</span><span>Personal outreach. Clear follow-up. Better attendance.</span></footer>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isTplEditor }}" hint-placeholder-val="{{ false }}">
+  <div class="route-view" data-screen-label="Template editor" style="max-width:1000px;margin:0 auto;padding:96px 28px 64px">
+    <header style="margin-bottom:22px">
+      <a href="#campaigns" onClick="{{ goCampaignsA }}" style="font-size:12px;font-weight:700;text-decoration:none">← Campaigns</a>
+      <h1 style="margin:8px 0 4px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(24px,3.2vw,32px);letter-spacing:-.02em;color:#0d1f1b">{{ tplEditorTitle }}</h1>
+      <p style="margin:0;font-size:13px;color:#58716d">Saved templates go to an Admin or Approver before campaigns can use them.</p>
+    </header>
+    <div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:14px;align-items:start">
+      <section style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:15px">
+        <div style="display:flex;flex-direction:column;gap:6px"><label for="tpl-name" style="font-size:12px;font-weight:700;color:#24433e">Template name</label><input id="tpl-name" value="{{ tplName }}" onChange="{{ onTplName }}" type="text" placeholder="e.g. Appointment reminder · EN" style="min-height:46px;padding:0 15px;border:1px solid #c6d1cf;border-radius:12px;font-size:13.5px;outline:none"></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;font-weight:700;color:#24433e">Purpose</span>
+          <div style="display:flex;gap:8px">
+            <sc-for list="{{ tplPurposes }}" as="p" hint-placeholder-count="2">
+              <button onClick="{{ p.pick }}" style="min-height:38px;padding:0 16px;border:1px solid #dfe8e6;border-radius:99px;font-weight:700;font-size:12.5px;cursor:pointer;background: {{ p.bg }};color: {{ p.fg }}">{{ p.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label for="tpl-content" style="font-size:12px;font-weight:700;color:#24433e">Message content</label>
+          <textarea id="tpl-content" value="{{ tplContent }}" onChange="{{ onTplContent }}" placeholder="Dear #patient_name, …" style="min-height:150px;padding:13px 15px;border:1px solid #c6d1cf;border-radius:12px;font-size:13.5px;line-height:1.6;outline:none;resize:vertical;box-sizing:border-box"></textarea>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+            <sc-for list="{{ tplTokens }}" as="tk" hint-placeholder-count="7">
+              <button onClick="{{ tk.add }}" style="min-height:28px;padding:0 10px;background:#edf2f1;border:0;border-radius:7px;font-family:ui-monospace,monospace;font-size:11px;color:#3a5752;cursor:pointer">{{ tk.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:8px;border-top:1px solid #edf2f1">
+          <button onClick="{{ goCampaignsA }}" style="min-height:44px;padding:0 18px;background:#fff;border:1px solid #c6d1cf;border-radius:11px;font-weight:700;font-size:13px;cursor:pointer;color:#3a5752">Cancel</button>
+          <button onClick="{{ saveTpl }}" style="min-height:44px;padding:0 22px;color:#fff;border:0;border-radius:11px;font-weight:800;font-size:13px;cursor:pointer;background: {{ tplSaveBg }}">Save draft for approval</button>
+        </div>
+      </section>
+      <aside style="background:#efe7dd;border-radius:18px;padding:20px;position:sticky;top:80px">
+        <div style="font-size:10.5px;font-weight:750;letter-spacing:.07em;text-transform:uppercase;color:#8a7a63;margin-bottom:12px">Live preview · sample patient</div>
+        <div style="max-width:100%;background:#dcf8c6;border-radius:12px 12px 12px 4px;padding:12px 14px;font-size:13px;line-height:1.6;color:#152b26;box-shadow:0 1px 1px rgba(0,0,0,.08);white-space:pre-wrap;overflow-wrap:break-word">{{ tplPreview }}<div style="text-align:right;font-size:10px;color:#6b8a7f;margin-top:5px">10:02 ✓</div></div>
+        <p style="margin:14px 0 0;font-size:11.5px;color:#8a7a63;line-height:1.5">Placeholders are filled with Layla Hassan's sample data so you can judge length and tone.</p>
+      </aside>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isEditProfile }}" hint-placeholder-val="{{ false }}">
+  <div class="route-view" data-screen-label="Edit profile" style="max-width:640px;margin:0 auto;padding:96px 28px 64px">
+    <header style="margin-bottom:22px">
+      <a href="#profile" onClick="{{ goProfile }}" style="font-size:12px;font-weight:700;text-decoration:none">← My profile</a>
+      <h1 style="margin:8px 0 4px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(24px,3.2vw,32px);letter-spacing:-.02em;color:#0d1f1b">Edit profile</h1>
+      <p style="margin:0;font-size:13px;color:#58716d">Update the contact details attached to your team account.</p>
+    </header>
+    <section style="background:#fff;border:1px solid #dfe8e6;border-radius:18px;padding:26px;display:flex;flex-direction:column;gap:15px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="display:flex;flex-direction:column;gap:6px"><label for="ep-first" style="font-size:12px;font-weight:700;color:#24433e">First name</label><input id="ep-first" value="{{ epFirst }}" onChange="{{ onEpFirst }}" type="text" style="min-height:46px;padding:0 15px;border:1px solid #c6d1cf;border-radius:12px;font-size:13.5px;outline:none"></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><label for="ep-last" style="font-size:12px;font-weight:700;color:#24433e">Last name</label><input id="ep-last" value="{{ epLast }}" onChange="{{ onEpLast }}" type="text" style="min-height:46px;padding:0 15px;border:1px solid #c6d1cf;border-radius:12px;font-size:13.5px;outline:none"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px"><label for="ep-email" style="font-size:12px;font-weight:700;color:#24433e">Email address</label><input id="ep-email" value="{{ epEmail }}" onChange="{{ onEpEmail }}" type="email" style="min-height:46px;padding:0 15px;border:1px solid #c6d1cf;border-radius:12px;font-size:13.5px;outline:none"></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><label for="ep-mobile" style="font-size:12px;font-weight:700;color:#24433e">Mobile number</label><input id="ep-mobile" value="{{ epMobile }}" onChange="{{ onEpMobile }}" type="text" style="min-height:46px;padding:0 15px;border:1px solid #c6d1cf;border-radius:12px;font-size:13.5px;outline:none"></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:8px;border-top:1px solid #edf2f1">
+        <button onClick="{{ goProfile }}" style="min-height:44px;padding:0 18px;background:#fff;border:1px solid #c6d1cf;border-radius:11px;font-weight:700;font-size:13px;cursor:pointer;color:#3a5752">Cancel</button>
+        <button onClick="{{ epSave }}" style="min-height:44px;padding:0 22px;background:#0b8f7b;color:#fff;border:0;border-radius:11px;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 6px 16px rgba(11,143,123,.3)">Save changes</button>
+      </div>
+    </section>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isAuth }}" hint-placeholder-val="{{ false }}">
+  <div class="route-view" data-screen-label="Auth" style="min-height:100vh;display:grid;grid-template-columns:minmax(0,.9fr) minmax(320px,1.1fr)">
+    <section style="background:#0d1c19;color:#fff;padding:clamp(28px,5vw,64px);display:flex;flex-direction:column;justify-content:space-between;gap:32px">
+      <button onClick="{{ goLanding }}" style="align-self:flex-start;display:flex;align-items:center;gap:10px;border:0;background:none;color:#fff;cursor:pointer;font:inherit"><span style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#0b8f7b,#0a6e60);display:grid;place-items:center;font-weight:800;font-size:15px">W</span><strong style="font-family:'Bricolage Grotesque',sans-serif;font-size:16px">Waslni</strong></button>
+      <div>
+        <div style="font-size:11.5px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:#5fd6bd">{{ authKicker }}</div>
+        <h1 style="margin:12px 0 12px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(26px,3.6vw,42px);letter-spacing:-.02em;line-height:1.08;max-width:440px">{{ authHeadline }}</h1>
+        <p style="margin:0;max-width:400px;font-size:14px;line-height:1.6;color:#9fbcb5">{{ authSub }}</p>
+      </div>
+      <div style="display:grid;gap:10px;max-width:400px">
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start"><span style="width:26px;height:26px;border-radius:50%;background:rgba(95,214,189,.16);color:#5fd6bd;display:grid;place-items:center;font-size:11px;font-weight:800">1</span><span style="font-size:12.5px;color:#c3d8d2;line-height:1.5"><strong style="color:#fff">Review the queue</strong> — pending messages and appointment statuses at a glance.</span></div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start"><span style="width:26px;height:26px;border-radius:50%;background:rgba(95,214,189,.16);color:#5fd6bd;display:grid;place-items:center;font-size:11px;font-weight:800">2</span><span style="font-size:12.5px;color:#c3d8d2;line-height:1.5"><strong style="color:#fff">Open WhatsApp</strong> — send each approved message personally.</span></div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start"><span style="width:26px;height:26px;border-radius:50%;background:rgba(95,214,189,.16);color:#5fd6bd;display:grid;place-items:center;font-size:11px;font-weight:800">3</span><span style="font-size:12.5px;color:#c3d8d2;line-height:1.5"><strong style="color:#fff">Record the result</strong> — keep the entire team aligned.</span></div>
+      </div>
+    </section>
+    <section style="display:grid;place-items:center;padding:clamp(24px,5vw,64px);background:#f2f6f5">
+      <div style="width:min(100%,400px)">
+        <h2 style="margin:0 0 6px;font-family:'Bricolage Grotesque',sans-serif;font-size:24px;font-weight:800;letter-spacing:-.02em;color:#0d1f1b">{{ authTitle }}</h2>
+        <p style="margin:0 0 22px;font-size:13px;color:#58716d">{{ authHint }}</p>
+        <div style="display:flex;flex-direction:column;gap:13px">
+          <sc-if value="{{ isRegister }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:6px"><label for="rd-org" style="font-size:12px;font-weight:700;color:#24433e">Organization name</label><input id="rd-org" type="text" placeholder="Al Noor Clinic" style="min-height:46px;padding:0 15px;border:1px solid #c6d1cf;border-radius:12px;font-size:13.5px;outline:none;background:#fff"></div>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:6px"><label for="rd-email" style="font-size:12px;font-weight:700;color:#24433e">Email address</label><input id="rd-email" type="email" placeholder="you@clinic.com" style="min-height:46px;padding:0 15px;border:1px solid #c6d1cf;border-radius:12px;font-size:13.5px;outline:none;background:#fff"></div>
+          <div style="display:flex;flex-direction:column;gap:6px"><label for="rd-pass" style="font-size:12px;font-weight:700;color:#24433e">Password</label><input id="rd-pass" type="password" placeholder="••••••••" style="min-height:46px;padding:0 15px;border:1px solid #c6d1cf;border-radius:12px;font-size:13.5px;outline:none;background:#fff"></div>
+          <button onClick="{{ goDashboard }}" style="min-height:48px;background:#0b8f7b;color:#fff;border:0;border-radius:13px;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 6px 18px rgba(11,143,123,.28);margin-top:4px">{{ authCta }}</button>
+        </div>
+        <p style="margin:16px 0 0;text-align:center;font-size:12.5px;color:#58716d">{{ authSwitchQ }} <a href="#switch" onClick="{{ authSwitch }}" style="font-weight:700">{{ authSwitchA }}</a></p>
+      </div>
+    </section>
+  </div>
+</sc-if></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startRoute&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dashboard&quot;,&quot;options&quot;:[&quot;dashboard&quot;,&quot;campaigns&quot;,&quot;queue&quot;,&quot;admin&quot;,&quot;profile&quot;,&quot;landing&quot;,&quot;login&quot;,&quot;register&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
+class Component extends DCLogic {
+  state = {
+    route: this.props.startRoute ?? 'dashboard', scrolled: false,
+    selected: 0, focusMode: false, doctorFilter: 'All doctors',
+    wizardStep: 0, wizardPurpose: 'Appointment reminder', wizardTemplate: 'Appointment reminder · EN',
+    waFor: null, summaryOpen: false, editing: false, draft: '',
+    search: '', statusFilter: 'All', toast: '',
+    epFirst: 'Nadia', epLast: 'Salem', epEmail: 'nadia@alnoorclinic.com', epMobile: '+966 55 812 3390',
+    tplId: null, tplName: '', tplPurpose: 'Appointment reminder', tplContent: '',
+    templates: [
+      { id: 1, name: 'Appointment reminder · EN', purpose: 'Appointment reminder', status: 'Approved', content: 'Dear #patient_name, this is a reminder of your appointment with #doctor (#department) on #appointment_date at #appointment_time. Reply to confirm. — Al Noor Clinic' },
+      { id: 2, name: 'Recall · Dermatology', purpose: 'Marketing', status: 'Approved', content: 'Dear #patient_name, it has been a while since your last dermatology visit. Reply to this message to book a check-up. — Al Noor Clinic' },
+      { id: 3, name: 'No-show follow-up', purpose: 'Appointment reminder', status: 'Pending', content: 'Dear #patient_name, we missed you at your appointment with #doctor on #appointment_date. Reply to rebook. — Al Noor Clinic' }
+    ],
+    adminTab: 'templates',
+    queue: [
+      { id: 1, patient: 'Layla Hassan', mrn: '448291', phone: '+966 50 123 4567', doctor: 'Dr. Al-Rashid', dept: 'Cardiology', time: '10:30', appt: 'Confirmed', status: 'pending', msg: 'Dear Layla, this is a reminder of your appointment with Dr. Al-Rashid (Cardiology) on 14 Aug at 10:30. Reply to confirm. — Al Noor Clinic' },
+      { id: 2, patient: 'Omar Farouk', mrn: '448302', phone: '+966 55 987 2210', doctor: 'Dr. Al-Rashid', dept: 'Cardiology', time: '11:00', appt: 'Booked', status: 'pending', msg: 'Dear Omar, this is a reminder of your appointment with Dr. Al-Rashid (Cardiology) on 14 Aug at 11:00. Reply to confirm. — Al Noor Clinic' },
+      { id: 3, patient: 'Sara Mansour', mrn: '448317', phone: '+966 54 332 8801', doctor: 'Dr. Osman', dept: 'Cardiology', time: '11:15', appt: 'Booked', status: 'pending', msg: 'Dear Sara, this is a reminder of your appointment with Dr. Osman (Cardiology) on 14 Aug at 11:15. Reply to confirm. — Al Noor Clinic' },
+      { id: 4, patient: 'Ali Kareem', mrn: '448256', phone: '+966 50 776 1148', doctor: 'Dr. Osman', dept: 'Cardiology', time: '11:45', appt: 'Booked', status: 'pending', msg: 'Dear Ali, this is a reminder of your appointment with Dr. Osman (Cardiology) on 14 Aug at 11:45. Reply to confirm. — Al Noor Clinic' },
+      { id: 5, patient: 'Mona Abdel', mrn: '448322', phone: '+966 53 218 9902', doctor: 'Dr. Al-Rashid', dept: 'Cardiology', time: '12:15', appt: 'Confirmed', status: 'pending', msg: 'Dear Mona, this is a reminder of your appointment with Dr. Al-Rashid (Cardiology) on 14 Aug at 12:15. Reply to confirm. — Al Noor Clinic' },
+      { id: 6, patient: 'Yousef Nabil', mrn: '448340', phone: '+966 56 402 7719', doctor: 'Dr. Osman', dept: 'Cardiology', time: '12:30', appt: 'Cancelled', status: 'pending', msg: 'Dear Yousef, your appointment with Dr. Osman (Cardiology) on 14 Aug at 12:30 was cancelled. Reply to rebook. — Al Noor Clinic' },
+      { id: 7, patient: 'Rania Saleh', mrn: '448355', phone: '+966 59 883 4410', doctor: 'Dr. Al-Rashid', dept: 'Cardiology', time: '13:00', appt: 'Booked', status: 'sent', msg: 'Dear Rania, this is a reminder of your appointment with Dr. Al-Rashid (Cardiology) on 14 Aug at 13:00. Reply to confirm. — Al Noor Clinic' },
+      { id: 8, patient: 'Hassan Tariq', mrn: '448371', phone: '+966 58 119 6633', doctor: 'Dr. Osman', dept: 'Cardiology', time: '13:30', appt: 'Booked', status: 'skipped', msg: 'Dear Hassan, this is a reminder of your appointment with Dr. Osman (Cardiology) on 14 Aug at 13:30. Reply to confirm. — Al Noor Clinic' }
+    ]
+  };
+  componentDidMount() {
+    this._onScroll = () => { const sc = window.scrollY > 40; if (sc !== this.state.scrolled) this.setState({ scrolled: sc }); };
+    window.addEventListener('scroll', this._onScroll, { passive: true });
+    this._onKey = (e) => {
+      if (this.state.route !== 'queue' || this.state.editing || this.state.waFor !== null) return;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+      const k = e.key.toLowerCase();
+      if (e.key === 'Enter') { e.preventDefault(); this.openWA(); }
+      else if (k === 's') { e.preventDefault(); this.markSkip(); }
+      else if (k === 'e') { e.preventDefault(); this.startEdit(); }
+      else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); this.move(1); }
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); this.move(-1); }
+      else if (k === 'f') { e.preventDefault(); this.setState(s => ({ focusMode: !s.focusMode })); }
+    };
+    window.addEventListener('keydown', this._onKey);
+  }
+  componentWillUnmount() { window.removeEventListener('scroll', this._onScroll); window.removeEventListener('keydown', this._onKey); }
+  filtered() {
+    const { doctorFilter: f, search, statusFilter } = this.state;
+    const t = (search || '').toLowerCase();
+    return this.state.queue.filter(q =>
+      (f === 'All doctors' || q.doctor === f) &&
+      (statusFilter === 'All' || q.status === statusFilter.toLowerCase()) &&
+      (!t || [q.patient, q.mrn, q.phone, q.doctor, q.dept].join(' ').toLowerCase().includes(t))
+    );
+  }
+  cur() { return this.filtered()[this.state.selected] || null; }
+  move(d) { const n = this.filtered().length; if (!n) return; this.setState(s => ({ selected: Math.min(n - 1, Math.max(0, s.selected + d)), editing: false })); }
+  setStatus(id, status) {
+    this.setState(s => ({ queue: s.queue.map(q => q.id === id ? { ...q, status } : q) }), () => {
+      const list = this.filtered();
+      const next = list.findIndex((q, i) => q.status === 'pending' && i >= this.state.selected);
+      const anyPending = list.some(q => q.status === 'pending');
+      if (!anyPending) this.setState({ summaryOpen: true });
+      else this.setState({ selected: next >= 0 ? next : list.findIndex(q => q.status === 'pending') });
+    });
+  }
+  openWA() { const c = this.cur(); if (c) this.setState({ waFor: c.id }); }
+  markSkip() { const c = this.cur(); if (c) this.setStatus(c.id, 'skipped'); }
+  startEdit() { const c = this.cur(); if (c) this.setState({ editing: true, draft: c.msg }); }
+  go(route) { return (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ route, editing: false, waFor: null }); window.scrollTo(0, 0); }; }
+  renderVals() {
+    const s = this.state;
+    const list = this.filtered();
+    const cur = this.cur();
+    const sent = s.queue.filter(q => q.status === 'sent').length;
+    const skipped = s.queue.filter(q => q.status === 'skipped').length;
+    const pending = s.queue.filter(q => q.status === 'pending').length;
+    const on = (r) => (s.route === r ? 'on' : '');
+    const badge = { Appointment: ['#e2edfb', '#315f9b'], Marketing: ['#fff1cf', '#9b5d0a'] };
+    const mkCamp = (title, meta, purpose, done, total) => ({ title, meta, purpose, badgeBg: badge[purpose][0], badgeFg: badge[purpose][1], progressLabel: done + ' / ' + total + ' sent', pct: Math.round(done / total * 100) + '%', open: this.go('queue') });
+    const doctors = ['All doctors', 'Dr. Al-Rashid', 'Dr. Osman'];
+    return {
+      inApp: !['landing', 'login', 'register'].includes(s.route),
+      isDashboard: s.route === 'dashboard', isCampaigns: s.route === 'campaigns', isQueue: s.route === 'queue', isAdmin: s.route === 'admin', isProfile: s.route === 'profile',
+      isLanding: s.route === 'landing', isLogin: s.route === 'login', isRegister: s.route === 'register',
+      isAuth: s.route === 'login' || s.route === 'register',
+      authKicker: s.route === 'login' ? 'Welcome back' : 'Start your organization',
+      authHeadline: s.route === 'login' ? 'Keep every patient conversation moving.' : 'A private outreach workspace for your healthcare team.',
+      authSub: s.route === 'login' ? 'Open your organization workspace to review today\u2019s reminders, record appointment outcomes, and prepare the next campaign.' : 'Your data, templates, campaigns, doctors, and employees stay isolated inside one organization.',
+      authTitle: s.route === 'login' ? 'Sign in to Waslni' : 'Create your organization',
+      authHint: s.route === 'login' ? 'Use the email address connected to your organization.' : 'Set up the Owner account that will manage your team. 14-day trial.',
+      authCta: s.route === 'login' ? 'Sign in →' : 'Create workspace →',
+      authSwitchQ: s.route === 'login' ? 'New to Waslni?' : 'Already have a workspace?',
+      authSwitchA: s.route === 'login' ? 'Create an organization workspace' : 'Sign in',
+      authSwitch: this.go(s.route === 'login' ? 'register' : 'login'),
+      fnavClass: 'fnav' + (s.scrolled ? ' mini' : ''),
+      nDash: on('dashboard'), nCamp: on('campaigns'), nQueue: on('queue'), nAdmin: on('admin'), nProfile: on('profile'),
+      goDashboard: this.go('dashboard'), goCampaigns: this.go('campaigns'), goQueue: this.go('queue'), goAdmin: this.go('admin'), goProfile: this.go('profile'),
+      goLanding: this.go('landing'), goLogin: this.go('login'), goRegister: this.go('register'),
+      goCampaignsA: this.go('campaigns'),
+      goCampaignsWizard: (e) => { if (e) e.preventDefault(); this.setState({ route: 'campaigns', wizardStep: 1 }); window.scrollTo(0, 0); },
+      pendingCount: pending, sentCount: sent, skippedCount: skipped,
+      dashCampaigns: [
+        mkCamp('Cardiology · 14 August', 'Appointment · created 12 Aug', 'Appointment', 61 + sent, 82),
+        mkCamp('Dermatology recall · September', 'Marketing · created 28 Aug', 'Marketing', 45, 120),
+        mkCamp('Orthopedics · 18 August', 'Appointment · created 16 Aug', 'Appointment', 96, 96)
+      ],
+      // queue values (used by the queue screen)
+      queueList: list.map((q, i) => ({
+        ...q,
+        select: () => this.setState({ selected: i, editing: false }),
+        rowBg: i === s.selected ? '#eafaf5' : (q.status === 'pending' ? '#fff' : '#f7f9f9'),
+        rowBorder: i === s.selected ? '3px solid #0b8f7b' : '3px solid transparent',
+        rowOpacity: q.status === 'pending' ? 1 : .55,
+        statusLabel: q.status === 'sent' ? '✓ sent' : (q.status === 'skipped' ? 'skipped' : q.time),
+        statusColor: q.status === 'sent' ? '#177245' : (q.status === 'skipped' ? '#a23b3b' : '#728985')
+      })),
+      cur, hasCur: !!cur,
+      queueCols: s.focusMode ? 'minmax(0,1fr)' : 'minmax(240px,.65fr) minmax(0,1.35fr)',
+      search: s.search, onSearch: (e) => this.setState({ search: e.target.value, selected: 0 }),
+      statusOptions: ['All', 'Pending', 'Sent', 'Skipped'].map(o => ({ label: o, pick: () => this.setState({ statusFilter: o, selected: 0 }), bg: s.statusFilter === o ? '#0b8f7b' : '#fff', fg: s.statusFilter === o ? '#fff' : '#3a5752' })),
+      resultCount: list.length,
+      exportCsv: () => { this.setState({ toast: 'campaign_export.csv downloaded — 82 rows' }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 2600); },
+      toast: s.toast, hasToast: !!s.toast,
+      doctorSummaries: [
+        { name: 'Dr. Al-Rashid', dept: 'Cardiology', total: 46, confirmed: 29, cancelled: 4, msg: 'Summary 14 Aug — Dr. Al-Rashid: 46 appointments, 29 confirmed, 4 cancelled, 13 awaiting reply.', share: () => { this.setState({ toast: 'Summary opened in WhatsApp for Dr. Al-Rashid' }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 2600); } },
+        { name: 'Dr. Osman', dept: 'Cardiology', total: 36, confirmed: 21, cancelled: 2, msg: 'Summary 14 Aug — Dr. Osman: 36 appointments, 21 confirmed, 2 cancelled, 13 awaiting reply.', share: () => { this.setState({ toast: 'Summary opened in WhatsApp for Dr. Osman' }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 2600); } }
+      ],
+      isEditProfile: s.route === 'editProfile', goEditProfile: this.go('editProfile'),
+      isTplEditor: s.route === 'template',
+      tplEditorTitle: s.tplId === null ? 'New template' : 'Edit template',
+      newTpl: () => { this.setState({ route: 'template', tplId: null, tplName: '', tplPurpose: 'Appointment reminder', tplContent: 'Dear #patient_name, ' }); window.scrollTo(0, 0); },
+      tplName: s.tplName, tplContent: s.tplContent,
+      onTplName: (e) => this.setState({ tplName: e.target.value }),
+      onTplContent: (e) => this.setState({ tplContent: e.target.value }),
+      tplPurposes: ['Appointment reminder', 'Marketing'].map(p => ({ label: p, pick: () => this.setState({ tplPurpose: p }), bg: s.tplPurpose === p ? '#0d1c19' : '#fff', fg: s.tplPurpose === p ? '#fff' : '#3a5752' })),
+      tplTokens: ['#patient_name', '#mrn', '#doctor', '#department', '#appointment_date', '#appointment_time', '#appointment_status'].map(t => ({ label: t, add: () => this.setState(x => ({ tplContent: (x.tplContent + (x.tplContent && !x.tplContent.endsWith(' ') ? ' ' : '') + t + ' ') })) })),
+      tplPreview: (s.tplContent || 'Your message preview appears here…')
+        .replace(/#patient_name/g, 'Layla Hassan').replace(/#mrn/g, '448291').replace(/#doctor/g, 'Dr. Al-Rashid')
+        .replace(/#department/g, 'Cardiology').replace(/#appointment_date/g, '14 Aug').replace(/#appointment_time/g, '10:30')
+        .replace(/#appointment_status/g, 'Confirmed'),
+      tplCanSave: !!(s.tplName.trim() && s.tplContent.trim()),
+      tplSaveBg: (s.tplName.trim() && s.tplContent.trim()) ? '#0b8f7b' : '#c6d1cf',
+      saveTpl: () => {
+        if (!(s.tplName.trim() && s.tplContent.trim())) return;
+        this.setState(x => ({
+          templates: x.tplId === null
+            ? [...x.templates, { id: Date.now(), name: x.tplName, purpose: x.tplPurpose, status: 'Pending', content: x.tplContent }]
+            : x.templates.map(t => t.id === x.tplId ? { ...t, name: x.tplName, purpose: x.tplPurpose, content: x.tplContent, status: 'Pending' } : t),
+          route: 'campaigns', toast: x.tplId === null ? 'Draft saved — sent for approval' : 'Template updated — back to pending review'
+        }));
+        clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 2600);
+        window.scrollTo(0, 0);
+      },
+      templateCards: s.templates.map(t => ({
+        ...t,
+        badgeBg: t.status === 'Approved' ? '#dff5e9' : '#fff1cf', badgeFg: t.status === 'Approved' ? '#177245' : '#9b5d0a',
+        sub: t.purpose + ' · ' + (t.content.match(/#\w+/g) || []).length + ' placeholders',
+        edit: () => { this.setState({ route: 'template', tplId: t.id, tplName: t.name, tplPurpose: t.purpose, tplContent: t.content }); window.scrollTo(0, 0); }
+      })),
+      epFirst: s.epFirst, epLast: s.epLast, epEmail: s.epEmail, epMobile: s.epMobile,
+      onEpFirst: (e) => this.setState({ epFirst: e.target.value }), onEpLast: (e) => this.setState({ epLast: e.target.value }),
+      onEpEmail: (e) => this.setState({ epEmail: e.target.value }), onEpMobile: (e) => this.setState({ epMobile: e.target.value }),
+      epSave: () => { this.setState({ route: 'profile', toast: 'Profile updated' }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 2600); window.scrollTo(0, 0); },
+      epName: s.epFirst + ' ' + s.epLast, epInitial: (s.epFirst || 'N').slice(0, 1),
+      waInitial: cur ? cur.patient.slice(0, 1) : '',
+      curAppt: cur ? cur.appt : '', curApptBg: cur ? ({ Confirmed: '#dff5e9', Booked: '#fff1cf', Cancelled: '#fde5e3' }[cur.appt]) : '#fff',
+      curApptFg: cur ? ({ Confirmed: '#177245', Booked: '#9b5d0a', Cancelled: '#a23b3b' }[cur.appt]) : '#000',
+      queuePos: list.length ? (s.selected + 1) + ' of ' + list.length : '0',
+      progressPct: Math.round(((sent + skipped) / (s.queue.length || 1)) * 100) + '%',
+      doctors: doctors.map(d => ({ name: d, count: d === 'All doctors' ? s.queue.length : s.queue.filter(q => q.doctor === d).length, pick: () => this.setState({ doctorFilter: d, selected: 0 }), bg: s.doctorFilter === d ? '#0d1c19' : '#edf2f1', fg: s.doctorFilter === d ? '#fff' : '#3a5752' })),
+      focusMode: s.focusMode, notFocusMode: !s.focusMode,
+      toggleFocus: () => this.setState(x => ({ focusMode: !x.focusMode })),
+      focusLabel: s.focusMode ? 'Exit focus (F)' : 'Focus mode (F)',
+      editing: s.editing, notEditing: !s.editing, draft: s.draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      saveEdit: () => this.setState(x => ({ editing: false, queue: x.queue.map(q => q.id === (cur && cur.id) ? { ...q, msg: x.draft } : q) })),
+      cancelEdit: () => this.setState({ editing: false }),
+      startEdit: () => this.startEdit(), openWA: () => this.openWA(), markSkip: () => this.markSkip(),
+      prevMsg: () => this.move(-1), nextMsg: () => this.move(1),
+      waOpen: s.waFor !== null,
+      waPatient: cur ? cur.patient : '', waPhone: cur ? cur.phone : '', waMsg: cur ? cur.msg : '',
+      waCancel: () => this.setState({ waFor: null }),
+      waConfirm: () => { const id = s.waFor; this.setState({ waFor: null }); if (id !== null) this.setStatus(id, 'sent'); },
+      summaryOpen: s.summaryOpen,
+      closeSummary: () => this.setState({ summaryOpen: false }),
+      summarySent: sent, summarySkipped: skipped,
+      // wizard
+      wizardStep: s.wizardStep, wizardOpen: s.wizardStep > 0,
+      wStep1: s.wizardStep === 1, wStep2: s.wizardStep === 2, wStep3: s.wizardStep === 3,
+      wNotStep1: s.wizardStep > 1, wNotStep3: s.wizardStep > 0 && s.wizardStep < 3,
+      openWizard: () => this.setState({ wizardStep: 1 }),
+      closeWizard: () => this.setState({ wizardStep: 0 }),
+      wizNext: () => this.setState(x => ({ wizardStep: Math.min(3, x.wizardStep + 1) })),
+      wizBack: () => this.setState(x => ({ wizardStep: Math.max(1, x.wizardStep - 1) })),
+      wizLaunch: () => { this.setState({ wizardStep: 0, route: 'queue' }); window.scrollTo(0, 0); },
+      stepDot: (n) => n,
+      wd1: s.wizardStep >= 1 ? '#0b8f7b' : '#c6d1cf', wd2: s.wizardStep >= 2 ? '#0b8f7b' : '#c6d1cf', wd3: s.wizardStep >= 3 ? '#0b8f7b' : '#c6d1cf',
+      // admin
+      adminTab: s.adminTab,
+      tabTemplates: s.adminTab === 'templates', tabDoctors: s.adminTab === 'doctors', tabTeam: s.adminTab === 'team', tabPlan: s.adminTab === 'plan',
+      pickTemplates: () => this.setState({ adminTab: 'templates' }), pickDoctors: () => this.setState({ adminTab: 'doctors' }),
+      pickTeam: () => this.setState({ adminTab: 'team' }), pickPlan: () => this.setState({ adminTab: 'plan' }),
+      tabBg: (t) => t,
+      atTemplates: s.adminTab === 'templates' ? '#0d1c19' : '#fff', atTemplatesFg: s.adminTab === 'templates' ? '#fff' : '#3a5752',
+      atDoctors: s.adminTab === 'doctors' ? '#0d1c19' : '#fff', atDoctorsFg: s.adminTab === 'doctors' ? '#fff' : '#3a5752',
+      atTeam: s.adminTab === 'team' ? '#0d1c19' : '#fff', atTeamFg: s.adminTab === 'team' ? '#fff' : '#3a5752',
+      atPlan: s.adminTab === 'plan' ? '#0d1c19' : '#fff', atPlanFg: s.adminTab === 'plan' ? '#fff' : '#3a5752'
+    };
+  }
+}
+</script>
+</body>
+</html>
