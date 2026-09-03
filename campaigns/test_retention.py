@@ -123,6 +123,28 @@ class ScrubEffectTests(RetentionFixture):
         self.assertEqual(self.item.patient_name_snapshot, "")
         self.assertEqual(self.item.phone_number_snapshot, "")
 
+    def test_the_appointment_remark_is_cleared(self):
+        # Free text the clinic wrote, so it can name people the scrub is
+        # meant to remove.
+        self.assertEqual(self.item.appointment_remarks, "Arrive early")
+
+        scrub_campaign(self.campaign)
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.appointment_remarks, "")
+
+    def test_the_clinical_remark_on_the_appointment_survives(self):
+        # Appointment is the clinical record, not part of the campaign
+        # snapshot, so it keeps its own copy. This stays snapshot scrubbing.
+        appointment = self.item.appointment
+        self.assertIsNotNone(appointment)
+        self.assertEqual(appointment.remarks, "Arrive early")
+
+        scrub_campaign(self.campaign)
+
+        appointment.refresh_from_db()
+        self.assertEqual(appointment.remarks, "Arrive early")
+
     def test_the_mrn_survives(self):
         scrub_campaign(self.campaign)
 

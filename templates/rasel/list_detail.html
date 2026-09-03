@@ -98,7 +98,10 @@
       </p>
 
       <div class="wa-bubble wa-bubble--lg" data-cur-bubble>
-        <span data-cur-message></span>
+        <div class="clamp-wrap">
+          <span data-cur-message data-clamp></span>
+          <button class="clamp-toggle" type="button" data-clamp-toggle hidden>Show more</button>
+        </div>
         <div class="wa-stamp" data-cur-stamp>✓</div>
       </div>
 
@@ -151,7 +154,10 @@
                 <span class="ds-stat ds-stat--ok"><strong>{{ record.confirmed|default:"0" }}</strong><small>Confirmed</small></span>
                 <span class="ds-stat ds-stat--no"><strong>{{ record.cancelled|default:"0" }}</strong><small>Cancelled</small></span>
               </div>
-              <p class="ds-msg">{{ summary.rendered_content }}</p>
+              <div class="clamp-wrap">
+                <p class="ds-msg" data-clamp>{{ summary.rendered_content }}</p>
+                <button class="clamp-toggle" type="button" data-clamp-toggle hidden>Show more</button>
+              </div>
               {% if summary.doctor.phone_number and perms.campaigns.change_doctorsummary %}
                 <a class="btn btn--wa" target="_blank" rel="noopener" href="{% url 'open_doctor_summary' summary.id %}">
                   <svg aria-hidden="true"><use href="#r-wa"></use></svg>Share in WhatsApp

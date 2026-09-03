@@ -48,7 +48,10 @@
               Draft by {{ revision.created_by.get_full_name|default:revision.created_by.email }} ·
               {{ revision.created_at|date:"j M" }} · {{ revision.template.get_purpose_display }}
             </p>
-            <p class="approval-body">{{ revision.content }}</p>
+            <div class="clamp-wrap">
+              <p class="approval-body" data-clamp>{{ revision.content }}</p>
+              <button class="clamp-toggle" type="button" data-clamp-toggle hidden>Show more</button>
+            </div>
           </div>
           {% if can_approve %}
             <div class="approval-actions">

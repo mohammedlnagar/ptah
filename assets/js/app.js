@@ -37,4 +37,32 @@
     const text = node.getAttribute("data-toast");
     if (text) window.showToast(text);
   });
+
+  /* Long messages clamp to four lines with a toggle. Whether a message
+     overflows depends on its width, so it is measured after layout rather
+     than guessed from a character count; call this again whenever the text
+     or the container width changes. */
+  window.applyClamp = function applyClamp(root) {
+    (root || document).querySelectorAll("[data-clamp]").forEach((el) => {
+      const toggle = el.parentElement.querySelector("[data-clamp-toggle]");
+      if (!toggle) return;
+      el.classList.remove("is-open");
+      toggle.textContent = "Show more";
+      toggle.setAttribute("aria-expanded", "false");
+      toggle.hidden = el.scrollHeight <= el.clientHeight + 1;
+    });
+  };
+
+  document.addEventListener("click", (event) => {
+    const toggle = event.target.closest("[data-clamp-toggle]");
+    if (!toggle) return;
+    const el = toggle.parentElement.querySelector("[data-clamp]");
+    if (!el) return;
+    const open = el.classList.toggle("is-open");
+    toggle.textContent = open ? "Show less" : "Show more";
+    toggle.setAttribute("aria-expanded", String(open));
+  });
+
+  window.applyClamp(document);
+  window.addEventListener("resize", () => window.applyClamp(document));
 })();
