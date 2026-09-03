@@ -139,6 +139,9 @@
       (row.dataset.status === SENT ? "sent ✓" : row.dataset.time || "") + "";
 
     cancelEdit();
+    /* The message just changed, so whether it overflows four lines has to be
+       measured again for this one. */
+    if (window.applyClamp) window.applyClamp(card);
     if (!opts.silent) row.scrollIntoView({ block: "nearest" });
   }
 
@@ -249,6 +252,7 @@
       row.dataset.message = text;
       root.querySelector("[data-cur-message]").textContent = text;
       cancelEdit();
+      if (window.applyClamp) window.applyClamp(card);
       window.showToast && window.showToast("Message updated");
     } catch (err) {
       window.showToast && window.showToast("Could not save that edit.");
@@ -308,6 +312,9 @@
 
   function applyFocus() {
     split.classList.toggle("focus", focusMode);
+    /* Focus mode widens the card, so a message that wrapped past four lines
+       may now fit. */
+    if (window.applyClamp) window.setTimeout(() => window.applyClamp(card), 0);
     const btn = root.querySelector("[data-focus-toggle]");
     btn.innerHTML = (focusMode ? "Exit focus" : "Focus mode") + ' <span class="kbd">F</span>';
     try { localStorage.setItem(focusKey, focusMode ? "1" : "0"); } catch (e) { /* private mode */ }

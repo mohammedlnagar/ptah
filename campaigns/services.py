@@ -40,10 +40,15 @@ def due_for_scrub(now=None):
 def scrub_campaign(campaign):
     """Strip patient identity from a list, keeping everything reportable.
 
-    Name and phone are cleared and the raw CSV row is replaced by a hash of
-    itself. The MRN, doctor, department, appointment date/time and status all
-    survive, as do Campaign.summary and every DoctorSummary, so counts and
-    per-doctor analysis still work afterwards.
+    Name, phone and the appointment remark are cleared, and the raw CSV row is
+    replaced by a hash of itself. The MRN, doctor, department, appointment
+    date/time and status all survive, as do Campaign.summary and every
+    DoctorSummary, so counts and per-doctor analysis still work afterwards.
+
+    Remarks go because they are operator-written free text: "son will collect
+    her", "call the husband instead". Nothing constrains them to be
+    non-identifying, so leaving them would let a name outlive the scrub of the
+    name field beside it.
 
     Contact and Appointment are deliberately untouched: they are the patient
     directory and the clinical record, not part of the campaign snapshot. That
@@ -63,13 +68,19 @@ def scrub_campaign(campaign):
     for item in items:
         item.patient_name_snapshot = ""
         item.phone_number_snapshot = ""
+        item.appointment_remarks = ""
         item.raw_data = (
             {"sha256": row_fingerprint(item.raw_data)} if item.raw_data else {}
         )
     if items:
         CampaignItem.objects.bulk_update(
             items,
-            ["patient_name_snapshot", "phone_number_snapshot", "raw_data"],
+            [
+                "patient_name_snapshot",
+                "phone_number_snapshot",
+                "appointment_remarks",
+                "raw_data",
+            ],
             batch_size=500,
         )
 
