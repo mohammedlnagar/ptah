@@ -32,6 +32,17 @@
     </div>
   </header>
 
+  <div class="stage-row" aria-label="Follow-up stage">
+    <span class="stage-label">Stage</span>
+    {% for option in stage_options %}
+      <a class="chip chip--stage{% if active_stage == option.key %} on{% endif %}"
+         href="?stage={{ option.key }}"{% if active_stage == option.key %} aria-current="true"{% endif %}>
+        {{ option.label }}<span class="n">{{ option.count }}</span>
+      </a>
+    {% endfor %}
+    <span class="stage-note">Due today is what needs you now. Nothing sends by itself.</span>
+  </div>
+
   <div class="filter-row" aria-label="Filter queue">
     <label class="visually-hidden" for="queue-search">Search recipients</label>
     <input class="search-pill" id="queue-search" type="search" data-filter-search
@@ -58,6 +69,9 @@
           <button class="qrow" type="button"
                   data-row="{{ campaign_message.id }}"
                   data-status="{{ campaign_message.status }}"
+                  data-stage="{{ campaign_message.stage }}"
+                  data-stage-label="{{ campaign_message.get_stage_display }}"
+                  data-due="{% if campaign_message.due_at %}{{ campaign_message.due_at|date:'j M H:i' }}{% endif %}"
                   data-doctor="{{ item.doctor_name_snapshot }}"
                   data-search="{{ item.patient_name_snapshot|lower }} {{ item.mrn_snapshot|lower }} {{ item.phone_number_snapshot|lower }} {{ item.doctor_name_snapshot|lower }} {{ item.department_name_snapshot|lower }}"
                   data-patient="{{ item.patient_name_snapshot|default:'Patient details removed' }}"
@@ -75,6 +89,9 @@
             <strong>{{ item.patient_name_snapshot|default:"Patient details removed" }}</strong>
             <span class="qrow__status">{% if item.appointment_time %}{{ item.appointment_time|time:"H:i" }}{% else %}—{% endif %}</span>
             <span class="qrow__sub">{{ item.doctor_name_snapshot|default:"No doctor" }} · MRN {{ item.mrn_snapshot|default:"—" }}</span>
+            {% if active_stage == "all" or active_stage == "due" %}
+              <span class="qrow__stage">{{ campaign_message.get_stage_display }}{% if campaign_message.due_at %} · due {{ campaign_message.due_at|date:"j M H:i" }}{% endif %}</span>
+            {% endif %}
           </button>
         {% endwith %}
       {% empty %}
@@ -85,7 +102,10 @@
     <section class="msg-card" aria-label="Current message" data-current hidden>
       <div class="msg-head">
         <div>
-          <div class="msg-kicker">Recipient · <span data-cur-position>1 of {{ result_count }}</span></div>
+          <div class="msg-kicker">
+            <span class="stage-pill" data-cur-stage></span>
+            Recipient · <span data-cur-position>1 of {{ result_count }}</span>
+          </div>
           <h2 data-cur-patient></h2>
           <div class="msg-meta" data-cur-meta></div>
         </div>
@@ -131,6 +151,42 @@
       </div>
     </section>
   </div>
+
+  {% if perms.campaigns.add_campaign %}
+    <section class="card card--pad update-panel">
+      <div class="section-head">
+        <div>
+          <h2>Update this campaign</h2>
+          <p>
+            Upload the same clinic day again to bring statuses up to date and add new
+            bookings. Matching is on MRN (or mobile, for patients without one), the
+            appointment date and time, and the clinician.
+          </p>
+        </div>
+      </div>
+      <form method="post" enctype="multipart/form-data"
+            action="{% url 'update_campaign_from_upload' appointment_list.id %}"
+            class="update-form">
+        {% csrf_token %}
+        <input class="field-input" type="file" name="csv_file" accept=".csv" required
+               aria-label="Updated export">
+        <button class="btn btn--dark" type="submit">Apply update</button>
+      </form>
+      {% if update_batches %}
+        <ul class="update-history">
+          {% for batch in update_batches %}
+            <li>
+              <strong>{{ batch.original_filename }}</strong>
+              <span>{{ batch.created_at|date:"j M H:i" }} ·
+                {{ batch.row_count }} row{{ batch.row_count|pluralize }} ·
+                {{ batch.imported_count }} added</span>
+              <span class="badge {% if batch.status == 'failed' %}badge--danger{% else %}badge--success{% endif %}">{{ batch.get_status_display }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </section>
+  {% endif %}
 
   {% if doctor_summary_records %}
     <section class="ds-section" aria-label="Doctor summaries">

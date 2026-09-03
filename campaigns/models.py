@@ -45,6 +45,28 @@ class Campaign(TenantModel):
         blank=True,
         null=True,
     )
+    # `template` is the reminder, the stage every campaign has. The later
+    # stages are optional: a campaign with no follow-up template simply never
+    # produces follow-up messages, which is how marketing campaigns behave.
+    follow_up_template = models.ForeignKey(
+        "messaging.MessageTemplate",
+        on_delete=models.PROTECT,
+        related_name="follow_up_campaigns",
+        blank=True,
+        null=True,
+        help_text="Sent 24 hours before the appointment. Leave empty to skip that stage.",
+    )
+    cancellation_template = models.ForeignKey(
+        "messaging.MessageTemplate",
+        on_delete=models.PROTECT,
+        related_name="cancellation_campaigns",
+        blank=True,
+        null=True,
+        help_text=(
+            "Raised at 19:00 the evening before when no confirmation has "
+            "arrived. Leave empty to skip that stage."
+        ),
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -162,6 +184,16 @@ class CampaignItem(TenantModel):
         null=True,
     )
     raw_data = models.JSONField(default=dict, blank=True)
+
+    @property
+    def reminder_message(self):
+        """The reminder, which is the stage every campaign produces.
+
+        A recipient now holds one message per follow-up stage, so callers that
+        want "the" message have to say which. Most want the reminder.
+        """
+        return self.messages.filter(stage="reminder").first()
+
 
     class Meta:
         db_table = "rasel_campaignitem"

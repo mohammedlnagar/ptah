@@ -22,7 +22,7 @@ from messaging.services import (
     transition_message_status,
 )
 
-from .forms import CampaignUploadForm
+from .forms import CampaignUpdateForm, CampaignUploadForm
 from .utilities.csv_handler import CsvImportError, save_campaign_from_csv
 
 
@@ -70,8 +70,8 @@ def manage_appointments_and_messages(request):
     campaigns = Campaign.objects.for_organization(organization).select_related("template").annotate(
         item_count=Count("items", distinct=True),
         sent_count=Count(
-            "items__message",
-            filter=Q(items__message__status=CampaignMessage.Status.SENT),
+            "items__messages",
+            filter=Q(items__messages__status=CampaignMessage.Status.SENT),
             distinct=True,
         ),
     )
@@ -139,6 +139,10 @@ def appointment_list_detail(request, list_id):
             "doctors": doctors,
             "doctor_counts": doctor_counts,
             "result_count": campaign_messages.count(),
+            "active_stage": request.GET.get("stage", "due"),
+            "stage_options": _stage_options(all_campaign_messages),
+            "update_form": CampaignUpdateForm(),
+            "update_batches": campaign.update_batches.order_by("-created_at")[:5],
             "message_metrics": {
                 "total": all_campaign_messages.count(),
                 "pending": all_campaign_messages.filter(
@@ -160,6 +164,39 @@ def appointment_list_detail(request, list_id):
             "doctor_summary_records": _doctor_summaries_with_appointments(campaign),
         },
     )
+
+
+def _stage_options(messages):
+    """The queue's stage chips, each with the work still outstanding in it.
+
+    Counts outstanding rather than total: a stage where every message has been
+    handled needs no attention, and showing its full size would imply it does.
+    """
+    outstanding = messages.filter(
+        status__in=(CampaignMessage.Status.PENDING, CampaignMessage.Status.OPENED)
+    )
+    now = timezone.now()
+    return [
+        {
+            "key": "due",
+            "label": "Due now",
+            "count": outstanding.filter(
+                Q(due_at__isnull=True) | Q(due_at__lte=now)
+            ).count(),
+        },
+        {
+            "key": "all",
+            "label": "All stages",
+            "count": outstanding.count(),
+        },
+    ] + [
+        {
+            "key": stage.value,
+            "label": stage.label,
+            "count": outstanding.filter(stage=stage).count(),
+        }
+        for stage in CampaignMessage.Stage
+    ]
 
 
 def _doctor_summaries_with_appointments(campaign):
@@ -356,7 +393,27 @@ def _filtered_messages(request, campaign):
             | Q(campaign_item__doctor_name_snapshot__icontains=search)
             | Q(campaign_item__department_name_snapshot__icontains=search)
         )
-    return query.select_related("campaign_item")
+
+    # A recipient now holds one message per follow-up stage, so the queue
+    # works one stage at a time; showing all three at once would list the same
+    # patient three times. "due" is the default because it answers the
+    # operator's actual question: what needs me today.
+    stage = request.GET.get("stage", "due").strip()
+    if stage == "due":
+        query = query.filter(
+            Q(due_at__isnull=True) | Q(due_at__lte=timezone.now())
+        )
+    elif stage in CampaignMessage.Stage.values:
+        query = query.filter(stage=stage)
+    # "all" deliberately applies no stage filter, which does list a recipient
+    # once per stage; that is the point of the option.
+
+    return query.select_related("campaign_item").order_by(
+        "campaign_item__appointment_date",
+        "campaign_item__appointment_time",
+        "campaign_item__row_number",
+        "stage",
+    )
 
 
 @login_required
@@ -482,7 +539,7 @@ def send_queue(request):
     organization = _tenant_or_403(request)
     campaign = (
         Campaign.objects.for_organization(organization)
-        .filter(items__message__status=CampaignMessage.Status.PENDING)
+        .filter(items__messages__status=CampaignMessage.Status.PENDING)
         .order_by("-created_at")
         .distinct()
         .first()
@@ -494,4 +551,47 @@ def send_queue(request):
     if campaign is None:
         messages.info(request, "Create a campaign to start sending.")
         return redirect("manage_appointments")
+    return redirect("appointment_list_detail", list_id=campaign.pk)
+
+
+@login_required
+@permission_required("campaigns.add_campaign", raise_exception=True)
+@require_POST
+def update_campaign_from_upload(request, list_id):
+    """Apply a re-exported file to an existing campaign.
+
+    Guarded by add_campaign rather than a new permission: this creates
+    appointments and messages, so it is the same authority as starting a
+    campaign, not merely viewing one.
+    """
+    organization = _tenant_or_403(request)
+    campaign = get_object_or_404(
+        Campaign.objects.for_organization(organization), pk=list_id
+    )
+    form = CampaignUpdateForm(request.POST, request.FILES)
+    if not form.is_valid():
+        for error in form.errors.get("csv_file", ["That file could not be read."]):
+            messages.error(request, error)
+        return redirect("appointment_list_detail", list_id=campaign.pk)
+
+    from campaigns.updates import update_campaign_from_csv
+
+    try:
+        result = update_campaign_from_csv(
+            user=request.user,
+            campaign=campaign,
+            file=form.cleaned_data["csv_file"],
+        )
+    except CsvImportError as error:
+        messages.error(request, str(error))
+        return redirect("appointment_list_detail", list_id=campaign.pk)
+
+    parts = [f"{result['matched']} row(s) matched"]
+    if result["status_changed"]:
+        parts.append(f"{result['status_changed']} status change(s)")
+    if result["added"]:
+        parts.append(f"{result['added']} new appointment(s)")
+    if result["messages_created"]:
+        parts.append(f"{result['messages_created']} message(s) prepared")
+    messages.success(request, "Campaign updated: " + ", ".join(parts) + ".")
     return redirect("appointment_list_detail", list_id=campaign.pk)

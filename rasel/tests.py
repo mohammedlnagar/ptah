@@ -150,7 +150,7 @@ class TenantSchemaTests(TestCase):
         self.assertEqual(item.appointment_status, CampaignItem.AppointmentStatus.CONFIRMED)
         self.assertEqual(item.doctor_name_snapshot, "Dr Ali")
         self.assertEqual(campaign.summary["total_items"], 1)
-        self.assertIn("Confirmed", item.message.rendered_content)
+        self.assertIn("Confirmed", item.reminder_message.rendered_content)
         self.assertIsNotNone(item.appointment_id)
         self.assertEqual(item.appointment.status, Appointment.Status.CONFIRMED)
         self.assertEqual(item.appointment.status_events.count(), 1)

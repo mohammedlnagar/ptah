@@ -48,8 +48,8 @@ def home(request):
     recent_campaigns = campaigns.annotate(
         item_count=Count("items", distinct=True),
         sent_count=Count(
-            "items__message",
-            filter=Q(items__message__status=CampaignMessage.Status.SENT),
+            "items__messages",
+            filter=Q(items__messages__status=CampaignMessage.Status.SENT),
             distinct=True,
         ),
     )[:5]

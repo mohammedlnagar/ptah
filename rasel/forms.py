@@ -53,3 +53,21 @@ class CampaignUploadForm(forms.ModelForm):
         if uploaded.size > 10 * 1024 * 1024:
             raise forms.ValidationError("CSV files may not exceed 10 MB.")
         return uploaded
+
+
+class CampaignUpdateForm(forms.Form):
+    """Re-upload of the same clinic day, applied to an existing campaign."""
+
+    csv_file = forms.FileField(
+        required=True,
+        label="Updated export",
+        widget=forms.ClearableFileInput(attrs={"accept": ".csv"}),
+    )
+
+    def clean_csv_file(self):
+        uploaded = self.cleaned_data["csv_file"]
+        if not uploaded.name.lower().endswith(".csv"):
+            raise forms.ValidationError("Upload a CSV file.")
+        if uploaded.size > 10 * 1024 * 1024:
+            raise forms.ValidationError("CSV files may not exceed 10 MB.")
+        return uploaded
