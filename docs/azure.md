@@ -314,20 +314,40 @@ done
 ```
 
 One federated credential per branch that may run the workflow. The `subject`
-must match the running ref exactly — a mismatch fails at `azure/login` with
-`AADSTS70021: No matching federated identity record found`.
+must match the presented assertion **exactly**, or `azure/login` fails with
+`AADSTS700213: No matching federated identity record found`.
+
+This repository issues **immutable subject claims**, which embed the numeric
+owner and repository IDs rather than their names:
+
+    repo:mohammedlnagar@35522526/ptah@1330744140:ref:refs/heads/<branch>
+
+That is stronger than the name-based form — trust binds to the repository ID,
+so renaming the repo, or deleting and recreating one with the same name, does
+not silently inherit deploy access. It is also easy to miss: the documented
+`repo:owner/repo:ref:...` format registers without complaint and only fails at
+login. If a deploy fails this way, read the `subject claim` line that
+`azure/login` prints just above the error and register that string verbatim.
+Confirm the IDs belong to this repository before trusting them:
+
+```bash
+gh api repos/mohammedlnagar/ptah -q '.id, .owner.id'
+```
+
+Credentials in both formats are registered, so the pipeline keeps working
+whichever claim GitHub presents.
 
 ```bash
 az ad app federated-credential create --id $APP_REG --parameters '{
   "name": "github-main",
   "issuer": "https://token.actions.githubusercontent.com",
-  "subject": "repo:mohammedlnagar/ptah:ref:refs/heads/agent/ptah-domain-refactor",
+  "subject": "repo:mohammedlnagar@35522526/ptah@1330744140:ref:refs/heads/agent/ptah-domain-refactor",
   "audiences": ["api://AzureADTokenExchange"]
 }'
 ```
 
-`github-azure` exists alongside it for `refs/heads/agent/azure-uae-deployment`,
-so the pipeline can be exercised from the deployment branch before it merges.
+`github-azure-immutable` covers `refs/heads/agent/azure-uae-deployment`, with
+`github-main` and `github-azure` holding the name-based equivalents.
 
 The three repository secrets are set (**Settings → Secrets and variables →
 Actions**): `AZURE_CLIENT_ID` (the `appId` above), `AZURE_TENANT_ID` and
@@ -341,13 +361,13 @@ gh secret set AZURE_TENANT_ID --body $(az account show --query tenantId -o tsv)
 gh secret set AZURE_SUBSCRIPTION_ID --body $(az account show --query id -o tsv)
 ```
 
-**The workflow must exist on the default branch before it can be run at all.**
-`workflow_dispatch` is only listed from the default branch, so until the Azure
-branch merges, `gh workflow run deploy-azure.yml` returns `404 not found on the
-default branch` even though the file is present on the feature branch.
+**A workflow must exist on the default branch before it can be run at all.**
+`workflow_dispatch` is only listed from the default branch, so a new deploy
+workflow returns `404 not found on the default branch` until it merges, even
+though the file is present on the feature branch.
 
-Once merged, deploy from **Actions → Deploy to Azure → Run workflow**, typing
-`deploy` to confirm. The workflow builds in ACR, runs `ptah-migrate` to
+Deploy from **Actions → Deploy to Azure → Run workflow**, typing `deploy` to
+confirm. The workflow builds in ACR, runs `ptah-migrate` to
 completion, and only then promotes the new revision — so a failed migration
 leaves the running version serving.
 
