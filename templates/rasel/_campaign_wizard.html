@@ -1,0 +1,107 @@
+{% comment %}
+Three-step campaign wizard. Posts to the existing manage_appointments endpoint
+(form_type=appointments_list), which already validates the CSV and returns JSON,
+so launching goes straight to the new campaign's send queue.
+{% endcomment %}
+{% if perms.campaigns.add_campaign %}
+<div class="modal-backdrop" id="wizard" role="dialog" aria-modal="true" aria-labelledby="wizard-title" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="wizard-title">New campaign</h2>
+      <button class="modal-close" type="button" data-wizard-close aria-label="Close">✕</button>
+    </div>
+
+    <div class="wiz-progress" aria-hidden="true">
+      <span class="done" data-wiz-bar="1"></span>
+      <span data-wiz-bar="2"></span>
+      <span data-wiz-bar="3"></span>
+    </div>
+
+    <form id="wizard-form" method="post" enctype="multipart/form-data" action="{% url 'manage_appointments' %}">
+      {% csrf_token %}
+      <input type="hidden" name="form_type" value="appointments_list">
+
+      <section class="wiz-step" data-wiz-step="1">
+        <div>
+          <strong>1 · Upload your CSV</strong>
+          <p>Appointment campaigns need patient, mobile, date/time, doctor, department, status. Marketing needs patient and mobile only.</p>
+        </div>
+        <label class="dropzone" id="wizard-drop">
+          <svg aria-hidden="true"><use href="#r-upload"></use></svg>
+          <strong>Drop your CSV here or browse</strong>
+          <small>CSV only · max 10 MB</small>
+          <input type="file" name="csv_file" accept=".csv" required>
+        </label>
+        <div class="file-ok" id="wizard-file" hidden>
+          <svg aria-hidden="true"><use href="#r-check"></use></svg>
+          <span></span>
+        </div>
+        <div>
+          <label class="field-label" for="wiz-name">Campaign name</label>
+          <input class="field-input" id="wiz-name" name="title" type="text" required
+                 placeholder="Cardiology · 14 August">
+        </div>
+      </section>
+
+      <section class="wiz-step" data-wiz-step="2" hidden>
+        <div>
+          <strong>2 · Choose purpose and template</strong>
+          <p>Only approved templates can be assigned.</p>
+        </div>
+        <div class="pick-grid">
+          {% for value, label in appointments_list_form.fields.purpose.choices %}
+            {% if value %}
+              <button class="pick{% if forloop.first %} on{% endif %}" type="button" data-purpose="{{ value }}">
+                <strong>{{ label }}</strong>
+                <small>{% if value == 'appointment' %}Date, time, doctor, status per row{% else %}Patient + mobile only{% endif %}</small>
+              </button>
+            {% endif %}
+          {% endfor %}
+        </div>
+        <input type="hidden" name="purpose" id="wiz-purpose" value="appointment">
+
+        <div class="tpl-pick-list">
+          {% for template in appointments_list_form.fields.template.queryset %}
+            <button class="tpl-pick" type="button" data-template="{{ template.id }}" data-template-purpose="{{ template.purpose }}"
+                    data-preview="{{ template.content }}">
+              <svg aria-hidden="true"><use href="#r-file"></use></svg>
+              <span class="stack">
+                <strong>{{ template.name }}</strong>
+                <small>{{ template.content|truncatechars:64 }}</small>
+              </span>
+              <span class="badge badge--success">Approved</span>
+            </button>
+          {% empty %}
+            <p class="muted-note">No approved templates yet. An approver must approve one first.</p>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="template" id="wiz-template" value="">
+      </section>
+
+      <section class="wiz-step" data-wiz-step="3" hidden>
+        <div>
+          <strong>3 · Preview and launch</strong>
+          <p>Your template, ready to personalise for every row in the file.</p>
+        </div>
+        <div class="wa-chat">
+          <div class="wa-bubble" id="wiz-preview">Choose a template to preview it here.</div>
+        </div>
+        <div class="stat-trio">
+          <div class="stat-tile"><strong id="wiz-stat-rows">—</strong><small>recipients</small></div>
+          <div class="stat-tile"><strong id="wiz-stat-file">CSV</strong><small>validated on upload</small></div>
+          <div class="stat-tile"><strong>0</strong><small>sent so far</small></div>
+        </div>
+      </section>
+
+      <p class="form-error" id="wizard-error" role="alert" hidden></p>
+
+      <div class="modal-foot">
+        <button class="btn btn--secondary" type="button" data-wiz-back hidden>Back</button>
+        <span></span>
+        <button class="btn btn--dark" type="button" data-wiz-next>Continue →</button>
+        <button class="btn btn--teal" type="submit" data-wiz-launch hidden>Launch campaign →</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}

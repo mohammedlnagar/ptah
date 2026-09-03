@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Waslni · Personal WhatsApp follow-up for clinics{% endblock %}
+
+{% block content %}
+<div class="route-view">
+  <header class="public-header">
+    <a class="brand" href="{% url 'home' %}">
+      <span class="mark" aria-hidden="true">W</span>
+      <strong>Waslni</strong>
+    </a>
+    <nav class="public-nav" aria-label="Public navigation">
+      <a href="{% url 'login' %}">Sign in</a>
+      <a class="btn btn--dark btn--compact" href="{% url 'register' %}">Start free</a>
+    </nav>
+  </header>
+
+  <div class="landing">
+    <section class="hero">
+      <div>
+        <span class="hero-chip">Healthcare messaging, made human</span>
+        <h1>Turn appointment data into <em>personal follow-up.</em></h1>
+        <p>
+          Waslni helps healthcare teams prepare, review, and open every WhatsApp message
+          individually — so reminders stay personal and operators stay in control.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn--teal" href="{% url 'register' %}">Create your workspace →</a>
+          <a class="btn btn--secondary" href="{% url 'login' %}">Sign in</a>
+        </div>
+        <p class="check-note">
+          <svg aria-hidden="true"><use href="#r-check"></use></svg>
+          No bulk sender. No hidden automation. One message at a time.
+        </p>
+      </div>
+
+      <div class="hero-mock" aria-hidden="true">
+        <div class="mock-kicker">Send queue · Cardiology</div>
+        <h3>61 / 82 handled</h3>
+        <div class="mock-row">
+          <strong>Layla Hassan</strong>
+          <span class="ok">Confirmed</span>
+        </div>
+        <div class="mock-bubble">
+          Dear Layla, this is a reminder of your appointment with Dr. Al-Rashid on 14 Aug at 10:30…
+        </div>
+        <div class="mock-row" style="margin-top:12px">
+          <span>Omar Farouk · 11:00</span>
+          <span class="ok">next →</span>
+        </div>
+        <div class="mock-row" style="opacity:.6">
+          <span>Sara Mansour · 11:15</span>
+          <span class="wait">queued</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="how" id="how-it-works">
+      <h2>From spreadsheet to WhatsApp, without losing control.</h2>
+      <p>
+        Every campaign is isolated to your organization and every message stays visible
+        and editable before it is opened.
+      </p>
+      <div class="how-grid">
+        <article class="how-card">
+          <span class="num">01</span>
+          <h3>Upload your CSV</h3>
+          <p>A guided wizard validates every row, maps your columns, and previews the first message before launch.</p>
+        </article>
+        <article class="how-card">
+          <span class="num">02</span>
+          <h3>Work the queue</h3>
+          <p>Batch by doctor, edit any message, and move keyboard-first: Enter to open, S to skip, arrows to navigate.</p>
+        </article>
+        <article class="how-card">
+          <span class="num">03</span>
+          <h3>Send it yourself</h3>
+          <p>Waslni opens the prepared message in WhatsApp. You send it personally and the outcome is recorded.</p>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <footer class="public-footer">
+    <span>© {% now "Y" %} Waslni</span>
+    <span>Personal outreach. Clear follow-up. Better attendance.</span>
+  </footer>
+</div>
+{% endblock %}

@@ -1,8 +1,8 @@
 {% if messages %}
-  <div class="flash-stack" aria-live="polite">
+  <div class="flash-region" aria-live="polite">
     {% for message in messages %}
       <div class="flash flash--{{ message.tags|default:'info' }}" role="status">
-        <svg><use href="{% if message.tags == 'success' %}#icon-check{% else %}#icon-info{% endif %}"></use></svg>
+        <svg aria-hidden="true"><use href="{% if message.tags == 'success' %}#r-check{% else %}#r-info{% endif %}"></use></svg>
         <span>{{ message }}</span>
       </div>
     {% endfor %}

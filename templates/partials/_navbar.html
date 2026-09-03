@@ -1,33 +1,32 @@
-{% if user.is_authenticated %}
-  <header class="topbar">
-    <button class="icon-button mobile-menu" type="button" data-sidebar-open aria-controls="primary-sidebar" aria-expanded="false" aria-label="Open navigation">
-      <svg><use href="#icon-menu"></use></svg>
+{% with route=request.resolver_match.url_name %}
+<nav class="fnav" id="floatingNav" aria-label="Primary">
+  <a class="brandb" href="{% url 'home' %}" aria-label="Waslni overview">
+    <span class="bmark" aria-hidden="true">W</span><span class="lbl">Waslni</span>
+  </a>
+  <span class="divider" aria-hidden="true"></span>
+
+  <a href="{% url 'home' %}" class="{% if route == 'home' %}on{% endif %}"{% if route == 'home' %} aria-current="page"{% endif %}>
+    <svg aria-hidden="true"><use href="#r-grid"></use></svg><span class="lbl">Overview</span>
+  </a>
+  <a href="{% url 'manage_appointments' %}" class="{% if route == 'manage_appointments' %}on{% endif %}"{% if route == 'manage_appointments' %} aria-current="page"{% endif %}>
+    <svg aria-hidden="true"><use href="#r-send"></use></svg><span class="lbl">Campaigns</span>
+  </a>
+  <a href="{% url 'send_queue' %}" class="{% if route == 'appointment_list_detail' or route == 'send_queue' %}on{% endif %}"{% if route == 'appointment_list_detail' %} aria-current="page"{% endif %}>
+    <svg aria-hidden="true"><use href="#r-wa"></use></svg><span class="lbl">Send queue</span>
+  </a>
+  <a href="{% url 'admin_center' %}" class="{% if route == 'admin_center' %}on{% endif %}"{% if route == 'admin_center' %} aria-current="page"{% endif %}>
+    <svg aria-hidden="true"><use href="#r-shield"></use></svg><span class="lbl">Admin</span>
+  </a>
+  <a href="{% url 'profile' %}" class="{% if route == 'profile' or route == 'edit_profile' %}on{% endif %}"{% if route == 'profile' %} aria-current="page"{% endif %}>
+    <svg aria-hidden="true"><use href="#r-user"></use></svg><span class="lbl">Profile</span>
+  </a>
+
+  <span class="divider" aria-hidden="true"></span>
+  <form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit" title="Sign out">
+      <svg aria-hidden="true"><use href="#r-x"></use></svg><span class="lbl">Sign out</span>
     </button>
-    <div class="topbar-context">
-      <span class="eyebrow">{{ user.organization.name|default:"Workspace" }}</span>
-      <strong>{% block topbar_title %}Patient outreach workspace{% endblock %}</strong>
-    </div>
-    <div class="topbar-actions">
-      <a class="button button--primary button--compact topbar-create" href="{% url 'manage_appointments' %}#new-campaign">
-        <svg><use href="#icon-plus"></use></svg><span>New campaign</span>
-      </a>
-      <a class="profile-menu" href="{% url 'profile' %}" aria-label="Open your profile">
-        <span class="profile-avatar">{{ user.get_full_name|default:user.email|slice:":1"|upper }}</span>
-        <span class="profile-copy"><strong>{{ user.get_full_name|default:user.username }}</strong><small>{% for group in user.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}Team member{% endfor %}</small></span>
-        <svg><use href="#icon-chevron"></use></svg>
-      </a>
-    </div>
-  </header>
-{% else %}
-  <header class="public-header">
-    <a class="brand" href="{% url 'home' %}" aria-label="Waslni home">
-      <span class="brand-mark">W</span>
-      <span><strong>Waslni</strong><small>Patient outreach</small></span>
-    </a>
-    <nav class="public-nav" aria-label="Public navigation">
-      <a href="{% url 'home' %}#how-it-works">How it works</a>
-      <a href="{% url 'login' %}">Sign in</a>
-      <a class="button button--primary button--compact" href="{% url 'register' %}">Start free</a>
-    </nav>
-  </header>
-{% endif %}
+  </form>
+</nav>
+{% endwith %}

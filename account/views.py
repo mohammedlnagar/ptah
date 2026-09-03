@@ -106,7 +106,25 @@ def user_logout(request):
 
 @login_required
 def profile(request):
-    return render(request, "account/profile.html", {"profile_user": request.user})
+    """Profile card with the operator's own real totals.
+
+    Both counts are attributed through sent_by, so they describe work this
+    person did rather than what happened in their workspace.
+    """
+    from messaging.models import CampaignMessage
+
+    sent = CampaignMessage.objects.filter(
+        sent_by=request.user, status=CampaignMessage.Status.SENT
+    )
+    return render(
+        request,
+        "account/profile.html",
+        {
+            "profile_user": request.user,
+            "messages_sent": sent.count(),
+            "campaigns_worked": sent.values("campaign_item__campaign").distinct().count(),
+        },
+    )
 
 
 @login_required
@@ -115,6 +133,7 @@ def edit_profile(request):
         user_form = CustomUserUpdateForm(request.POST, instance=request.user)
         if user_form.is_valid():
             user_form.save()
+            messages.success(request, "Profile updated")
             return redirect("profile")
     else:
         user_form = CustomUserUpdateForm(instance=request.user)
@@ -308,3 +327,85 @@ def suspend_member(request, user_id):
     member.save(update_fields=("is_active",))
     messages.success(request, f"{member.email} can no longer sign in.")
     return redirect("manage_team")
+
+
+@login_required
+def admin_center(request):
+    """One workspace administration screen with four tabs.
+
+    Template approval, doctors, team and plan each already had their own page.
+    The redesign folds them into tabs, so this gathers all four datasets and
+    the templates render whichever tab is selected. Each section is omitted
+    when the viewer lacks the permission that guards its dedicated page, so
+    the tabs never expose more than the old screens did.
+    """
+    from directory.models import Doctor
+    from messaging.models import MessageTemplateRevision
+
+    organization = tenant_or_403(request)
+    tab = request.GET.get("tab", "templates")
+    if tab not in {"templates", "doctors", "team", "plan"}:
+        tab = "templates"
+
+    can_approve = request.user.has_perm("messaging.change_messagetemplate")
+    can_view_templates = request.user.has_perm("messaging.view_messagetemplate")
+    can_view_doctors = request.user.has_perm("directory.view_doctor")
+    can_view_team = request.user.has_perm("account.change_customuser")
+    can_view_plan = request.user.has_perm("account.change_organization")
+
+    awaiting = []
+    if can_view_templates:
+        awaiting = list(
+            MessageTemplateRevision.objects.for_organization(organization)
+            .filter(
+                is_current=True,
+                approval_status=MessageTemplateRevision.ApprovalStatus.PENDING,
+            )
+            .select_related("template", "created_by")
+            .order_by("template__name")
+        )
+
+    doctors = []
+    if can_view_doctors:
+        doctors = list(
+            Doctor.objects.for_organization(organization)
+            .select_related("department")
+            .order_by("name")
+        )
+
+    team_rows = []
+    if can_view_team:
+        members = (
+            CustomUser.objects.filter(organization=organization)
+            .prefetch_related("groups")
+            .order_by("-is_active", "email")
+        )
+        for member in members:
+            team_rows.append(
+                {
+                    "member": member,
+                    "roles": [group.name for group in member.groups.all()],
+                }
+            )
+
+    subscription = getattr(organization, "subscription", None)
+    usage = usage_summary(organization) if can_view_plan else None
+
+    return render(
+        request,
+        "account/admin_center.html",
+        {
+            "tab": tab,
+            "awaiting": awaiting,
+            "awaiting_count": len(awaiting),
+            "doctors": doctors,
+            "team_rows": team_rows,
+            "subscription": subscription,
+            "usage": usage,
+            "can_approve": can_approve,
+            "can_view_templates": can_view_templates,
+            "can_view_doctors": can_view_doctors,
+            "can_view_team": can_view_team,
+            "can_view_plan": can_view_plan,
+        },
+    )

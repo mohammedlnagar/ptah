@@ -1,28 +1,65 @@
 {% extends "base.html" %}
-{% block title %}My profile · Waslni{% endblock %}
-{% block content %}
-<header class="page-header">
-  <div><span class="eyebrow">Account</span><h1>My profile</h1><p>Review your workspace membership and keep your contact details current.</p></div>
-  <div class="page-header-actions"><a href="{% url 'edit_profile' %}" class="button button--primary"><svg><use href="#icon-edit"></use></svg>Edit profile</a></div>
-</header>
 
-<div class="profile-grid">
-  <section class="panel panel--padded profile-summary">
-    <div class="profile-summary__avatar">{{ profile_user.get_full_name|default:profile_user.email|slice:":1"|upper }}</div>
-    <h2>{{ profile_user.get_full_name|default:profile_user.username }}</h2>
-    <p>{{ profile_user.email }}</p>
-    <span class="badge badge--active">Active team member</span>
-  </section>
-  <section class="panel">
-    <div class="panel-header"><div><h2>Workspace details</h2><p>Your organization and role access.</p></div></div>
-    <div class="panel-body">
-      <dl class="detail-list">
-        <div class="detail-row"><dt>Organization</dt><dd>{{ profile_user.organization.name }}</dd></div>
-        <div class="detail-row"><dt>Email</dt><dd>{{ profile_user.email }}</dd></div>
-        <div class="detail-row"><dt>Mobile number</dt><dd>{{ profile_user.mobile_number|default:"Not added" }}</dd></div>
-        <div class="detail-row"><dt>Access role</dt><dd>{% for group in profile_user.groups.all %}<span class="badge badge--neutral">{{ group.name }}</span>{% if not forloop.last %} {% endif %}{% empty %}Team member{% endfor %}</dd></div>
-      </dl>
-    </div>
-  </section>
+{% block title %}My profile · Waslni{% endblock %}
+
+{% block content %}
+<div class="route-view page page--profile">
+  <header style="margin-bottom:22px">
+    <div class="kicker">Account</div>
+    <h1 class="editor-title">My profile</h1>
+  </header>
+
+  <div class="profile-grid">
+    <section class="profile-card">
+      <div class="avatar-lg" aria-hidden="true">{{ profile_user.get_full_name|default:profile_user.email|slice:":1"|upper }}</div>
+      <h2>{{ profile_user.get_full_name|default:profile_user.username }}</h2>
+      <p class="email">{{ profile_user.email }}</p>
+      {% if profile_user.is_active %}
+        <span class="badge badge--success">Active team member</span>
+      {% else %}
+        <span class="badge badge--danger">Suspended</span>
+      {% endif %}
+      <div class="profile-stats">
+        <div>
+          <strong>{{ messages_sent }}</strong>
+          <small>message{{ messages_sent|pluralize }} sent</small>
+        </div>
+        <div>
+          <strong>{{ campaigns_worked }}</strong>
+          <small>campaign{{ campaigns_worked|pluralize }} worked</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="card card--flush">
+      <div class="detail-head">
+        <div>
+          <h2>Workspace details</h2>
+          <p>Your organization and role access.</p>
+        </div>
+        <a class="btn btn--dark btn--sm" href="{% url 'edit_profile' %}">Edit profile</a>
+      </div>
+      <div class="detail-body">
+        <div class="detail-row">
+          <span class="key">Organization</span>
+          <strong>{{ profile_user.organization.name|default:"—" }}</strong>
+        </div>
+        <div class="detail-row">
+          <span class="key">Email</span>
+          <span class="val">{{ profile_user.email }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="key">Mobile number</span>
+          <span class="val">{{ profile_user.mobile_number|default:"Not added" }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="key">Access role</span>
+          <span class="badge badge--muted">
+            {% for group in profile_user.groups.all %}{{ group.name }}{% if not forloop.last %} · {% endif %}{% empty %}Team member{% endfor %}
+          </span>
+        </div>
+      </div>
+    </section>
+  </div>
 </div>
 {% endblock %}

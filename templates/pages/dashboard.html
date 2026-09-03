@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Overview · Waslni{% endblock %}
+
+{% block content %}
+<div class="route-view page">
+  <header class="page-header">
+    <div>
+      <div class="kicker">{{ user.organization.name|default:"Waslni" }} · {% now "l j M" %}</div>
+      <h1>Good {{ greeting }}, {{ user.first_name|default:user.username }}</h1>
+      <p>
+        {{ dashboard.today }} appointment{{ dashboard.today|pluralize }} today.
+        {{ dashboard.pending }} patient{{ dashboard.pending|pluralize }} still {{ dashboard.pending|pluralize:"hasn't,haven't" }} received their reminder.
+      </p>
+    </div>
+    <div class="header-actions">
+      {% if perms.campaigns.add_campaign %}
+        <a class="btn btn--dark" href="{% url 'manage_appointments' %}?wizard=1">
+          <svg aria-hidden="true"><use href="#r-upload"></use></svg>New campaign
+        </a>
+      {% endif %}
+      <a class="btn btn--teal" href="{% url 'send_queue' %}">
+        <svg aria-hidden="true"><use href="#r-bolt"></use></svg>Start sending
+      </a>
+    </div>
+  </header>
+
+  <section class="metric-row" aria-label="Today at a glance">
+    <article class="metric metric--dark">
+      <span class="metric__label">Pending today</span>
+      <strong class="metric__value">{{ dashboard.pending }}</strong>
+      <span class="metric__note">reminders waiting in the queue</span>
+    </article>
+    <article class="metric">
+      <span class="metric__label">Sent</span>
+      <strong class="metric__value">{{ dashboard.sent }}</strong>
+      <span class="metric__note">opened personally in WhatsApp</span>
+    </article>
+    <article class="metric">
+      <span class="metric__label">Confirmed today</span>
+      <strong class="metric__value metric__value--green">{{ dashboard.confirmed_today }}<span class="metric__suffix"> / {{ dashboard.today }}</span></strong>
+      <span class="metric__note">patients replied to confirm</span>
+    </article>
+    <article class="metric">
+      <span class="metric__label">Templates</span>
+      <strong class="metric__value">{{ dashboard.templates }}{% if dashboard.pending_templates %}<span class="metric__suffix metric__suffix--warn"> +{{ dashboard.pending_templates }} pending</span>{% endif %}</strong>
+      <span class="metric__note">approved and ready to assign</span>
+    </article>
+  </section>
+
+  <div class="dash-grid">
+    <section class="card card--flush">
+      <div class="panel-head">
+        <div>
+          <h2>Active campaigns</h2>
+          <p>Pick up where the team left off.</p>
+        </div>
+        <a class="link-more" href="{% url 'manage_appointments' %}">View all →</a>
+      </div>
+      {% for campaign in recent_campaigns %}
+        <a class="crow" href="{% url 'appointment_list_detail' campaign.id %}">
+          <span class="crow__main">
+            <strong>{{ campaign.title }}</strong>
+            <small>{{ campaign.item_count }} recipient{{ campaign.item_count|pluralize }} · {{ campaign.created_at|date:"j M" }}</small>
+          </span>
+          <span class="badge {% if campaign.purpose == 'appointment' %}badge--info{% else %}badge--warning{% endif %}">{{ campaign.get_purpose_display }}</span>
+          <span class="crow__progress">
+            <span>{{ campaign.sent_count }} / {{ campaign.item_count }} sent</span>
+            <span class="bar"><i style="width: {% widthratio campaign.sent_count campaign.item_count|default:1 100 %}%"></i></span>
+          </span>
+          <span class="crow__chev" aria-hidden="true">→</span>
+        </a>
+      {% empty %}
+        <div class="empty">
+          <strong>No campaigns yet</strong>
+          Upload a CSV to create your first campaign.
+        </div>
+      {% endfor %}
+    </section>
+
+    <aside class="rail">
+      <section class="card card--pad">
+        <h3 class="card-title">Team activity</h3>
+        <p class="muted-note">Live operator progress today</p>
+        <div class="team-list">
+          {% for member in team %}
+            <div class="team-row">
+              <span class="avatar-sm{% cycle '' ' avatar-sm--blue' ' avatar-sm--rose' as avatarcolor %}">{{ member.get_full_name|default:member.email|slice:":1"|upper }}</span>
+              <span class="stack">
+                <strong>{{ member.get_full_name|default:member.username }}{% if member.pk == user.pk %} (you){% endif %}</strong>
+                <small>{% if member.sent_total %}{{ member.sent_total }} message{{ member.sent_total|pluralize }} sent{% else %}No messages sent yet{% endif %}</small>
+              </span>
+              {% if member.sent_total %}
+                <strong class="team-row__count">{{ member.sent_total }} sent</strong>
+              {% else %}
+                <span class="team-row__idle">—</span>
+              {% endif %}
+            </div>
+          {% empty %}
+            <p class="muted-note">No team members yet.</p>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="promo">
+        <h3>Keyboard-first sending</h3>
+        <p>Work the queue without touching the mouse: <strong>↵</strong> open WhatsApp, <strong>S</strong> skip, <strong>E</strong> edit, <strong>→</strong> next.</p>
+        <a class="btn btn--compact" href="{% url 'send_queue' %}">Try it now</a>
+      </section>
+    </aside>
+  </div>
+</div>
+{% endblock %}

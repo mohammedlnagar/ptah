@@ -1,38 +1,80 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{{ heading }} · Waslni{% endblock %}
 
 {% block content %}
-<header class="page-header">
-  <div>
-    <a class="section-link" href="{% url 'template_approvals' %}">← All templates</a>
-    <h1>{{ heading }}</h1>
-    {% if template %}<p>Saving an edit creates a new draft revision; the approved copy already used by campaigns is left untouched.</p>{% endif %}
-  </div>
-</header>
+<div class="route-view page page--editor" id="tpl-editor">
+  <header style="margin-bottom:22px">
+    <a class="back-link" href="{% url 'manage_appointments' %}">← Campaigns</a>
+    <h1 class="editor-title">{{ heading }}</h1>
+    <p class="queue-counts">Saved templates go to an Admin or Approver before campaigns can use them.</p>
+  </header>
 
-<section class="panel panel--padded" style="max-width:44rem">
   <form method="post" novalidate>
     {% csrf_token %}
-    {% if form.non_field_errors %}<div class="flash flash--error" role="alert"><span>{{ form.non_field_errors|striptags }}</span></div>{% endif %}
-    <div class="form-grid">
-      {% for field in form %}
-        <div class="form-field form-field--full">
-          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<small>Required</small>{% endif %}</label>
-          {{ field }}
-          {% if field.name == "content" %}
-            <div class="placeholder-guide" aria-label="Available placeholders">
-              {% for placeholder in placeholders %}<span class="placeholder-token">{{ placeholder }}</span>{% endfor %}
-            </div>
-          {% endif %}
-          {% if field.errors %}<ul class="field-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    <div class="editor-grid">
+      <section class="editor-card">
+        {% if form.non_field_errors %}
+          <div class="form-error">{{ form.non_field_errors|join:" " }}</div>
+        {% endif %}
+
+        <div class="field">
+          <label for="{{ form.name.id_for_label }}">Template name</label>
+          <input class="field-input field-input--lg" type="text"
+                 id="{{ form.name.id_for_label }}" name="{{ form.name.html_name }}"
+                 value="{{ form.name.value|default:'' }}"
+                 placeholder="e.g. Appointment reminder · EN" data-tpl-name required>
+          {% if form.name.errors %}<div class="form-error">{{ form.name.errors|join:" " }}</div>{% endif %}
         </div>
-      {% endfor %}
-      <div class="confirm-actions">
-        <a class="button button--secondary" href="{% url 'template_approvals' %}">Cancel</a>
-        <button class="button button--primary" type="submit">Save template</button>
-      </div>
+
+        <div class="field">
+          <span class="label">Purpose</span>
+          <div class="seg-row">
+            {% for value, label in form.fields.purpose.choices %}
+              {% if value %}
+                <button class="seg{% if form.purpose.value|stringformat:'s' == value|stringformat:'s' %} on{% elif not form.purpose.value and forloop.first %} on{% endif %}"
+                        type="button" data-purpose="{{ value }}">{{ label }}</button>
+              {% endif %}
+            {% endfor %}
+          </div>
+          <input type="hidden" name="{{ form.purpose.html_name }}" id="tpl-purpose"
+                 value="{{ form.purpose.value|default:'appointment' }}">
+          {% if form.purpose.errors %}<div class="form-error">{{ form.purpose.errors|join:" " }}</div>{% endif %}
+        </div>
+
+        <div class="field">
+          <label for="{{ form.content.id_for_label }}">Message content</label>
+          <textarea class="field-textarea" id="{{ form.content.id_for_label }}"
+                    name="{{ form.content.html_name }}" data-tpl-content
+                    placeholder="Dear #patient_name, …" required>{{ form.content.value|default:'' }}</textarea>
+          <div class="token-row">
+            {% for placeholder in placeholders %}
+              <button class="token" type="button" data-token="{{ placeholder }}">{{ placeholder }}</button>
+            {% endfor %}
+          </div>
+          {% if form.content.errors %}<div class="form-error">{{ form.content.errors|join:" " }}</div>{% endif %}
+        </div>
+
+        <div class="editor-foot">
+          <a class="btn btn--secondary" href="{% url 'manage_appointments' %}">Cancel</a>
+          <button class="btn btn--teal" type="submit" data-tpl-save>Save draft for approval</button>
+        </div>
+      </section>
+
+      <aside class="preview-aside">
+        <div class="preview-kicker">Live preview · sample patient</div>
+        <div class="wa-bubble">
+          <span data-tpl-preview></span>
+          <div class="wa-stamp wa-stamp--sm">10:02 ✓</div>
+        </div>
+        <p class="preview-note">Placeholders are filled with Layla Hassan's sample data so you can judge length and tone.</p>
+      </aside>
     </div>
   </form>
-</section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/template_editor.js' %}" defer></script>
 {% endblock %}

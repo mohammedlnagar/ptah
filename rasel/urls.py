@@ -4,6 +4,7 @@ from . import views
 
 
 urlpatterns = [
+    path("queue/", views.send_queue, name="send_queue"),
     path("AppointmentsManage/", views.manage_appointments_and_messages, name="manage_appointments"),
     path("list/<int:list_id>/", views.appointment_list_detail, name="appointment_list_detail"),
     path("EditMessage/", views.edit_assigned_message, name="EditMessage"),
