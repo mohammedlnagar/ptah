@@ -27,3 +27,7 @@ media/
 docs/
 *.md
 !README.md
+
+# Design reference. Nothing imports it and COPY . . would otherwise ship it
+# in every image; *.md above only matches the top level, so name the folder.
+design_handoff_waslni_redesign/
