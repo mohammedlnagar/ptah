@@ -107,6 +107,22 @@
     const position = (index + 1) + " of " + visible.length;
     root.querySelector("[data-queue-position]").textContent = "Message " + position;
     root.querySelector("[data-cur-position]").textContent = position;
+    /* Which message of the sequence this is. The operator has to know before
+       opening WhatsApp: a cancellation reads very differently from a
+       reminder. */
+    const stagePill = root.querySelector("[data-cur-stage]");
+    if (stagePill) {
+      stagePill.textContent = row.dataset.stageLabel || "";
+      stagePill.hidden = !row.dataset.stageLabel;
+      stagePill.className =
+        "stage-pill" +
+        (row.dataset.stage === "cancellation"
+          ? " is-cancellation"
+          : row.dataset.stage === "follow_up"
+          ? " is-follow-up"
+          : "");
+    }
+
     root.querySelector("[data-cur-patient]").textContent = row.dataset.patient;
 
     const meta = ["MRN " + row.dataset.mrn, row.dataset.phone, row.dataset.doctorName];

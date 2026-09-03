@@ -33,6 +33,16 @@ class ImportBatch(TenantModel):
     imported_count = models.PositiveIntegerField(default=0)
     error_count = models.PositiveIntegerField(default=0)
     errors = models.JSONField(default=list, blank=True)
+    # Set when this upload updates an existing campaign rather than creating
+    # one. Named for the direction it points because Campaign.import_batch
+    # already claims the reverse accessor `campaign` for the original upload.
+    updates_campaign = models.ForeignKey(
+        "campaigns.Campaign",
+        on_delete=models.CASCADE,
+        related_name="update_batches",
+        blank=True,
+        null=True,
+    )
     replaces = models.OneToOneField(
         "self",
         on_delete=models.SET_NULL,

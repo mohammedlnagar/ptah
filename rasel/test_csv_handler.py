@@ -212,7 +212,7 @@ class CancelledAppointmentImportTests(TestCase):
         self.assertEqual(
             item.appointment_status, CampaignItem.AppointmentStatus.CANCELLED
         )
-        self.assertIsNotNone(item.message)
+        self.assertIsNotNone(item.reminder_message)
         self.assertEqual(campaign.summary["appointments"]["cancelled"], 1)
 
 
@@ -254,7 +254,7 @@ class CancelledWhatsappGuardTests(TestCase):
             template=self.template,
             purpose=Campaign.Purpose.APPOINTMENT,
         )
-        return campaign.items.get().message
+        return campaign.items.get().reminder_message
 
     def test_booked_appointments_open_whatsapp_directly(self):
         message = self._import("Booked")

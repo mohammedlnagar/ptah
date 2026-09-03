@@ -172,7 +172,7 @@ class ScrubEffectTests(RetentionFixture):
         self.assertNotIn("Patient Name", self.item.raw_data)
 
     def test_the_rendered_message_is_emptied(self):
-        self.assertIn("Mona", self.item.message.rendered_content)
+        self.assertIn("Mona", self.item.reminder_message.rendered_content)
 
         scrub_campaign(self.campaign)
 

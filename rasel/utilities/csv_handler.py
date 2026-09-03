@@ -457,15 +457,13 @@ def save_campaign_from_csv(user, file, title, template, purpose, replaces=None):
                 )
                 item.full_clean()
                 item.save()
-                campaign_message = CampaignMessage(
-                    organization=user.organization,
-                    campaign_item=item,
-                    template=template,
-                    template_revision=template_revision,
-                    rendered_content=format_message(template_content, item),
-                )
-                campaign_message.full_clean()
-                campaign_message.save()
+
+            # Every stage, including the reminder, is generated in one pass
+            # so due dates come from a single expression of clinic policy
+            # rather than being computed here as well.
+            from campaigns.followups import generate_stage_messages
+
+            generate_stage_messages(campaign)
 
             refresh_campaign_summary(campaign)
             batch.status = ImportBatch.Status.IMPORTED

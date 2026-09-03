@@ -204,10 +204,32 @@ class CampaignMessage(TenantModel):
         OPENED = "opened", "WhatsApp opened"
         SENT = "operator_marked_sent", "Operator marked sent"
         SKIPPED = "skipped", "Skipped"
+        # Overtaken by events rather than handled: the patient confirmed
+        # before the cancellation window opened, so the message was never
+        # needed. Distinct from SKIPPED, which is an operator's decision.
+        VOIDED = "voided", "No longer needed"
 
-    campaign_item = models.OneToOneField(
-        "campaigns.CampaignItem", on_delete=models.CASCADE, related_name="message"
+    class Stage(models.TextChoices):
+        """Where in the follow-up sequence this message sits.
+
+        Clinic policy: remind two days ahead, follow up 24 hours before, and
+        raise a cancellation at 19:00 the evening before when no confirmation
+        has arrived.
+        """
+
+        REMINDER = "reminder", "Reminder"
+        FOLLOW_UP = "follow_up", "24-hour follow-up"
+        CANCELLATION = "cancellation", "Cancellation"
+
+    campaign_item = models.ForeignKey(
+        "campaigns.CampaignItem", on_delete=models.CASCADE, related_name="messages"
     )
+    stage = models.CharField(
+        max_length=20, choices=Stage.choices, default=Stage.REMINDER
+    )
+    # When this message becomes the operator's business. Nothing sends itself;
+    # a due message simply surfaces in the queue.
+    due_at = models.DateTimeField(blank=True, null=True)
     template = models.ForeignKey(
         MessageTemplate,
         on_delete=models.SET_NULL,
@@ -251,10 +273,21 @@ class CampaignMessage(TenantModel):
                         "opened",
                         "operator_marked_sent",
                         "skipped",
+                        "voided",
                     )
                 ),
                 name="valid_campaign_message_status",
-            )
+            ),
+            models.CheckConstraint(
+                condition=Q(stage__in=("reminder", "follow_up", "cancellation")),
+                name="valid_campaign_message_stage",
+            ),
+            # A recipient gets at most one message per stage, so a re-upload
+            # updates the existing reminder instead of stacking duplicates.
+            models.UniqueConstraint(
+                fields=("campaign_item", "stage"),
+                name="unique_message_stage_per_item",
+            ),
         ]
 
     def clean(self):
