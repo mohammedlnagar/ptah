@@ -32,6 +32,12 @@
     {% endif %}
   </div>
 
+  {% comment %}
+  The handoff defines four tabs, so screens it does not cover are surfaced from
+  the tab they belong to rather than as new top-level nav items. Each link is
+  gated by the same permission that guards the page it opens.
+  {% endcomment %}
+
   {% if tab == 'templates' %}
     {% if can_view_templates %}
       {% for revision in awaiting %}
@@ -65,6 +71,20 @@
     {% endif %}
 
   {% elif tab == 'doctors' %}
+    <div class="tab-actions">
+      <p>Doctors are matched by name on import. Departments group them for summaries.</p>
+      <div class="panel-head-actions">
+        {% if perms.directory.view_department %}
+          <a class="btn btn--secondary btn--sm" href="{% url 'department_list' %}">Departments</a>
+        {% endif %}
+        {% if perms.directory.view_doctor %}
+          <a class="btn btn--secondary btn--sm" href="{% url 'doctor_list' %}">Full doctor list</a>
+        {% endif %}
+        {% if perms.directory.add_doctor %}
+          <a class="btn btn--dark btn--sm" href="{% url 'doctor_create' %}">+ Add doctor</a>
+        {% endif %}
+      </div>
+    </div>
     <section class="card card--flush">
       <div class="table-head">
         <span>Doctor</span><span>Department</span><span>WhatsApp</span><span style="width:70px"></span>
@@ -86,6 +106,17 @@
     </section>
 
   {% elif tab == 'team' %}
+    <div class="tab-actions">
+      <p>This list is read-only. Approvals, roles and suspensions live in access management.</p>
+      <div class="panel-head-actions">
+        {% if perms.account.add_organizationinvite %}
+          <a class="btn btn--secondary btn--sm" href="{% url 'manage_invites' %}">Invitations</a>
+        {% endif %}
+        {% if perms.account.change_customuser %}
+          <a class="btn btn--dark btn--sm" href="{% url 'manage_team' %}">Manage access</a>
+        {% endif %}
+      </div>
+    </div>
     <section class="card card--flush">
       {% for row in team_rows %}
         <div class="member-row">

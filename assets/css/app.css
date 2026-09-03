@@ -1154,3 +1154,12 @@ main:not(:has(> .route-view)):not(:has(> .auth-split)) {
 .roster-row .badge, .roster-main .badge, .roster-field .badge {
   justify-self: start; align-self: flex-start; width: auto; flex: none;
 }
+
+/* Per-tab actions in the admin center: the destinations the handoff's four
+   tabs do not cover, surfaced where they belong instead of in the nav. */
+.tab-actions {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 12px;
+}
+.tab-actions p { margin: 0; font-size: 12.5px; color: var(--muted); max-width: 60ch; }
+.panel-head-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }

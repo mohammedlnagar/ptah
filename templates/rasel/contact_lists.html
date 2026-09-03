@@ -24,7 +24,12 @@
         <h2>All campaigns</h2>
         <p>Open one to work its send queue.</p>
       </div>
-      <span class="count-chip">{{ campaign_stats.campaigns }} total</span>
+      <div class="panel-head-actions">
+        {% if perms.imports.view_importbatch %}
+          <a class="btn btn--secondary btn--sm" href="{% url 'import_list' %}">Import history</a>
+        {% endif %}
+        <span class="count-chip">{{ campaign_stats.campaigns }} total</span>
+      </div>
     </div>
     {% for campaign in appointment_lists %}
       <a class="crow crow--roomy" href="{% url 'appointment_list_detail' campaign.id %}">
